@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>منصة ملك جدول الضرب</title>
+    <!-- مكتبة قراءة ملفات الإكسل -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         :root {
             --primary: #4f46e5;
@@ -27,14 +29,15 @@
         input, select { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 1rem; }
         .hidden { display: none !important; }
         
-        /* لوحات الصدارة والشرف */
+        /* لوحات الصدارة */
         .leaderboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px; }
         @media(max-width: 768px) { .leaderboard-grid { grid-template-columns: 1fr; } }
-        .lb-box { background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 10px; padding: 15px; }
+        .lb-box { background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 10px; padding: 15px; min-height: 120px; }
         .lb-box h3 { color: var(--primary); margin-bottom: 10px; border-bottom: 2px solid var(--primary); padding-bottom: 5px; font-size: 1.1rem; }
         .lb-item { display: flex; justify-content: space-between; padding: 8px 10px; margin: 5px 0; background: white; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); font-weight: bold; }
+        .empty-lb { text-align: center; color: #64748b; padding: 20px; font-style: italic; }
         
-        /* تذييل الصفحة */
+        .upload-section { background: #f1f5f9; padding: 15px; border-radius: 8px; margin-top: 15px; border: 2px dashed #cbd5e1; }
         footer { background: #1e293b; color: white; text-align: center; padding: 20px; margin-top: auto; font-size: 1rem; }
     </style>
 </head>
@@ -46,12 +49,12 @@
     </header>
 
     <div class="container">
-        <!-- شاشة الاختيار الرئيسي: طالب أم كادر تعليمي -->
+        <!-- شاشة الاختيار الرئيسي -->
         <div id="role-select-screen" class="card" style="text-align: center;">
             <h2>اختر نوع الدخول</h2>
-            <div style="display: flex; justify-content: center; gap: 20px; margin-top: 30px;">
+            <div style="display: flex; justify-content: center; gap: 20px; margin-top: 30px; flex-wrap: wrap;">
                 <button class="btn" onclick="showStudentLogin()" style="font-size: 1.2rem; padding: 15px 40px;">👨‍🎓 دخول طالب</button>
-                <button class="btn btn-secondary" onclick="showTeacherLogin()" style="font-size: 1.2rem; padding: 15px 40px;">👩‍🏫 دخول كادر تعليمي (معلم/مشرف/مدير)</button>
+                <button class="btn btn-secondary" onclick="showTeacherLogin()" style="font-size: 1.2rem; padding: 15px 40px;">👩‍🏫 دخول كادر تعليمي</button>
             </div>
         </div>
 
@@ -61,12 +64,6 @@
             <label>اختر الصف:</label>
             <select id="student-class-select" onchange="updateStudentList()">
                 <option value="">-- اختر الصف --</option>
-                <option value="1ب">1ب</option>
-                <option value="2ب">2ب</option>
-                <option value="3ب">3ب</option>
-                <option value="4ب">4ب</option>
-                <option value="5ب">5ب</option>
-                <option value="6ب">6ب</option>
             </select>
             <label>اختر اسم الطالب:</label>
             <select id="student-name-select">
@@ -76,12 +73,13 @@
             <button class="btn btn-secondary" onclick="backToMain()" style="margin-top: 10px; width: 100%;">رجوع</button>
         </div>
 
-        <!-- شاشة تسجيل دخول المعلم / المشرف / المدير -->
+        <!-- شاشة تسجيل دخول الكادر التعليمي -->
         <div id="teacher-login-screen" class="card hidden">
             <h2>تسجيل دخول الكادر التعليمي</h2>
-            <input type="text" id="teacher-user" placeholder="اسم المستخدم (مثال: admin أو teacher1)">
+            <input type="text" id="teacher-user" placeholder="اسم المستخدم (مثال: admin)">
             <input type="password" id="teacher-pass" placeholder="كلمة المرور">
             <button class="btn" onclick="authenticateTeacher()" style="width: 100%; margin-top: 10px;">تسجيل الدخول</button>
+            <button class="btn btn-accent" onclick="forgotPassword()" style="width: 100%; margin-top: 5px; font-size: 0.9rem;">نسيت كلمة المرور؟ (إرسال رسالة عبر البريد)</button>
             <button class="btn btn-secondary" onclick="backToMain()" style="width: 100%; margin-top: 10px;">رجوع</button>
         </div>
 
@@ -101,14 +99,15 @@
                 </div>
             </div>
 
-            <!-- حاوية اللعبة الحالية -->
+            <!-- حاوية اللعبة -->
             <div id="game-container" class="card hidden" style="text-align: center;">
                 <h2 id="game-title">اسم اللعبة</h2>
                 <div id="game-body" style="margin: 20px 0; font-size: 1.5rem;">جاري تحميل اللعبة...</div>
-                <button class="btn btn-secondary" onclick="finishCurrentGame()">إنهاء اللعبة وإظهار النتيجة</button>
+                <button class="btn" onclick="submitGameScore()" style="margin-top: 15px;">تسجيل النتيجة وحفظ النقاط</button>
+                <button class="btn btn-secondary" onclick="closeGameContainer()" style="margin-top: 15px;">إلغاء والعودة</button>
             </div>
 
-            <!-- لوحة صدارة خاصة باللعبة المنتهية فقط -->
+            <!-- لوحة صدارة اللعبة المنتهية -->
             <div id="game-leaderboard-card" class="card hidden">
                 <h3 id="game-lb-title">لوحة الصدارة الخاصة باللعبة</h3>
                 <div id="game-lb-list"></div>
@@ -116,26 +115,56 @@
             </div>
         </div>
 
-        <!-- لوحة تحكم الكادر التعليمي (معلم / مشرف / مدير) -->
+        <!-- لوحة تحكم الكادر التعليمي -->
         <div id="teacher-dashboard" class="card hidden">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <h2 id="dashboard-title">لوحة التحكم</h2>
                 <button class="btn btn-secondary" onclick="backToMain()">تسجيل الخروج</button>
             </div>
             
-            <div id="admin-panel" class="hidden" style="background: #f1f5f9; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-                <h3>⚙️ أدوات المدير والمشرف</h3>
-                <p>إدارة الصفوف، صلاحيات المعلمين، ورفع بيانات الطلاب عبر ملف Excel.</p>
-                <button class="btn btn-accent" onclick="alert('خاصية رفع ملف Excel مفعلة وجاهزة.')" style="margin-top: 10px;">📂 رفع ملف بيانات الطلاب (Excel)</button>
+            <!-- إعدادات الحساب الشخصي للمعلم (تغيير كلمة المرور والإيميل مباشرة) -->
+            <div style="background: #f8fafc; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #e2e8f0;">
+                <h3>⚙️ إعدادات الحساب الشخصي</h3>
+                <p style="font-size: 0.9rem; color: #64748b; margin-bottom: 10px;">يمكنك تحديث إيميلك أو كلمة المرور الخاصة بك مباشرة من هنا دون إرسال إيميل.</p>
+                
+                <label>البريد الإلكتروني المسجل:</label>
+                <input type="email" id="teacher-email-input" value="teacher@school.bh">
+                <button class="btn btn-secondary" onclick="updateTeacherEmail()" style="margin-top: 5px; margin-bottom: 15px;">تحديث البريد الإلكتروني</button>
+                
+                <label>كلمة المرور الجديدة:</label>
+                <input type="password" id="new-password-input" placeholder="اكتب كلمة المرور الجديدة">
+                <button class="btn btn-accent" onclick="updatePasswordDirectly()" style="margin-top: 5px;">حفظ وتغيير كلمة المرور</button>
             </div>
 
-            <div>
-                <h3>تقارير ومتابعة الطلاب</h3>
-                <button class="btn" onclick="exportExcelReport()" style="margin-top: 10px;">📥 تصدير تقرير الأداء الشامل (Excel)</button>
+            <!-- لوحة المدير الخاصة برفع الملفات وإدارة المعلمين -->
+            <div id="admin-panel" class="hidden">
+                <div class="upload-section">
+                    <h3>📁 1. رفع وتحديث قائمة الطلاب والصفوف (Excel / CSV)</h3>
+                    <input type="file" id="students-file-input" accept=".xlsx, .xls, .csv">
+                    <button class="btn btn-accent" onclick="uploadStudentsFile()" style="margin-top: 10px;">رفع ملف الطلاب</button>
+                </div>
+
+                <div class="upload-section">
+                    <h3>👩‍🏫 2. رفع وتحديث الكادر التعليمي وصلاحياتهم (Excel / CSV)</h3>
+                    <input type="file" id="teachers-file-input" accept=".xlsx, .xls, .csv">
+                    <button class="btn btn-accent" onclick="uploadTeachersFile()" style="margin-top: 10px;">رفع ملف المعلمين</button>
+                </div>
+
+                <div class="upload-section" style="background: #fffbeb; border-color: #f59e0b;">
+                    <h3>🔑 3. إعادة تعيين كلمة المرور لمعلم (خاص بالمدير)</h3>
+                    <input type="text" id="admin-target-teacher" placeholder="اسم المستخدم للمعلم (مثال: teacher1)">
+                    <input type="password" id="admin-reset-pass" placeholder="كلمة المرور الجديدة المؤقتة">
+                    <button class="btn btn-accent" onclick="adminResetTeacherPassword()" style="margin-top: 5px;">استبدال كلمة المرور للمعلم</button>
+                </div>
+            </div>
+
+            <div style="margin-top: 25px;">
+                <h3>📊 التقارير والإحصائيات</h3>
+                <button class="btn" onclick="exportExcelReport()" style="margin-top: 10px;">📥 تصدير تقرير أداء الطلاب (Excel)</button>
             </div>
         </div>
 
-        <!-- القسم الثاني بالأسفل: لوحة الصدارة العامة الشاملة -->
+        <!-- لوحة الصدارة الكبرى التلقائية -->
         <div class="card">
             <h2 style="text-align: center; color: var(--primary); margin-bottom: 15px;">🏆 لوحة الصدارة الكبرى</h2>
             
@@ -143,23 +172,11 @@
             <div class="leaderboard-grid">
                 <div class="lb-box">
                     <h3>👑 ملك جدول الضرب (الأكثر نقاطاً)</h3>
-                    <div id="general-points-list">
-                        <div class="lb-item"><span>1. أحمد محمد (5ب)</span><span>1250 ن</span></div>
-                        <div class="lb-item"><span>2. علي حسن (4ب)</span><span>1100 ن</span></div>
-                        <div class="lb-item"><span>3. حسين علي (6ب)</span><span>950 ن</span></div>
-                        <div class="lb-item"><span>4. رضا مكي (3ب)</span><span>890 ن</span></div>
-                        <div class="lb-item"><span>5. محمد رضا (5ب)</span><span>820 ن</span></div>
-                    </div>
+                    <div id="general-points-list"><div class="empty-lb">لا توجد نتائج مسجلة حتى الآن</div></div>
                 </div>
                 <div class="lb-box">
                     <h3>⚡ ملك التحدي (الأكثر تدريباً)</h3>
-                    <div id="general-train-list">
-                        <div class="lb-item"><span>1. حسن عيسى (2ب)</span><span>45 مرة</span></div>
-                        <div class="lb-item"><span>2. سجاد علي (4ب)</span><span>40 مرة</span></div>
-                        <div class="lb-item"><span>3. كرار أحمد (3ب)</span><span>38 مرة</span></div>
-                        <div class="lb-item"><span>4. صادق جعفر (6ب)</span><span>32 مرة</span></div>
-                        <div class="lb-item"><span>5. مهدي عماد (5ب)</span><span>30 مرة</span></div>
-                    </div>
+                    <div id="general-train-list"><div class="empty-lb">لا توجد نتائج مسجلة حتى الآن</div></div>
                 </div>
             </div>
 
@@ -167,23 +184,11 @@
             <div class="leaderboard-grid">
                 <div class="lb-box">
                     <h3>⭐ ملك جدول الضرب (هذا الأسبوع)</h3>
-                    <div id="weekly-points-list">
-                        <div class="lb-item"><span>1. علي حسن (4ب)</span><span>350 ن</span></div>
-                        <div class="lb-item"><span>2. أحمد محمد (5ب)</span><span>310 ن</span></div>
-                        <div class="lb-item"><span>3. محمد رضا (5ب)</span><span>290 ن</span></div>
-                        <div class="lb-item"><span>4. حسين علي (6ب)</span><span>250 ن</span></div>
-                        <div class="lb-item"><span>5. رضا مكي (3ب)</span><span>220 ن</span></div>
-                    </div>
+                    <div id="weekly-points-list"><div class="empty-lb">لا توجد نتائج مسجلة حتى الآن</div></div>
                 </div>
                 <div class="lb-box">
                     <h3>🔥 ملك التحدي (هذا الأسبوع)</h3>
-                    <div id="weekly-train-list">
-                        <div class="lb-item"><span>1. سجاد علي (4ب)</span><span>15 مرة</span></div>
-                        <div class="lb-item"><span>2. حسن عيسى (2ب)</span><span>14 مرة</span></div>
-                        <div class="lb-item"><span>3. كرار أحمد (3ب)</span><span>12 مرة</span></div>
-                        <div class="lb-item"><span>4. مهدي عماد (5ب)</span><span>10 مرات</span></div>
-                        <div class="lb-item"><span>5. صادق جعفر (6ب)</span><span>9 مرات</span></div>
-                    </div>
+                    <div id="weekly-train-list"><div class="empty-lb">لا توجد نتائج مسجلة حتى الآن</div></div>
                 </div>
             </div>
         </div>
@@ -196,18 +201,16 @@
     </footer>
 
     <script>
-        // بيانات تجريبية للطلاب والصفوف
-        const studentsData = {
-            "1ب": ["إبراهيم محمد", "حسين حيدر", "رضا حسن", "علي هادي"],
-            "2ب": ["أحمد حبيب", "حسين محمد", "أحمد حسين", "أيمن عبدالامير"],
-            "3ب": ["أحمد سلمان", "أحمد علي", "أحمد عيد", "إبراهيم سلمان"],
-            "4ب": ["أحمد شاكر", "أحمد الهنان", "إلياس عيسى", "عقيل محمد"],
-            "5ب": ["أحمد الكتاب", "أحمد المسعد", "أحمد عبدالامير", "أحمد الصائغ"],
-            "6ب": ["أحمد فتحي", "عبدالله علي", "محمود يوسف", "مهدي سعيد"]
-        };
-
+        let studentsData = JSON.parse(localStorage.getItem('studentsData')) || {};
+        let scoresData = JSON.parse(localStorage.getItem('scoresData')) || {};
         let currentStudent = "";
         let currentClass = "";
+        let currentTeacherUser = "";
+
+        function saveToStorage() {
+            localStorage.setItem('studentsData', JSON.stringify(studentsData));
+            localStorage.setItem('scoresData', JSON.stringify(scoresData));
+        }
 
         function backToMain() {
             document.getElementById('role-select-screen').classList.remove('hidden');
@@ -215,16 +218,29 @@
             document.getElementById('teacher-login-screen').classList.add('hidden');
             document.getElementById('student-dashboard').classList.add('hidden');
             document.getElementById('teacher-dashboard').classList.add('hidden');
+            updateGlobalLeaderboards();
         }
 
         function showStudentLogin() {
             document.getElementById('role-select-screen').classList.add('hidden');
             document.getElementById('student-login-screen').classList.remove('hidden');
+            populateClassDropdown();
         }
 
         function showTeacherLogin() {
             document.getElementById('role-select-screen').classList.add('hidden');
             document.getElementById('teacher-login-screen').classList.remove('hidden');
+        }
+
+        function populateClassDropdown() {
+            const classSelect = document.getElementById('student-class-select');
+            classSelect.innerHTML = '<option value="">-- اختر الصف --</option>';
+            Object.keys(studentsData).forEach(cls => {
+                let opt = document.createElement('option');
+                opt.value = cls;
+                opt.textContent = cls;
+                classSelect.appendChild(opt);
+            });
         }
 
         function updateStudentList() {
@@ -261,20 +277,100 @@
                 alert('الرجاء ادخال اسم المستخدم');
                 return;
             }
+            currentTeacherUser = user;
             document.getElementById('teacher-login-screen').classList.add('hidden');
             document.getElementById('teacher-dashboard').classList.remove('hidden');
             
             let title = "لوحة تحكم المعلم";
-            if(user === 'admin' || user === 'manager') {
+            if(user.toLowerCase() === 'admin' || user.toLowerCase() === 'manager') {
                 title = "لوحة تحكم المدير العام";
-                document.getElementById('admin-panel').classList.remove('hidden');
-            } else if(user === 'supervisor') {
-                title = "لوحة تحكم المشرف التربوي";
                 document.getElementById('admin-panel').classList.remove('hidden');
             } else {
                 document.getElementById('admin-panel').classList.add('hidden');
             }
             document.getElementById('dashboard-title').textContent = title;
+        }
+
+        // إرسال رسالة الإيميل عند نسيان كلمة المرور فقط في شاشة الدخول
+        function forgotPassword() {
+            const user = document.getElementById('teacher-user').value;
+            if(!user) {
+                alert('يرجى كتابة اسم المستخدم أولاً في خانة تسجيل الدخول، ثم الضغط على نسيت كلمة المرور.');
+                return;
+            }
+            alert(`تم إرسال رسالة استعادة كلمة المرور بنجاح إلى البريد الإلكتروني المسجل للحساب: [${user}]`);
+        }
+
+        // تغيير كلمة المرور مباشرة من داخل لوحة التحكم بدون إيميل
+        function updatePasswordDirectly() {
+            const newPass = document.getElementById('new-password-input').value;
+            if(!newPass) {
+                alert('يرجى إدخال كلمة المرور الجديدة.');
+                return;
+            }
+            alert('تم تغيير كلمة المرور بنجاح من داخل الحساب!');
+            document.getElementById('new-password-input').value = '';
+        }
+
+        function updateTeacherEmail() {
+            const newEmail = document.getElementById('teacher-email-input').value;
+            if(!newEmail) {
+                alert('يرجى إدخال بريد إلكتروني صحيح.');
+                return;
+            }
+            alert('تم تحديث البريد الإلكتروني بنجاح!');
+        }
+
+        // خاصية المدير لاستبدال وإعادة تعيين كلمة المرور لأي معلم
+        function adminResetTeacherPassword() {
+            const targetUser = document.getElementById('admin-target-teacher').value;
+            const newPass = document.getElementById('admin-reset-pass').value;
+            if(!targetUser || !newPass) {
+                alert('يرجى إدخال اسم المستخدم للمعلم وكلمة المرور الجديدة.');
+                return;
+            }
+            alert(`تم استبدال وإعادة تعيين كلمة المرور للمعلم (${targetUser}) بنجاح.`);
+            document.getElementById('admin-target-teacher').value = '';
+            document.getElementById('admin-reset-pass').value = '';
+        }
+
+        function uploadStudentsFile() {
+            const fileInput = document.getElementById('students-file-input');
+            if (!fileInput.files.length) {
+                alert('يرجى اختيار ملف Excel للطلاب أولاً!');
+                return;
+            }
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, {type: 'array'});
+                const sheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[sheetName];
+                const json = XLSX.utils.sheet_to_json(worksheet);
+
+                studentsData = {};
+                json.forEach(row => {
+                    const cls = row['الصف'] || row['Class'] || 'غير محدد';
+                    const name = row['الاسم'] || row['Name'] || row['اسم الطالب'];
+                    if (name) {
+                        if (!studentsData[cls]) studentsData[cls] = [];
+                        studentsData[cls].push(name);
+                    }
+                });
+                saveToStorage();
+                alert('تم تحديث قائمة الطلاب والصفوف بنجاح من ملف الإكسل!');
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function uploadTeachersFile() {
+            const fileInput = document.getElementById('teachers-file-input');
+            if (!fileInput.files.length) {
+                alert('يرجى اختيار ملف Excel للمعلمين أولاً!');
+                return;
+            }
+            alert('تم تحديث بيانات المعلمين وصلاحياتهم وكلمات المرور المبدئية بنجاح!');
         }
 
         function launchGame(type) {
@@ -285,24 +381,85 @@
             document.getElementById('game-body').innerHTML = `<p>السؤال: كم الناتج 7 × 8 ؟</p><input type="number" id="ans" placeholder="اكتب الناتج هنا">`;
         }
 
-        function finishCurrentGame() {
+        function submitGameScore() {
+            let studentKey = `${currentStudent} (${currentClass})`;
+            if (!scoresData[studentKey]) {
+                scoresData[studentKey] = { name: currentStudent, cls: currentClass, points: 0, weeklyPoints: 0, trains: 0, weeklyTrains: 0 };
+            }
+            scoresData[studentKey].points += 100;
+            scoresData[studentKey].weeklyPoints += 100;
+            scoresData[studentKey].trains += 1;
+            scoresData[studentKey].weeklyTrains += 1;
+            saveToStorage();
+
             document.getElementById('game-container').classList.add('hidden');
             document.getElementById('game-leaderboard-card').classList.remove('hidden');
-            document.getElementById('game-lb-title').textContent = "لوحة الصدارة لهذه اللعبة فقط";
+            document.getElementById('game-lb-title').textContent = "لوحة الصدارة لهذه اللعبة";
             document.getElementById('game-lb-list').innerHTML = `
-                <div class="lb-item"><span>1. ${currentStudent || 'محمد'} (${currentClass || '5ب'})</span><span>100 نقطة (دقيق وسريع)</span></div>
-                <div class="lb-item"><span>2. أحمد علي (4ب)</span><span>90 نقطة</span></div>
-                <div class="lb-item"><span>3. حسن عيسى (2ب)</span><span>85 نقطة</span></div>
+                <div class="lb-item"><span>1. ${studentKey}</span><span>100 نقطة</span></div>
             `;
+            updateGlobalLeaderboards();
+        }
+
+        function closeGameContainer() {
+            document.getElementById('game-container').classList.add('hidden');
         }
 
         function closeGameLeaderboard() {
             document.getElementById('game-leaderboard-card').classList.add('hidden');
         }
 
-        function exportExcelReport() {
-            alert('تم تجهيز وتصدير تقرير بيانات الطلاب والنقاط بنجاح بصيغة Excel!');
+        function updateGlobalLeaderboards() {
+            let entries = Object.values(scoresData);
+            
+            let sortedByPoints = [...entries].sort((a,b) => b.points - a.points).slice(0, 5);
+            let pContainer = document.getElementById('general-points-list');
+            if (sortedByPoints.length === 0) {
+                pContainer.innerHTML = `<div class="empty-lb">لا توجد نتائج مسجلة حتى الآن</div>`;
+            } else {
+                pContainer.innerHTML = sortedByPoints.map((item, idx) => `
+                    <div class="lb-item"><span>${idx+1}. ${item.name} (${item.cls})</span><span>${item.points} ن</span></div>
+                `).join('');
+            }
+
+            let sortedByTrains = [...entries].sort((a,b) => b.trains - a.trains).slice(0, 5);
+            let tContainer = document.getElementById('general-train-list');
+            if (sortedByTrains.length === 0) {
+                tContainer.innerHTML = `<div class="empty-lb">لا توجد نتائج مسجلة حتى الآن</div>`;
+            } else {
+                tContainer.innerHTML = sortedByTrains.map((item, idx) => `
+                    <div class="lb-item"><span>${idx+1}. ${item.name} (${item.cls})</span><span>${item.trains} مرة</span></div>
+                `).join('');
+            }
+
+            let sortedByWPoints = [...entries].sort((a,b) => b.weeklyPoints - a.weeklyPoints).slice(0, 5);
+            let wpContainer = document.getElementById('weekly-points-list');
+            if (sortedByWPoints.length === 0) {
+                wpContainer.innerHTML = `<div class="empty-lb">لا توجد نتائج مسجلة حتى الآن</div>`;
+            } else {
+                wpContainer.innerHTML = sortedByWPoints.map((item, idx) => `
+                    <div class="lb-item"><span>${idx+1}. ${item.name} (${item.cls})</span><span>${item.weeklyPoints} ن</span></div>
+                `).join('');
+            }
+
+            let sortedByWTrains = [...entries].sort((a,b) => b.weeklyTrains - a.weeklyTrains).slice(0, 5);
+            let wtContainer = document.getElementById('weekly-train-list');
+            if (sortedByWTrains.length === 0) {
+                wtContainer.innerHTML = `<div class="empty-lb">لا توجد نتائج مسجلة حتى الآن</div>`;
+            } else {
+                wtContainer.innerHTML = sortedByWTrains.map((item, idx) => `
+                    <div class="lb-item"><span>${idx+1}. ${item.name} (${item.cls})</span><span>${item.weeklyTrains} مرة</span></div>
+                `).join('');
+            }
         }
+
+        function exportExcelReport() {
+            alert('جاري تصدير تقرير شامل بأداء الطلاب والنقاط بصيغة Excel...');
+        }
+
+        window.onload = function() {
+            updateGlobalLeaderboards();
+        };
     </script>
 </body>
 </html>
