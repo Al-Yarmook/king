@@ -33,6 +33,12 @@
         input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 1rem; background: #fff; }
         .hidden { display: none !important; }
         
+        /* تصميم حقل كلمة المرور مع زر الإظهار */
+        .password-container { position: relative; width: 100%; }
+        .password-container input { padding-left: 45px; }
+        .toggle-password { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 1.2rem; user-select: none; opacity: 0.7; transition: 0.2s; }
+        .toggle-password:hover { opacity: 1; }
+
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         @media(max-width: 768px) { .grid-2 { grid-template-columns: 1fr; } }
         
@@ -82,4 +88,668 @@
                 <button class="my-btn btn-accent" onclick="startStudentSession(true)">دخول كضيف 👤</button>
             </div>
             <div>
-                <button class="my-btn btn-secondary" onclick="back
+                <button class="my-btn btn-secondary" onclick="backToMain()">رجوع</button>
+            </div>
+        </div>
+
+        <!-- شاشة دخول الكادر التعليمي والمدير -->
+        <div id="staff-login-screen" class="card hidden">
+            <h2>تسجيل دخول الكادر (مدير / مشرف / معلم)</h2>
+            <label>اسم المستخدم:</label>
+            <input type="text" id="staff-user" placeholder="مثال: Admin">
+            <label>كلمة المرور:</label>
+            <div class="password-container">
+                <input type="password" id="staff-pass" placeholder="أدخل كلمة المرور">
+                <span class="toggle-password" onclick="togglePassVisibility('staff-pass', this)">👁️</span>
+            </div>
+            <div>
+                <button class="my-btn" onclick="authenticateStaff()">تسجيل الدخول</button>
+            </div>
+            <div>
+                <button class="my-btn btn-secondary" onclick="backToMain()">رجوع</button>
+            </div>
+        </div>
+
+        <!-- شاشة التغيير الإجباري لكلمة مرور المدير الأولى -->
+        <div id="admin-first-login-screen" class="card hidden">
+            <h2 style="color: var(--danger);">⚠️ إعداد حساب المدير المبدئي</h2>
+            <p style="margin-bottom: 15px;">لقد قمت بالدخول بكلمة المرور المؤقتة. يجب استبدالها وتعيين البريد الإلكتروني لحماية الحساب للبدء.</p>
+            <label>كلمة المرور الجديدة:</label>
+            <div class="password-container">
+                <input type="password" id="admin-new-pass-first" placeholder="كلمة مرور حديثة وقوية">
+                <span class="toggle-password" onclick="togglePassVisibility('admin-new-pass-first', this)">👁️</span>
+            </div>
+            <label>البريد الإلكتروني للربط والحماية:</label>
+            <input type="email" id="admin-email-first" placeholder="example@school.bh">
+            <div>
+                <button class="my-btn" onclick="saveAdminFirstSetup()">حفظ وتفعيل الحساب</button>
+            </div>
+        </div>
+
+        <!-- لوحة الطالب -->
+        <div id="student-dashboard" class="hidden">
+            <div class="card" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <div>
+                    <h3 id="student-info-display">طالب</h3>
+                    <small id="guest-badge" style="color: var(--accent); display: none;">(حساب ضيف - لن تحفظ النقاط)</small>
+                </div>
+                <button class="my-btn btn-accent" onclick="switchStudent()">🔄 دخول طالب آخر / تبديل الحساب</button>
+            </div>
+            
+            <div class="card" style="text-align: center;">
+                <h3>اختر نوع اللعبة للتدرب:</h3>
+                <div style="display: flex; justify-content: center; gap: 15px; margin-top: 15px; flex-wrap: wrap;">
+                    <button class="my-btn" onclick="launchGame('speed')">⚡ تحدي السرعة</button>
+                    <button class="my-btn btn-accent" onclick="launchGame('accuracy')">🎯 رحلة الفضاء والدقة</button>
+                    <button class="my-btn btn-secondary" onclick="launchGame('memory')">🃏 بطاقات الذاكرة</button>
+                </div>
+            </div>
+
+            <!-- منطقة أداء اللعبة -->
+            <div id="game-container" class="card hidden" style="text-align: center;">
+                <h2 id="game-title">اللعبة</h2>
+                <div id="game-body" style="margin: 20px 0; font-size: 1.6rem; font-weight: bold;"></div>
+                <button class="my-btn" onclick="submitScore()">إرسال النتيجة وحفظ النقاط</button>
+                <button class="my-btn btn-secondary" onclick="closeGameContainer()">العودة للألعاب</button>
+            </div>
+        </div>
+
+        <!-- لوحة الإدارة / الكادر التعليمي -->
+        <div id="staff-dashboard" class="card hidden">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 id="staff-role-title">لوحة التحكم</h2>
+                <button class="my-btn btn-secondary" onclick="backToMain()">تسجيل الخروج</button>
+            </div>
+
+            <!-- إعدادات الحساب الشخصي -->
+            <div class="section-box">
+                <h3>⚙️ إعدادات الحساب الشخصي</h3>
+                <div>
+                    <label>كلمة المرور الجديدة:</label>
+                    <div class="password-container">
+                        <input type="password" id="self-new-pass" placeholder="كلمة مرور جديدة">
+                        <span class="toggle-password" onclick="togglePassVisibility('self-new-pass', this)">👁️</span>
+                    </div>
+                    <button class="my-btn btn-accent" onclick="updateSelfPassword()">تغيير كلمة المرور</button>
+                </div>
+            </div>
+
+            <!-- إدارة الطلاب -->
+            <div id="student-mgmt-section" class="section-box hidden">
+                <h3>👨‍🎓 1. إدارة قائمة الطلاب والصفوف</h3>
+                <div style="margin-bottom: 15px;">
+                    <button class="my-btn btn-secondary" onclick="downloadStudentsTemplate()">📥 تحميل قالب إكسل للطلاب</button>
+                    <input type="file" id="students-file-input" accept=".xlsx, .xls, .csv" style="margin-top: 10px;">
+                    <button class="my-btn" onclick="uploadStudentsFile()">رفع وتحديث ملف الطلاب</button>
+                </div>
+                
+                <hr style="margin: 15px 0;">
+                <h4>إضافة طالب يدوياً:</h4>
+                <div class="grid-2">
+                    <input type="text" id="manual-student-name" placeholder="اسم الطالب الثلاثي">
+                    <input type="text" id="manual-student-cpr" placeholder="الرقم الشخصي">
+                    <input type="text" id="manual-student-class" placeholder="الصف (مثال: 3ب4 أو 5ب2)">
+                </div>
+                <button class="my-btn btn-accent" onclick="addStudentManually()">إضافة الطالب للبيانات</button>
+            </div>
+
+            <!-- إدارة المعلمين -->
+            <div id="teacher-mgmt-section" class="section-box hidden">
+                <h3>👩‍🏫 2. إدارة وتحديد المعلمين والصلاحيات</h3>
+                <div style="margin-bottom: 15px;">
+                    <button class="my-btn btn-secondary" onclick="downloadTeachersTemplate()">📥 تحميل قالب إكسل المعلمين</button>
+                    <input type="file" id="teachers-file-input" accept=".xlsx, .xls, .csv" style="margin-top: 10px;">
+                    <button class="my-btn" onclick="uploadTeachersFile()">رفع وتحديث ملف المعلمين</button>
+                </div>
+
+                <hr style="margin: 15px 0;">
+                <h4>إضافة معلم / مشرف يدوياً:</h4>
+                <div class="grid-2">
+                    <input type="text" id="m-t-cpr" placeholder="الرقم الشخصي">
+                    <input type="text" id="m-t-user" placeholder="اسم الحساب / اسم المستخدم">
+                    <div class="password-container">
+                        <input type="password" id="m-t-pass" placeholder="كلمة السر المبدئية">
+                        <span class="toggle-password" onclick="togglePassVisibility('m-t-pass', this)">👁️</span>
+                    </div>
+                    <input type="text" id="m-t-name" placeholder="اسم المعلم">
+                    <input type="email" id="m-t-email" placeholder="البريد الإلكتروني">
+                    <input type="text" id="m-t-classes" placeholder="الصفوف المخصصة (5ب1, 5ب2)">
+                    <select id="m-t-role">
+                        <option value="معلم">معلم</option>
+                        <option value="مشرف">مشرف</option>
+                    </select>
+                </div>
+                <button class="my-btn btn-accent" onclick="addTeacherManually()">إضافة المعلم للنظام</button>
+            </div>
+
+            <!-- لوحة المدير -->
+            <div id="admin-only-section" class="section-box hidden">
+                <h3>👑 3. إعدادات الإدارة المتقدمة (خاص بالمدير)</h3>
+                
+                <h4>إضافة مدير جديد للنظام:</h4>
+                <div class="grid-2">
+                    <input type="text" id="m-a-user" placeholder="اسم المستخدم للمدير الجديد">
+                    <div class="password-container">
+                        <input type="password" id="m-a-pass" placeholder="كلمة المرور المبدئية">
+                        <span class="toggle-password" onclick="togglePassVisibility('m-a-pass', this)">👁️</span>
+                    </div>
+                    <input type="email" id="m-a-email" placeholder="البريد الإلكتروني للمدير">
+                </div>
+                <button class="my-btn btn-accent" onclick="addAdminManually()">إضافة مدير إضافي</button>
+
+                <hr style="margin: 15px 0;">
+                <h4>🎯 تحديد جداول الضرب حسب المراحل الدراسية:</h4>
+                <div id="tables-config-grid" class="grid-2"></div>
+                <button class="my-btn" onclick="saveTableConfig()">حفظ إعدادات الجداول</button>
+
+                <hr style="margin: 15px 0;">
+                <h4 style="color: var(--danger);">⚠️ تصفير وإعادة تعيين لوحة الملوك:</h4>
+                <p style="font-size: 0.9rem; margin-bottom: 10px;">سيتم تصفير كافة أداء الطلاب واللوحات العامة عند التأكيد.</p>
+                <div class="password-container">
+                    <input type="password" id="reset-confirm-pass" placeholder="اكتب كلمة مرور المدير للتأكيد">
+                    <span class="toggle-password" onclick="togglePassVisibility('reset-confirm-pass', this)">👁️</span>
+                </div>
+                <button class="my-btn btn-danger" onclick="resetAllScores()">⚠️ تصفير لوحة الملوك نهائياً</button>
+            </div>
+
+            <!-- تصدير التقارير -->
+            <div class="section-box">
+                <h3>📊 التقارير والإحصائيات</h3>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;">
+                    <button class="my-btn" onclick="exportStats('all')">📥 تصدير التقرير الشامل (Excel)</button>
+                    <button class="my-btn btn-secondary" onclick="exportStats('speed')">⚡ تحدي السرعة</button>
+                    <button class="my-btn btn-secondary" onclick="exportStats('accuracy')">🎯 رحلة الفضاء</button>
+                    <button class="my-btn btn-secondary" onclick="exportStats('memory')">🃏 بطاقات الذاكرة</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- لوحة الملوك العامة الشاملة -->
+        <div class="card">
+            <h2 style="text-align: center; color: var(--primary); margin-bottom: 15px;">🏆 لوحة الملوك الكبرى</h2>
+            
+            <h3 style="margin-top: 15px; color: var(--secondary);">1- بشكل عام (الإجمالي)</h3>
+            <div class="leaderboard-grid">
+                <div class="lb-box">
+                    <h3>👑 ملك جدول الضرب (الأكثر نقاطاً)</h3>
+                    <div id="general-points-list"><div class="empty-lb">لا توجد نتائج مسجلة حتى الآن</div></div>
+                </div>
+                <div class="lb-box">
+                    <h3>⚡ ملك التحدي (الأكثر تدريباً)</h3>
+                    <div id="general-train-list"><div class="empty-lb">لا توجد نتائج مسجلة حتى الآن</div></div>
+                </div>
+            </div>
+
+            <h3 style="margin-top: 25px; color: var(--secondary);">2- خلال الأسبوع الحالي</h3>
+            <div class="leaderboard-grid">
+                <div class="lb-box">
+                    <h3>⭐ ملك جدول الضرب (هذا الأسبوع)</h3>
+                    <div id="weekly-points-list"><div class="empty-lb">لا توجد نتائج مسجلة حتى الآن</div></div>
+                </div>
+                <div class="lb-box">
+                    <h3>🔥 ملك التحدي (هذا الأسبوع)</h3>
+                    <div id="weekly-train-list"><div class="empty-lb">لا توجد نتائج مسجلة حتى الآن</div></div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <footer>
+        إعداد . أ. صادق القلعاوي<br>
+        مدرسة اليرموك الابتدائية للبنين
+    </footer>
+
+    <script>
+        // دالة تبديل رؤية كلمة المرور
+        function togglePassVisibility(inputId, icon) {
+            const field = document.getElementById(inputId);
+            if (field.type === "password") {
+                field.type = "text";
+                icon.textContent = "🙈";
+            } else {
+                field.type = "password";
+                icon.textContent = "👁️";
+            }
+        }
+
+        // التحقق التلقائي وإنشاء حساب المدير الافتراضي
+        let staffData = JSON.parse(localStorage.getItem('staffData'));
+        if (!staffData || !staffData["Admin"]) {
+            staffData = staffData || {};
+            staffData["Admin"] = { cpr: "000000000", pass: "0", name: "مدير النظام", email: "", role: "مدير", classes: [], firstLogin: true };
+            localStorage.setItem('staffData', JSON.stringify(staffData));
+        }
+
+        let studentsData = JSON.parse(localStorage.getItem('studentsData')) || [];
+        let scoresData = JSON.parse(localStorage.getItem('scoresData')) || {}; 
+        let stageTables = JSON.parse(localStorage.getItem('stageTables')) || {
+            1: 3, 2: 5, 3: 5, 4: 12, 5: 12, 6: 12
+        };
+
+        let currentStaffUser = null;
+        let currentStudent = null;
+
+        function saveStorage() {
+            localStorage.setItem('studentsData', JSON.stringify(studentsData));
+            localStorage.setItem('staffData', JSON.stringify(staffData));
+            localStorage.setItem('scoresData', JSON.stringify(scoresData));
+            localStorage.setItem('stageTables', JSON.stringify(stageTables));
+        }
+
+        function backToMain() {
+            document.getElementById('role-select-screen').classList.remove('hidden');
+            document.getElementById('student-login-screen').classList.add('hidden');
+            document.getElementById('staff-login-screen').classList.add('hidden');
+            document.getElementById('admin-first-login-screen').classList.add('hidden');
+            document.getElementById('student-dashboard').classList.add('hidden');
+            document.getElementById('staff-dashboard').classList.add('hidden');
+            updateGlobalLeaderboards();
+        }
+
+        function showStudentLogin() {
+            document.getElementById('role-select-screen').classList.add('hidden');
+            document.getElementById('student-login-screen').classList.remove('hidden');
+            populateStudentClasses();
+        }
+
+        function showStaffLogin() {
+            document.getElementById('role-select-screen').classList.add('hidden');
+            document.getElementById('staff-login-screen').classList.remove('hidden');
+        }
+
+        function populateStudentClasses() {
+            const classSelect = document.getElementById('student-class-select');
+            classSelect.innerHTML = '<option value="">-- اختر الصف --</option>';
+            let classes = [...new Set(studentsData.map(s => s.cls))].sort();
+            classes.forEach(c => {
+                let opt = document.createElement('option');
+                opt.value = c;
+                opt.textContent = c;
+                classSelect.appendChild(opt);
+            });
+        }
+
+        function updateStudentDropdown() {
+            const cls = document.getElementById('student-class-select').value;
+            const nameSelect = document.getElementById('student-name-select');
+            nameSelect.innerHTML = '<option value="">-- اختر اسمك --</option>';
+            studentsData.filter(s => s.cls === cls).forEach(s => {
+                let opt = document.createElement('option');
+                opt.value = s.name;
+                opt.textContent = s.name;
+                nameSelect.appendChild(opt);
+            });
+        }
+
+        function startStudentSession(isGuest) {
+            if(isGuest) {
+                currentStudent = { name: "ضيف متدرب", cls: "عام", isGuest: true };
+            } else {
+                const cls = document.getElementById('student-class-select').value;
+                const name = document.getElementById('student-name-select').value;
+                if(!cls || !name) {
+                    alert('يرجى اختيار الصف والاسم للبدء.');
+                    return;
+                }
+                currentStudent = { name: name, cls: cls, isGuest: false };
+            }
+
+            document.getElementById('student-login-screen').classList.add('hidden');
+            document.getElementById('student-dashboard').classList.remove('hidden');
+            document.getElementById('student-info-display').textContent = `الطالب: ${currentStudent.name} (${currentStudent.cls})`;
+            document.getElementById('guest-badge').style.display = isGuest ? 'inline' : 'none';
+        }
+
+        function switchStudent() {
+            currentStudent = null;
+            document.getElementById('student-dashboard').classList.add('hidden');
+            showStudentLogin();
+        }
+
+        function authenticateStaff() {
+            const user = document.getElementById('staff-user').value.trim();
+            const pass = document.getElementById('staff-pass').value;
+
+            if(!staffData[user] || staffData[user].pass !== pass) {
+                alert('اسم المستخدم أو كلمة المرور غير صحيحة!');
+                return;
+            }
+
+            currentStaffUser = user;
+
+            if(staffData[user].role === 'مدير' && staffData[user].firstLogin) {
+                document.getElementById('staff-login-screen').classList.add('hidden');
+                document.getElementById('admin-first-login-screen').classList.remove('hidden');
+                return;
+            }
+
+            openStaffDashboard();
+        }
+
+        function saveAdminFirstSetup() {
+            const newPass = document.getElementById('admin-new-pass-first').value;
+            const email = document.getElementById('admin-email-first').value.trim();
+
+            if(!newPass || !email) {
+                alert('يرجى كتابة كلمة المرور الجديدة والبريد الإلكتروني للربط.');
+                return;
+            }
+
+            staffData[currentStaffUser].pass = newPass;
+            staffData[currentStaffUser].email = email;
+            staffData[currentStaffUser].firstLogin = false;
+            saveStorage();
+
+            alert('تم تفعيل وتأمين حساب المدير بنجاح!');
+            document.getElementById('admin-first-login-screen').classList.add('hidden');
+            openStaffDashboard();
+        }
+
+        function openStaffDashboard() {
+            document.getElementById('staff-login-screen').classList.add('hidden');
+            document.getElementById('staff-dashboard').classList.remove('hidden');
+
+            const uData = staffData[currentStaffUser];
+            document.getElementById('staff-role-title').textContent = `لوحة تحكم (${uData.role}): ${uData.name || currentStaffUser}`;
+
+            if(uData.role === 'مدير') {
+                document.getElementById('student-mgmt-section').classList.remove('hidden');
+                document.getElementById('teacher-mgmt-section').classList.remove('hidden');
+                document.getElementById('admin-only-section').classList.remove('hidden');
+                renderTableConfigs();
+            } else if(uData.role === 'مشرف') {
+                document.getElementById('student-mgmt-section').classList.remove('hidden');
+                document.getElementById('teacher-mgmt-section').classList.remove('hidden');
+                document.getElementById('admin-only-section').classList.add('hidden');
+            } else {
+                document.getElementById('student-mgmt-section').classList.add('hidden');
+                document.getElementById('teacher-mgmt-section').classList.add('hidden');
+                document.getElementById('admin-only-section').classList.add('hidden');
+            }
+        }
+
+        function updateSelfPassword() {
+            const newPass = document.getElementById('self-new-pass').value;
+            if(!newPass) { alert('ادخل كلمة المرور الجديدة'); return; }
+            staffData[currentStaffUser].pass = newPass;
+            saveStorage();
+            alert('تم تغيير كلمة المرور بنجاح.');
+            document.getElementById('self-new-pass').value = '';
+        }
+
+        function renderTableConfigs() {
+            const grid = document.getElementById('tables-config-grid');
+            grid.innerHTML = '';
+            const stageNames = {1: 'الأول الابتدائي', 2: 'الثاني الابتدائي', 3: 'الثالث الابتدائي', 4: 'الرابع الابتدائي', 5: 'الخامس الابتدائي', 6: 'السادس الابتدائي'};
+            for(let i=1; i<=6; i++) {
+                grid.innerHTML += `
+                    <div>
+                        <label>الصف ${stageNames[i]}: أقصى جدول ضرب</label>
+                        <select id="stage-select-${i}">
+                            ${[1,2,3,4,5,6,7,8,9,10,11,12].map(n => `<option value="${n}" ${stageTables[i] === n ? 'selected':''}>حتى جدول ${n}</option>`).join('')}
+                        </select>
+                    </div>
+                `;
+            }
+        }
+
+        function saveTableConfig() {
+            for(let i=1; i<=6; i++) {
+                stageTables[i] = parseInt(document.getElementById(`stage-select-${i}`).value);
+            }
+            saveStorage();
+            alert('تم حفظ نطاق جداول الضرب للمراحل بنجاح!');
+        }
+
+        function getMaxTableForClass(clsStr) {
+            let match = clsStr.match(/\d+/);
+            let stageNum = match ? parseInt(match[0]) : 4;
+            return stageTables[stageNum] || 12;
+        }
+
+        let currentQuestion = { a: 0, b: 0, ans: 0 };
+        let currentGameType = "";
+
+        function launchGame(type) {
+            currentGameType = type;
+            document.getElementById('game-container').classList.remove('hidden');
+            let maxT = getMaxTableForClass(currentStudent.cls);
+
+            let a = Math.floor(Math.random() * maxT) + 1;
+            let b = Math.floor(Math.random() * 12) + 1;
+            currentQuestion = { a: a, b: b, ans: a * b };
+
+            let titleName = type === 'speed' ? '⚡ تحدي السرعة' : type === 'accuracy' ? '🎯 رحلة الفضاء والدقة' : '🃏 بطاقات الذاكرة';
+            document.getElementById('game-title').textContent = titleName;
+            document.getElementById('game-body').innerHTML = `
+                <p>كم الناتج: ${a} × ${b} ؟</p>
+                <input type="number" id="user-ans" placeholder="اكتب الناتج هنا" style="width: 200px; text-align: center; margin: 10px auto; display: block;">
+            `;
+        }
+
+        function submitScore() {
+            const userAnsField = document.getElementById('user-ans');
+            if(!userAnsField) return;
+            const userAns = parseInt(userAnsField.value);
+            if(userAns === currentQuestion.ans) {
+                alert('إجابة صحيحة وممتازة! 🎉 (+100 نقطة)');
+                if(!currentStudent.isGuest) {
+                    let key = `${currentStudent.name} (${currentStudent.cls})`;
+                    if(!scoresData[key]) {
+                        scoresData[key] = { name: currentStudent.name, cls: currentStudent.cls, points: 0, weeklyPoints: 0, trains: 0, weeklyTrains: 0, games: {speed:0, accuracy:0, memory:0} };
+                    }
+                    scoresData[key].points += 100;
+                    scoresData[key].weeklyPoints += 100;
+                    scoresData[key].trains += 1;
+                    scoresData[key].weeklyTrains += 1;
+                    scoresData[key].games[currentGameType] = (scoresData[key].games[currentGameType] || 0) + 1;
+                    saveStorage();
+                    updateGlobalLeaderboards();
+                }
+            } else {
+                alert(`إجابة خاطئة. الإجابة الصحيحة هي: ${currentQuestion.ans}`);
+            }
+            launchGame(currentGameType);
+        }
+
+        function closeGameContainer() {
+            document.getElementById('game-container').classList.add('hidden');
+        }
+
+        function downloadStudentsTemplate() {
+            let data = [
+                ["الاسم", "الرقم الشخصي", "الصف"],
+                ["أحمد محمد علي", "080123456", "5ب2"],
+                ["حسن عيسى محمود", "090654321", "3ب4"]
+            ];
+            let ws = XLSX.utils.aoa_to_sheet(data);
+            let wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "الطلاب");
+            XLSX.writeFile(wb, "students_template.xlsx");
+        }
+
+        function uploadStudentsFile() {
+            let input = document.getElementById('students-file-input');
+            if(!input.files.length) { alert('يرجى اختيار ملف الإكسل'); return; }
+            let reader = new FileReader();
+            reader.onload = function(e) {
+                let data = new Uint8Array(e.target.result);
+                let wb = XLSX.read(data, {type: 'array'});
+                let json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+                
+                json.forEach(row => {
+                    let name = row['الاسم'] || row['Name'];
+                    let cpr = row['الرقم الشخصي'] || row['CPR'];
+                    let cls = row['الصف'] || row['Class'];
+                    if(name && cls) {
+                        studentsData.push({ name: String(name), cpr: String(cpr || ''), cls: String(cls) });
+                    }
+                });
+                saveStorage();
+                alert('تم استيراد قائمة الطلاب بنجاح!');
+            };
+            reader.readAsArrayBuffer(input.files[0]);
+        }
+
+        function addStudentManually() {
+            let name = document.getElementById('manual-student-name').value.trim();
+            let cpr = document.getElementById('manual-student-cpr').value.trim();
+            let cls = document.getElementById('manual-student-class').value.trim();
+            if(!name || !cls) { alert('يرجى ملء اسم الطالب والصف'); return; }
+
+            studentsData.push({ name: name, cpr: cpr, cls: cls });
+            saveStorage();
+            alert('تمت إضافة الطالب يدوياً وحفظ البيانات بنجاح!');
+            document.getElementById('manual-student-name').value = '';
+            document.getElementById('manual-student-cpr').value = '';
+            document.getElementById('manual-student-class').value = '';
+        }
+
+        function downloadTeachersTemplate() {
+            let data = [
+                ["الرقم الشخصي", "اسم الحساب", "كلمة السر", "اسم المعلم", "البريد الالكتروني", "الصفوف", "الدور"],
+                ["010101010", "teacher1", "123456", "أ. محمد علي", "teacher1@school.bh", "5ب1, 5ب2", "معلم"]
+            ];
+            let ws = XLSX.utils.aoa_to_sheet(data);
+            let wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "الكادر التعليمي");
+            XLSX.writeFile(wb, "teachers_template.xlsx");
+        }
+
+        function uploadTeachersFile() {
+            let input = document.getElementById('teachers-file-input');
+            if(!input.files.length) { alert('يرجى اختيار ملف الإكسل'); return; }
+            let reader = new FileReader();
+            reader.onload = function(e) {
+                let data = new Uint8Array(e.target.result);
+                let wb = XLSX.read(data, {type: 'array'});
+                let json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+                
+                json.forEach(row => {
+                    let user = row['اسم الحساب'] || row['Username'];
+                    if(user) {
+                        staffData[user] = {
+                            cpr: String(row['الرقم الشخصي'] || ''),
+                            pass: String(row['كلمة السر'] || '123456'),
+                            name: String(row['اسم المعلم'] || user),
+                            email: String(row['البريد الالكتروني'] || ''),
+                            classes: String(row['الصفوف'] || '').split(',').map(s=>s.trim()),
+                            role: String(row['الدور'] || 'معلم')
+                        };
+                    }
+                });
+                saveStorage();
+                alert('تم تحديث قائمة المعلمين والصلاحيات بنجاح!');
+            };
+            reader.readAsArrayBuffer(input.files[0]);
+        }
+
+        function addTeacherManually() {
+            let user = document.getElementById('m-t-user').value.trim();
+            let pass = document.getElementById('m-t-pass').value;
+            let name = document.getElementById('m-t-name').value.trim();
+            if(!user || !pass) { alert('ادخل اسم الحساب وكلمة السر'); return; }
+
+            staffData[user] = {
+                cpr: document.getElementById('m-t-cpr').value.trim(),
+                pass: pass,
+                name: name || user,
+                email: document.getElementById('m-t-email').value.trim(),
+                classes: document.getElementById('m-t-classes').value.split(',').map(s=>s.trim()),
+                role: document.getElementById('m-t-role').value
+            };
+            saveStorage();
+            alert('تمت إضافة المعلم/المشرف وحفظ بياناته بنجاح!');
+        }
+
+        function addAdminManually() {
+            let user = document.getElementById('m-a-user').value.trim();
+            let pass = document.getElementById('m-a-pass').value;
+            let email = document.getElementById('m-a-email').value.trim();
+            if(!user || !pass) { alert('يرجى كتابة بيانات المدير الجديدة'); return; }
+
+            staffData[user] = { cpr: "", pass: pass, name: user, email: email, role: "مدير", classes: [], firstLogin: false };
+            saveStorage();
+            alert('تمت إضافة مدير جديد للنظام بنجاح!');
+        }
+
+        function resetAllScores() {
+            let pass = document.getElementById('reset-confirm-pass').value;
+            if(!pass || staffData[currentStaffUser].pass !== pass) {
+                alert('كلمة المرور غير صحيحة! لم يتم تصفير البيانات.');
+                return;
+            }
+            if(confirm('هل أنت متأكد تماماً من تصفير كافة نتائج لوحة الملوك والطلاب؟')) {
+                scoresData = {};
+                saveStorage();
+                updateGlobalLeaderboards();
+                alert('تم تصفير لوحة الملوك بنجاح.');
+                document.getElementById('reset-confirm-pass').value = '';
+            }
+        }
+
+        function exportStats(type) {
+            let entries = Object.values(scoresData);
+            let data = [["اسم الطالب", "الصف", "النقاط الإجمالية", "التدريبات", "تحدي السرعة", "رحلة الفضاء", "بطاقات الذاكرة"]];
+            
+            entries.forEach(e => {
+                data.push([e.name, e.cls, e.points, e.trains, e.games.speed || 0, e.games.accuracy || 0, e.games.memory || 0]);
+            });
+
+            let ws = XLSX.utils.aoa_to_sheet(data);
+            let wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "التقارير");
+            XLSX.writeFile(wb, `reports_${type}.xlsx`);
+        }
+
+        function updateGlobalLeaderboards() {
+            let entries = Object.values(scoresData);
+            
+            let sortedByPoints = [...entries].sort((a,b) => b.points - a.points).slice(0, 5);
+            let pContainer = document.getElementById('general-points-list');
+            if (sortedByPoints.length === 0) {
+                pContainer.innerHTML = `<div class="empty-lb">لا توجد نتائج مسجلة حتى الآن</div>`;
+            } else {
+                pContainer.innerHTML = sortedByPoints.map((item, idx) => `
+                    <div class="lb-item"><span>${idx+1}. ${item.name} (${item.cls})</span><span>${item.points} ن</span></div>
+                `).join('');
+            }
+
+            let sortedByTrains = [...entries].sort((a,b) => b.trains - a.trains).slice(0, 5);
+            let tContainer = document.getElementById('general-train-list');
+            if (sortedByTrains.length === 0) {
+                tContainer.innerHTML = `<div class="empty-lb">لا توجد نتائج مسجلة حتى الآن</div>`;
+            } else {
+                tContainer.innerHTML = sortedByTrains.map((item, idx) => `
+                    <div class="lb-item"><span>${idx+1}. ${item.name} (${item.cls})</span><span>${item.trains} مرة</span></div>
+                `).join('');
+            }
+
+            let sortedByWPoints = [...entries].sort((a,b) => b.weeklyPoints - a.weeklyPoints).slice(0, 5);
+            let wpContainer = document.getElementById('weekly-points-list');
+            if (sortedByWPoints.length === 0) {
+                wpContainer.innerHTML = `<div class="empty-lb">لا توجد نتائج مسجلة حتى الآن</div>`;
+            } else {
+                wpContainer.innerHTML = sortedByWPoints.map((item, idx) => `
+                    <div class="lb-item"><span>${idx+1}. ${item.name} (${item.cls})</span><span>${item.weeklyPoints} ن</span></div>
+                `).join('');
+            }
+
+            let sortedByWTrains = [...entries].sort((a,b) => b.weeklyTrains - a.weeklyTrains).slice(0, 5);
+            let wtContainer = document.getElementById('weekly-train-list');
+            if (sortedByWTrains.length === 0) {
+                wtContainer.innerHTML = `<div class="empty-lb">لا توجد نتائج مسجلة حتى الآن</div>`;
+            } else {
+                wtContainer.innerHTML = sortedByWTrains.map((item, idx) => `
+                    <div class="lb-item"><span>${idx+1}. ${item.name} (${item.cls})</span><span>${item.weeklyTrains} مرة</span></div>
+                `).join('');
+            }
+        }
+
+        window.onload = function() {
+            updateGlobalLeaderboards();
+        };
+    </script>
+</body>
+</html>
