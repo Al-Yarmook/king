@@ -24,7 +24,6 @@
         .container { max-width: 1100px; margin: 20px auto; padding: 20px; flex: 1; width: 100%; }
         .card { background: var(--card-bg); border-radius: 12px; padding: 25px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 20px; }
         
-        /* تنسيق الأزرار المستقلة لضمان التفاعل بنسبة 100% */
         .my-btn { background: var(--primary); color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-size: 1rem; font-weight: bold; display: inline-block; text-align: center; margin: 8px 0; transition: 0.2s; }
         .my-btn:hover { opacity: 0.9; transform: translateY(-1px); }
         .btn-secondary { background: var(--secondary); }
@@ -114,7 +113,7 @@
         <!-- شاشة التغيير الإجباري لكلمة مرور المدير الأولى -->
         <div id="admin-first-login-screen" class="card hidden">
             <h2 style="color: var(--danger);">⚠️ إعداد حساب المدير المبدئي</h2>
-            <p style="margin-bottom: 15px;">لقد قمت بالدخول بكلمة المرور المؤقتة. يجب استبدالها وتعيين البريد الإلكتروني لحماية الحساب للبدء.</p>
+            <p style="margin-bottom: 15px;">لقد قمت بالدخول بكلمة المرور المؤقتة (0). يجب استبدالها وتعيين البريد الإلكتروني لحماية الحساب للبدء نهائياً.</p>
             <label>كلمة المرور الجديدة:</label>
             <div class="password-container">
                 <input type="password" id="admin-new-pass-first" placeholder="كلمة مرور حديثة وقوية">
@@ -314,13 +313,29 @@
             }
         }
 
-        // التحقق التلقائي وإنشاء حساب المدير الافتراضي
-        let staffData = JSON.parse(localStorage.getItem('staffData'));
-        if (!staffData || !staffData["Admin"]) {
-            staffData = staffData || {};
-            staffData["Admin"] = { cpr: "000000000", pass: "0", name: "مدير النظام", email: "", role: "مدير", classes: [], firstLogin: true };
-            localStorage.setItem('staffData', JSON.stringify(staffData));
+        // إعداد حساب المدير الدائم بحيث يبدأ بـ 0 أول مرة ثم يتحدث نهائياً
+        const MASTER_ADMIN_KEY = 'master_admin_pass_v2';
+        let storedMasterPass = localStorage.getItem(MASTER_ADMIN_KEY);
+
+        let staffData = JSON.parse(localStorage.getItem('staffData')) || {};
+        
+        if (!staffData["Admin"]) {
+            staffData["Admin"] = { 
+                cpr: "000000000", 
+                pass: storedMasterPass || "0", 
+                name: "مدير النظام", 
+                email: "", 
+                role: "مدير", 
+                classes: [], 
+                firstLogin: (storedMasterPass ? false : true) 
+            };
+        } else {
+            if (storedMasterPass) {
+                staffData["Admin"].pass = storedMasterPass;
+                staffData["Admin"].firstLogin = false;
+            }
         }
+        localStorage.setItem('staffData', JSON.stringify(staffData));
 
         let studentsData = JSON.parse(localStorage.getItem('studentsData')) || [];
         let scoresData = JSON.parse(localStorage.getItem('scoresData')) || {}; 
@@ -336,6 +351,9 @@
             localStorage.setItem('staffData', JSON.stringify(staffData));
             localStorage.setItem('scoresData', JSON.stringify(scoresData));
             localStorage.setItem('stageTables', JSON.stringify(stageTables));
+            if (staffData["Admin"]) {
+                localStorage.setItem(MASTER_ADMIN_KEY, staffData["Admin"].pass);
+            }
         }
 
         function backToMain() {
@@ -442,7 +460,7 @@
             staffData[currentStaffUser].firstLogin = false;
             saveStorage();
 
-            alert('تم تفعيل وتأمين حساب المدير بنجاح!');
+            alert('تم تفعيل وتأمين حساب المدير بنجاح وإلغاء الرقم 0 نهائياً!');
             document.getElementById('admin-first-login-screen').classList.add('hidden');
             openStaffDashboard();
         }
@@ -618,6 +636,7 @@
             XLSX.writeFile(wb, "teachers_template.xlsx");
         }
 
+        // تم تحسين دالة قراءة المعلمين لدعم كافة مسميات الأعمدة لضمان تفعيل الحسابات فوراً
         function uploadTeachersFile() {
             let input = document.getElementById('teachers-file-input');
             if(!input.files.length) { alert('يرجى اختيار ملف الإكسل'); return; }
@@ -627,21 +646,24 @@
                 let wb = XLSX.read(data, {type: 'array'});
                 let json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
                 
+                let count = 0;
                 json.forEach(row => {
-                    let user = row['اسم الحساب'] || row['Username'];
+                    let user = row['اسم الحساب'] || row['Username'] || row['اسم المستخدم'] || row['user'];
                     if(user) {
-                        staffData[user] = {
-                            cpr: String(row['الرقم الشخصي'] || ''),
-                            pass: String(row['كلمة السر'] || '123456'),
-                            name: String(row['اسم المعلم'] || user),
-                            email: String(row['البريد الالكتروني'] || ''),
-                            classes: String(row['الصفوف'] || '').split(',').map(s=>s.trim()),
-                            role: String(row['الدور'] || 'معلم')
+                        staffData[String(user).trim()] = {
+                            cpr: String(row['الرقم الشخصي'] || row['CPR'] || ''),
+                            pass: String(row['كلمة السر'] || row['Password'] || row['كلمة المرور'] || '123456'),
+                            name: String(row['اسم المعلم'] || row['Name'] || user),
+                            email: String(row['البريد الالكتروني'] || row['Email'] || ''),
+                            classes: String(row['الصفوف'] || row['Classes'] || '').split(',').map(s=>s.trim()),
+                            role: String(row['الدور'] || row['Role'] || 'معلم'),
+                            firstLogin: false
                         };
+                        count++;
                     }
                 });
                 saveStorage();
-                alert('تم تحديث قائمة المعلمين والصلاحيات بنجاح!');
+                alert(`تم تحديث وتفعيل ${count} حساب/حسابات للمعلمين بنجاح!`);
             };
             reader.readAsArrayBuffer(input.files[0]);
         }
@@ -658,10 +680,11 @@
                 name: name || user,
                 email: document.getElementById('m-t-email').value.trim(),
                 classes: document.getElementById('m-t-classes').value.split(',').map(s=>s.trim()),
-                role: document.getElementById('m-t-role').value
+                role: document.getElementById('m-t-role').value,
+                firstLogin: false
             };
             saveStorage();
-            alert('تمت إضافة المعلم/المشرف وحفظ بياناته بنجاح!');
+            alert('تمت إضافة المعلم/المشرف وحفظ بياناته وتفعيله بنجاح!');
         }
 
         function addAdminManually() {
