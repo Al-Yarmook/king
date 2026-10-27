@@ -156,8 +156,11 @@
 
     <script>
         let currentUser = JSON.parse(localStorage.getItem('current_staff_user'));
-        if(!currentUser) { window.location.href = 'staff.html'; }
-        document.getElementById('welcomeTitle').textContent = `أهلاً بك يا ${currentUser.name || 'مستخدم'} (${currentUser.role === 'Admin' ? 'مدير النظام' : currentUser.role === 'Supervisor' ? 'مشرف' : 'معلم'})`;
+        if(!currentUser) { 
+            window.location.href = 'staff.html'; 
+        } else {
+            document.getElementById('welcomeTitle').textContent = `أهلاً بك يا ${currentUser.name || 'مستخدم'} (${currentUser.role === 'Admin' ? 'مدير النظام' : currentUser.role === 'Supervisor' ? 'مشرف' : 'معلم'})`;
+        }
 
         function switchTab(tabId) {
             document.querySelectorAll('.section-card').forEach(el => el.classList.remove('active'));
@@ -345,17 +348,19 @@
             let updateData = { name, cpr, email };
             if(newPass) updateData.password = newPass;
 
-            if (!currentUser || !currentUser.id) {
-                alert('جلسة المستخدم غير صالحة، يرجى تسجيل الدخول مرة أخرى.');
-                window.location.href = 'staff.html';
+            let query = supabaseClient.from('staff').update(updateData);
+            
+            // التحديث إما بالـ id أو بالرقم الشخصي الأصلي لضمان نجاح العملية بدون أخطاء
+            if (currentUser.id) {
+                query = query.eq('id', currentUser.id);
+            } else if (currentUser.cpr) {
+                query = query.eq('cpr', currentUser.cpr);
+            } else {
+                alert('خطأ في بيانات الجلسة، يرجى تسجيل الخروج والدخول مرة أخرى.');
                 return;
             }
 
-            const { data, error } = await supabaseClient
-                .from('staff')
-                .update(updateData)
-                .eq('id', currentUser.id)
-                .select();
+            const { data, error } = await query.select();
 
             if(error) {
                 console.error("Update Error:", error);
