@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>منصة ملك جدول الضرب - لوحة الملوك الكبرى</title>
+    <!-- مكتبة Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --secondary: #ec4899;
+            --accent: #f59e0b;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
+        header { background: linear-gradient(135deg, var(--accent), var(--primary)); color: white; padding: 20px; text-align: center; }
+        .container { max-width: 900px; margin: 30px auto; padding: 20px; flex: 1; width: 100%; }
+        .card { background: var(--card-bg); border-radius: 12px; padding: 30px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; text-align: center; }
+        th, td { padding: 12px; border-bottom: 1px solid #e2e8f0; }
+        th { background: var(--accent); color: white; }
+        tr:hover { background: #f1f5f9; }
+        .back-link { display: inline-block; margin-top: 20px; color: var(--primary); text-decoration: none; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>🏆 لوحة الملوك الكبرى (أبطال جدول الضرب)</h1>
+    </header>
+
+    <div class="container">
+        <div class="card">
+            <h2 style="margin-bottom: 20px; text-align: center; color: var(--accent);">لوحة الشرف والتميز</h2>
+            
+            <table id="leaderboardTable">
+                <thead>
+                    <tr>
+                        <th>المركز 👑</th>
+                        <th>اسم الطالب</th>
+                        <th>الصف</th>
+                        <th>النقاط ⭐️</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td colspan="4">جاري تحميل قائمة الأبطال من السحابة...</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div style="text-align: center;">
+                <a href="index.html" class="back-link">← العودة للرئيسية</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function loadLeaderboard() {
+            const tableBody = document.querySelector('#leaderboardTable tbody');
+            
+            try {
+                // جلب أعلى النتائج من جدول scores في Supabase
+                const { data, error } = await supabaseClient
+                    .from('scores')
+                    .select('student_name, grade, score')
+                    .order('score', { ascending: false })
+                    .limit(10);
+
+                if (error) throw error;
+
+                tableBody.innerHTML = '';
+                if (!data || data.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="4">لا توجد نتائج مسجلة حتى الآن. كن أول الأبطال!</td></tr>';
+                    return;
+                }
+
+                data.forEach((row, index) => {
+                    let medal = index + 1;
+                    if (index === 0) medal = '🥇 1';
+                    else if (index === 1) medal = '🥈 2';
+                    else if (index === 2) medal = '🥉 3';
+
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${medal}</td>
+                        <td>${row.student_name}</td>
+                        <td>${row.grade || 'الخامس'}</td>
+                        <td><b>${row.score}</b></td>
+                    `;
+                    tableBody.appendChild(tr);
+                });
+
+            } catch (err) {
+                console.error(err);
+                tableBody.innerHTML = '<tr><td colspan="4">حدث خطأ أثناء جلب لوحة الشرف من السحابة.</td></tr>';
+            }
+        }
+
+        window.onload = function() {
+            loadLeaderboard();
+        };
+    </script>
+
+</body>
+</html>

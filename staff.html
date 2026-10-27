@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>منصة ملك جدول الضرب - بوابة الكادر التعليمي</title>
+    <!-- مكتبة Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --secondary: #ec4899;
+            --accent: #f59e0b;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --danger: #ef4444;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
+        header { background: linear-gradient(135deg, var(--secondary), var(--primary)); color: white; padding: 20px; text-align: center; }
+        .container { max-width: 800px; margin: 30px auto; padding: 20px; flex: 1; width: 100%; }
+        .card { background: var(--card-bg); border-radius: 12px; padding: 30px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        .form-group { margin-bottom: 20px; text-align: right; position: relative; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: bold; color: var(--secondary); }
+        .form-group input { width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 1rem; }
+        .toggle-icon { position: absolute; left: 15px; top: 40px; cursor: pointer; font-size: 1.2rem; }
+        .my-btn { background: var(--secondary); color: white; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-size: 1.1rem; font-weight: bold; width: 100%; transition: 0.2s; }
+        .my-btn:hover { opacity: 0.9; }
+        .back-link { display: inline-block; margin-top: 20px; color: var(--primary); text-decoration: none; font-weight: bold; }
+        .hidden { display: none; }
+        .alert-box { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; padding: 12px; border-radius: 8px; margin-bottom: 20px; text-align: center; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>👩‍🏫 بوابة الكادر التعليمي والإدارة</h1>
+    </header>
+
+    <div class="container">
+        <!-- نموذج تسجيل الدخول الأساسي -->
+        <div class="card" id="loginCard">
+            <h2 style="margin-bottom: 20px; text-align: center; color: var(--secondary);">تسجيل دخول المعلمين والإدارة</h2>
+            
+            <div class="form-group">
+                <label>البريد الإلكتروني أو اسم المستخدم:</label>
+                <input type="text" id="staffEmail" placeholder="أدخل البريد أو اسم المستخدم...">
+            </div>
+
+            <div class="form-group">
+                <label>كلمة المرور:</label>
+                <input type="password" id="staffPass" placeholder="أدخل كلمة المرور...">
+                <span class="toggle-icon" onclick="togglePassVisibility('staffPass', this)">👁️</span>
+            </div>
+
+            <button class="my-btn" onclick="staffLogin()">دخول للنظام 🔐</button>
+            
+            <div style="text-align: center;">
+                <a href="index.html" class="back-link">← العودة للرئيسية</a>
+            </div>
+        </div>
+
+        <!-- نموذج إعادة تعيين كلمة المرور المؤقتة (يظهر عند استخدام كلمة المرور 0) -->
+        <div class="card hidden" id="resetCard">
+            <div class="alert-box">⚠️ تنبيه أمني: هذه أول مرة تسجل بها الدخول بكلمة المرور المؤقتة (0). يجب تعيين كلمة مرور جديدة آمنة للمتابعة.</div>
+            <h2 style="margin-bottom: 20px; text-align: center; color: var(--primary);">إعادة تعيين كلمة المرور الدائمة</h2>
+            
+            <div class="form-group">
+                <label>كلمة المرور الجديدة:</label>
+                <input type="password" id="newPass" placeholder="أدخل كلمة المرور الجديدة...">
+                <span class="toggle-icon" onclick="togglePassVisibility('newPass', this)">👁️</span>
+            </div>
+
+            <div class="form-group">
+                <label>تأكيد كلمة المرور الجديدة:</label>
+                <input type="password" id="confirmPass" placeholder="أعد إدخال كلمة المرور...">
+                <span class="toggle-icon" onclick="togglePassVisibility('confirmPass', this)">👁️</span>
+            </div>
+
+            <button class="my-btn" style="background: var(--primary);" onclick="updatePassword()">حفظ وتحديث كلمة المرور 🚀</button>
+        </div>
+    </div>
+
+    <script>
+        let loggedInStaffId = null;
+
+        async function staffLogin() {
+            const email = document.getElementById('staffEmail').value.trim();
+            const pass = document.getElementById('staffPass').value.trim();
+
+            if(!email || !pass) {
+                alert('الرجاء إدخال البريد وكلمة المرور!');
+                return;
+            }
+
+            try {
+                const { data, error } = await supabaseClient
+                    .from('staff')
+                    .select('*')
+                    .or(`email.eq.${email},username.eq.${email}`)
+                    .single();
+
+                if (error || !data) {
+                    alert('خطأ: اسم المستخدم أو البريد الإلكتروني غير صحيح.');
+                    return;
+                }
+
+                if (data.password !== pass) {
+                    alert('كلمة المرور غير صحيحة!');
+                    return;
+                }
+
+                // التحقق إذا كانت كلمة المرور المؤقتة هي 0
+                if (data.password === '0') {
+                    loggedInStaffId = data.id;
+                    document.getElementById('loginCard').classList.add('hidden');
+                    document.getElementById('resetCard').classList.remove('hidden');
+                    return;
+                }
+
+                // تسجيل الدخول العادي الناجح
+                alert('أهلاً بك يا أستاذ ' + (data.name || ''));
+                localStorage.setItem('current_staff_user', JSON.stringify(data));
+                window.location.href = 'dashboard.html';
+
+            } catch (err) {
+                console.error(err);
+                alert('حدث خطأ أثناء محاولة الاتصال بالسحابة.');
+            }
+        }
+
+        // دالة تحديث كلمة المرور في السحابة ومزامنتها
+        async function updatePassword() {
+            const newPass = document.getElementById('newPass').value.trim();
+            const confirmPass = document.getElementById('confirmPass').value.trim();
+
+            if (!newPass || !confirmPass) {
+                alert('الرجاء تعبئة حقول كلمة المرور!');
+                return;
+            }
+
+            if (newPass !== confirmPass) {
+                alert('كلمتا المرور غير متطابقتين!');
+                return;
+            }
+
+            if (newPass === '0') {
+                alert('لا يمكن استخدام الكلمة المؤقتة (0) ككلمة مرور جديدة!');
+                return;
+            }
+
+            try {
+                // تحديث كلمة المرور في جدول staff بـ Supabase
+                const { error } = await supabaseClient
+                    .from('staff')
+                    .update({ password: newPass })
+                    .eq('id', loggedInStaffId);
+
+                if (error) throw error;
+
+                alert('تم تحديث كلمة المرور بنجاح! سيتم توجيهك للوحة التحكم.');
+                
+                // جلب بيانات المعلم وتخزينها للانتقال للوحة التحكم
+                const { data: updatedData } = await supabaseClient
+                    .from('staff')
+                    .select('*')
+                    .eq('id', loggedInStaffId)
+                    .single();
+
+                localStorage.setItem('current_staff_user', JSON.stringify(updatedData));
+                window.location.href = 'dashboard.html';
+
+            } catch (err) {
+                console.error(err);
+                alert('حدث خطأ أثناء تحديث كلمة المرور في السحابة.');
+            }
+        }
+    </script>
+
+</body>
+</html>
