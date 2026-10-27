@@ -240,7 +240,7 @@
             tbody.innerHTML = '';
             if(data) {
                 data.forEach(st => {
-                    tbody.innerHTML += `<tr><td>${st.name}</td><td>${st.cpr || ''}</td><td>${st.email || ''}</td><td>${st.role}</td><td>${st.classes || ''}</td><td><button class="btn" style="background:#f57c00; padding:5px 10px;" onclick="resetStaffPass('${st.username}')">تصفير كلمة المرور</button></td></tr>`;
+                    tbody.innerHTML += `<tr><td>${st.name}</td><td>${st.cpr || ''}</td><td>${st.email || ''}</td><td>${st.role}</td><td>${st.classes || ''}</td><td><button class="btn" style="background:#f57c00; padding:5px 10px;" onclick="resetStaffPass('${st.id}')">تصفير كلمة المرور</button></td></tr>`;
                 });
             }
         }
@@ -258,9 +258,9 @@
             if(error) { alert('خطأ في الإضافة'); } else { alert('تم إضافة المعلم بنجاح'); loadStaff(); }
         }
 
-        async function resetStaffPass(username) {
+        async function resetStaffPass(id) {
             if(confirm('هل تريد إعادة تعيين كلمة المرور إلى 0 لهذا المعلم؟')) {
-                await supabaseClient.from('staff').update({ password: '0' }).eq('username', username);
+                await supabaseClient.from('staff').update({ password: '0' }).eq('id', id);
                 alert('تمت الإعادة إلى كلمة المرور المؤقتة 0 بنجاح.');
             }
         }
@@ -345,22 +345,26 @@
             let updateData = { name, cpr, email };
             if(newPass) updateData.password = newPass;
 
-            // تحديد شرط البحث بالرقم الشخصي أولاً أو البريد لضمان مطابقة سجل Supabase
-            const identifier = currentUser.cpr || currentUser.email;
+            if (!currentUser || !currentUser.id) {
+                alert('جلسة المستخدم غير صالحة، يرجى تسجيل الدخول مرة أخرى.');
+                window.location.href = 'staff.html';
+                return;
+            }
 
             const { data, error } = await supabaseClient
                 .from('staff')
                 .update(updateData)
-                .or(`cpr.eq.${identifier},email.eq.${identifier}`)
+                .eq('id', currentUser.id)
                 .select();
 
             if(error) {
-                console.error(error);
+                console.error("Update Error:", error);
                 alert('حدث خطأ أثناء التحديث في السحابة.');
             } else {
                 alert('تم تحديث ومزامنة بياناتك الشخصية بنجاح!');
                 if(data && data.length > 0) {
-                    localStorage.setItem('current_staff_user', JSON.stringify(data[0]));
+                    currentUser = data[0];
+                    localStorage.setItem('current_staff_user', JSON.stringify(currentUser));
                 }
             }
         }
