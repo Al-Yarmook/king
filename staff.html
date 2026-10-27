@@ -13,8 +13,10 @@
         h2 { color: #d81b60; margin-bottom: 25px; }
         .form-group { margin-bottom: 20px; text-align: right; }
         label { display: block; margin-bottom: 8px; color: #d81b60; font-weight: 600; }
-        input { width: 100%; padding: 12px 15px; border: 2px solid #ffccd5; border-radius: 10px; font-size: 16px; font-family: 'Cairo', sans-serif; box-sizing: border-box; outline: none; transition: 0.3s; }
+        .input-container { position: relative; }
+        input { width: 100%; padding: 12px 45px 12px 15px; border: 2px solid #ffccd5; border-radius: 10px; font-size: 16px; font-family: 'Cairo', sans-serif; box-sizing: border-box; outline: none; transition: 0.3s; }
         input:focus { border-color: #d81b60; }
+        .toggle-password { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 18px; user-select: none; }
         .btn { background: #d81b60; color: white; border: none; width: 100%; padding: 12px; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 10px; }
         .btn:hover { background: #ad1457; }
         .back-link { display: block; margin-top: 20px; color: #3f51b5; text-decoration: none; font-weight: 600; }
@@ -32,7 +34,10 @@
         </div>
         <div class="form-group">
             <label>كلمة المرور:</label>
-            <input type="password" id="staffPass" placeholder="أدخل كلمة المرور">
+            <div class="input-container">
+                <input type="password" id="staffPass" placeholder="أدخل كلمة المرور">
+                <span class="toggle-password" onclick="togglePass('staffPass', this)">👁️</span>
+            </div>
         </div>
         <button class="btn" onclick="staffLogin()">دخول للنظام 🔐</button>
         <a href="index.html" class="back-link">← العودة للرئيسية</a>
@@ -44,17 +49,33 @@
         <p style="color: #666; margin-bottom: 20px; font-size: 14px;">هذه هي ممرتك الأولى للنظام، يرجى تعيين كلمة مرور جديدة ومؤمنة.</p>
         <div class="form-group">
             <label>كلمة المرور الجديدة:</label>
-            <input type="password" id="newPass" placeholder="أدخل كلمة المرور الجديدة">
+            <div class="input-container">
+                <input type="password" id="newPass" placeholder="أدخل كلمة المرور الجديدة">
+                <span class="toggle-password" onclick="togglePass('newPass', this)">👁️</span>
+            </div>
         </div>
         <div class="form-group">
             <label>تأكيد كلمة المرور:</label>
-            <input type="password" id="confirmPass" placeholder="أعد إدخال كلمة المرور">
+            <div class="input-container">
+                <input type="password" id="confirmPass" placeholder="أعد إدخال كلمة المرور">
+                <span class="toggle-password" onclick="togglePass('confirmPass', this)">👁️</span>
+            </div>
         </div>
         <button class="btn" onclick="updatePassword()">حفظ ودخول 🚀</button>
     </div>
 
     <script>
-        let loggedInStaffId = null;
+        // دالة إظهار وإخفاء كلمة المرور
+        function togglePass(fieldId, icon) {
+            const input = document.getElementById(fieldId);
+            if (input.type === "password") {
+                input.type = "text";
+                icon.textContent = "🙈";
+            } else {
+                input.type = "password";
+                icon.textContent = "👁️";
+            }
+        }
 
         async function staffLogin() {
             const inputVal = document.getElementById('staffEmail').value.trim();
@@ -83,7 +104,6 @@
                 }
 
                 if (data.password === '0') {
-                    loggedInStaffId = data.id;
                     document.getElementById('loginCard').classList.add('hidden');
                     document.getElementById('resetCard').classList.remove('hidden');
                     return;
@@ -104,45 +124,10 @@
             const confirmPass = document.getElementById('confirmPass').value.trim();
 
             if(!newPass || !confirmPass) {
-                alert('الرجاء إعباء خانات كلمة المرور!');
+                alert('الرجاء تعبئة خانات كلمة المرور!');
                 return;
             }
 
             if(newPass !== confirmPass) {
                 alert('كلمتا المرور غير متطابقتين!');
                 return;
-            }
-
-            if(newPass === '0') {
-                alert('لا يمكنเกียد كلمة المرور لتكون 0، اختر كلمة أخرى.');
-                return;
-            }
-
-            try {
-                const { error } = await supabaseClient
-                    .from('staff')
-                    .update({ password: newPass })
-                    .eq('id', loggedInStaffId);
-
-                if(error) {
-                    alert('حدث خطأ أثناء تحديث كلمة المرور في السحابة.');
-                    return;
-                }
-
-                alert('تم تحديث كلمة المرور بنجاح! جاري تحويلك للوحة التحكم...');
-                
-                // جلب بيانات الحساب وتحويله للوحة التحكم
-                const { data } = await supabaseClient.from('staff').select('*').eq('id', loggedInStaffId).single();
-                if(data) {
-                    localStorage.setItem('current_staff_user', JSON.stringify(data));
-                }
-                window.location.href = 'dashboard.html';
-
-            } catch (err) {
-                console.error(err);
-                alert('حدث خطأ في الاتصال.');
-            }
-        }
-    </script>
-</body>
-</html>
