@@ -19,17 +19,18 @@
         .toggle-password { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 18px; user-select: none; }
         .btn { background: #d81b60; color: white; border: none; width: 100%; padding: 12px; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 10px; }
         .btn:hover { background: #ad1457; }
-        .back-link { display: block; margin-top: 20px; color: #3f51b5; text-decoration: none; font-weight: 600; }
+        .back-link { display: block; margin-top: 20px; color: #3f51b5; text-decoration: none; font-weight: 600; cursor: pointer; }
         .back-link:hover { text-decoration: underline; }
         .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
+    <!-- نموذج تسجيل الدخول -->
     <div class="card" id="loginCard">
         <h2>تسجيل دخول المعلمين والإدارة</h2>
         <div class="form-group">
-            <label>البريد الإلكتروني أو اسم المستخدم:</label>
+            <label>البريد الإلكتروني أو اسم المستخدم / الرقم الشخصي:</label>
             <input type="text" id="staffEmail" placeholder="أدخل اسم المستخدم أو الرقم">
         </div>
         <div class="form-group">
@@ -40,10 +41,11 @@
             </div>
         </div>
         <button class="btn" id="loginBtn">دخول للنظام 🔐</button>
+        <a class="back-link" onclick="showForgotCard()">نسيت كلمة المرور؟ 🤔</a>
         <a href="index.html" class="back-link">← العودة للرئيسية</a>
     </div>
 
-    <!-- كارد تحديث كلمة المرور الإجبارية عند الدخول لأول مرة -->
+    <!-- نموذج تغيير كلمة المرور عند الدخول لأول مرة (0) -->
     <div class="card hidden" id="resetCard">
         <h2>🔒 تعيين كلمة مرور جديدة</h2>
         <p style="color: #666; margin-bottom: 20px; font-size: 14px;">هذه هي مرتك الأولى للنظام، يرجى تعيين كلمة مرور جديدة ومؤمنة.</p>
@@ -64,124 +66,100 @@
         <button class="btn" id="updatePassBtn">حفظ ودخول 🚀</button>
     </div>
 
+    <!-- نموذج استعادة كلمة المرور (نسيت كلمة المرور) -->
+    <div class="card hidden" id="forgotCard">
+        <h2>🔑 استعادة كلمة المرور</h2>
+        <p style="color: #666; margin-bottom: 20px; font-size: 14px;">أدخل الرقم الشخصي والبريد الإلكتروني المسجل للتحقق.</p>
+        <div class="form-group">
+            <label>الرقم الشخصي:</label>
+            <input type="text" id="forgotCpr" placeholder="أدخل الرقم الشخصي">
+        </div>
+        <div class="form-group">
+            <label>البريد الإلكتروني المسجل:</label>
+            <input type="email" id="forgotEmail" placeholder="أدخل بريدك الإلكتروني">
+        </div>
+        <div class="form-group">
+            <label>كلمة المرور الجديدة:</label>
+            <input type="password" id="forgotNewPass" placeholder="كلمة المرور الجديدة">
+        </div>
+        <button class="btn" id="verifyForgotBtn">تحديث كلمة المرور 🔄</button>
+        <a class="back-link" onclick="showLoginCard()">← العودة لتسجيل الدخول</a>
+    </div>
+
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // تفعيل أزرار إظهار/إخفاء كلمة المرور
             function setupToggle(toggleId, inputId) {
                 const toggle = document.getElementById(toggleId);
                 const input = document.getElementById(inputId);
                 if (toggle && input) {
                     toggle.addEventListener('click', () => {
-                        if (input.type === "password") {
-                            input.type = "text";
-                            toggle.textContent = "🙈";
-                        } else {
-                            input.type = "password";
-                            toggle.textContent = "👁️";
-                        }
+                        if (input.type === "password") { input.type = "text"; toggle.textContent = "🙈"; }
+                        else { input.type = "password"; toggle.textContent = "👁️"; }
                     });
                 }
             }
-
             setupToggle('toggleStaffPass', 'staffPass');
             setupToggle('toggleNewPass', 'newPass');
             setupToggle('toggleConfirmPass', 'confirmPass');
 
-            // تفعيل زر الدخول
-            const loginBtn = document.getElementById('loginBtn');
-            if (loginBtn) {
-                loginBtn.addEventListener('click', async () => {
-                    const inputVal = document.getElementById('staffEmail').value.trim();
-                    const pass = document.getElementById('staffPass').value.trim();
+            let tempStaffData = null;
 
-                    if(!inputVal || !pass) {
-                        alert('الرجاء إدخال اسم المستخدم/الرقم وكلمة المرور!');
-                        return;
-                    }
+            document.getElementById('loginBtn').addEventListener('click', async () => {
+                const inputVal = document.getElementById('staffEmail').value.trim();
+                const pass = document.getElementById('staffPass').value.trim();
+                if(!inputVal || !pass) { alert('الرجاء إدخال البيانات!'); return; }
 
-                    try {
-                        const { data, error } = await supabaseClient
-                            .from('staff')
-                            .select('*')
-                            .or(`username.eq.${inputVal},cpr.eq.${inputVal},email.eq.${inputVal}`)
-                            .maybeSingle();
+                const { data, error } = await supabaseClient.from('staff').select('*').or(`username.eq.${inputVal},cpr.eq.${inputVal},email.eq.${inputVal}`).maybeSingle();
+                if (error || !data) { alert('خطأ: اسم المستخدم أو الرقم غير صحيح.'); return; }
+                if (data.password !== pass) { alert('كلمة المرور غير صحيحة!'); return; }
 
-                        if (error || !data) {
-                            alert('خطأ: اسم المستخدم أو الرقم غير صحيح.');
-                            return;
-                        }
+                if (data.password === '0') {
+                    tempStaffData = data;
+                    document.getElementById('loginCard').classList.add('hidden');
+                    document.getElementById('resetCard').classList.remove('hidden');
+                    return;
+                }
 
-                        if (data.password !== pass) {
-                            alert('كلمة المرور غير صحيحة!');
-                            return;
-                        }
+                localStorage.setItem('current_staff_user', JSON.stringify(data));
+                window.location.href = 'dashboard.html';
+            });
 
-                        if (data.password === '0') {
-                            document.getElementById('loginCard').classList.add('hidden');
-                            document.getElementById('resetCard').classList.remove('hidden');
-                            return;
-                        }
+            document.getElementById('updatePassBtn').addEventListener('click', async () => {
+                const newPass = document.getElementById('newPass').value.trim();
+                const confirmPass = document.getElementById('confirmPass').value.trim();
+                if(!newPass || newPass !== confirmPass) { alert('كلمتا المرور غير متطابقتين!'); return; }
 
-                        alert('أهلاً بك يا أستاذ ' + (data.name || ''));
-                        localStorage.setItem('current_staff_user', JSON.stringify(data));
-                        window.location.href = 'dashboard.html';
+                await supabaseClient.from('staff').update({ password: newPass }).eq('id', tempStaffData.id);
+                alert('تم التحديث بنجاح!');
+                const { data } = await supabaseClient.from('staff').select('*').eq('id', tempStaffData.id).single();
+                localStorage.setItem('current_staff_user', JSON.stringify(data));
+                window.location.href = 'dashboard.html';
+            });
 
-                    } catch (err) {
-                        console.error(err);
-                        alert('حدث خطأ أثناء محاولة الاتصال بالسحابة.');
-                    }
-                });
-            }
+            document.getElementById('verifyForgotBtn').addEventListener('click', async () => {
+                const cpr = document.getElementById('forgotCpr').value.trim();
+                const email = document.getElementById('forgotEmail').value.trim();
+                const newPass = document.getElementById('forgotNewPass').value.trim();
+                if(!cpr || !email || !newPass) { alert('الرجاء تعبئة جميع الحقول!'); return; }
 
-            // تفعيل زر حفظ كلمة المرور الجديدة
-            const updatePassBtn = document.getElementById('updatePassBtn');
-            if (updatePassBtn) {
-                updatePassBtn.addEventListener('click', async () => {
-                    const newPass = document.getElementById('newPass').value.trim();
-                    const confirmPass = document.getElementById('confirmPass').value.trim();
+                const { data, error } = await supabaseClient.from('staff').select('*').eq('cpr', cpr).eq('email', email).maybeSingle();
+                if(error || !data) { alert('البيانات غير مطابقة لسجلات المعلمين!'); return; }
 
-                    if(!newPass || !confirmPass) {
-                        alert('الرجاء تعبئة خانات كلمة المرور!');
-                        return;
-                    }
-
-                    if(newPass !== confirmPass) {
-                        alert('كلمتا المرور غير متطابقتين!');
-                        return;
-                    }
-
-                    if(newPass === '0') {
-                        alert('لا يمكن تعيين كلمة المرور لتكون 0، اختر كلمة أخرى.');
-                        return;
-                    }
-
-                    try {
-                        const { data, error } = await supabaseClient
-                            .from('staff')
-                            .update({ password: newPass })
-                            .eq('username', 'Admin')
-                            .select();
-
-                        if(error) {
-                            console.error(error);
-                            alert('حدث خطأ أثناء تحديث كلمة المرور في السحابة.');
-                            return;
-                        }
-
-                        alert('تم تحديث كلمة المرور بنجاح! جاري تحويلك لوحة التحكم...');
-                        
-                        if(data && data.length > 0) {
-                            localStorage.setItem('current_staff_user', JSON.stringify(data[0]));
-                        }
-                        window.location.href = 'dashboard.html';
-
-                    } catch (err) {
-                        console.error(err);
-                        alert('حدث خطأ في الاتصال.');
-                    }
-                });
-            }
+                await supabaseClient.from('staff').update({ password: newPass }).eq('id', data.id);
+                alert('تم تغيير كلمة المرور بنجاح! يمكنك تسجيل الدخول الآن.');
+                showLoginCard();
+            });
         });
+
+        function showForgotCard() {
+            document.getElementById('loginCard').classList.add('hidden');
+            document.getElementById('forgotCard').classList.remove('hidden');
+        }
+        function showLoginCard() {
+            document.getElementById('forgotCard').classList.add('hidden');
+            document.getElementById('resetCard').classList.add('hidden');
+            document.getElementById('loginCard').classList.remove('hidden');
+        }
     </script>
 </body>
 </html>
