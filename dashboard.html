@@ -207,17 +207,18 @@
             const roleVal = String(currentUser.role || '').trim().toLowerCase();
             if(roleVal === 'teacher' && currentUser.classes) {
                 let clsList = currentUser.classes.split(',').map(c => c.trim());
-                query = query.in('class', clsList);
+                query = query.in('cls', clsList);
             }
             const { data, error } = await query;
             const tbody = document.querySelector('#studentsTable tbody');
             tbody.innerHTML = '';
             if(data && data.length > 0) {
                 data.forEach(s => {
+                    if(!s.id) return;
                     tbody.innerHTML += `
                         <tr>
                             <td><input type="text" class="table-input" id="std_name_${s.id}" value="${s.name || ''}"></td>
-                            <td><input type="text" class="table-input" id="std_class_${s.id}" value="${s.class || ''}"></td>
+                            <td><input type="text" class="table-input" id="std_cls_${s.id}" value="${s.cls || ''}"></td>
                             <td><input type="text" class="table-input" id="std_cpr_${s.id}" value="${s.cpr || ''}"></td>
                             <td>
                                 <button class="btn btn-orange" onclick="updateStudentManual(${s.id})">حفظ 💾</button>
@@ -232,13 +233,19 @@
 
         async function updateStudentManual(id) {
             const name = document.getElementById(`std_name_${id}`).value.trim();
-            const cls = document.getElementById(`std_class_${id}`).value.trim();
+            const cls = document.getElementById(`std_cls_${id}`).value.trim();
             const cpr = document.getElementById(`std_cpr_${id}`).value.trim();
 
             if(!name || !cls) { alert('الاسم والصف حقول إجبارية!'); return; }
 
-            const { error } = await supabaseClient.from('students').update({ name, class: cls, cpr }).eq('id', id);
-            if(error) { alert('خطأ أثناء التحديث'); } else { alert('تم تحديث بيانات الطالب بنجاح!'); loadStudents(); }
+            const { error } = await supabaseClient.from('students').update({ name, cls, cpr }).eq('id', id);
+            if(error) { 
+                console.error("Student Update Error:", error);
+                alert('خطأ أثناء التحديث: ' + error.message); 
+            } else { 
+                alert('تم تحديث بيانات الطالب بنجاح!'); 
+                loadStudents(); 
+            }
         }
 
         async function addStudentManual() {
@@ -246,19 +253,34 @@
             const cls = document.getElementById('stdClass').value.trim();
             const cpr = document.getElementById('stdCpr').value.trim();
             if(!name || !cls) { alert('الرجاء إدخال اسم الطالب والصف!'); return; }
-            const { error } = await supabaseClient.from('students').insert([{ name, class: cls, cpr }]);
-            if(error) { alert('خطأ أثناء الإضافة'); } else { alert('تمت الإضافة بنجاح'); document.getElementById('stdName').value=''; document.getElementById('stdClass').value=''; document.getElementById('stdCpr').value=''; loadStudents(); }
+            const { error } = await supabaseClient.from('students').insert([{ name, cls, cpr }]);
+            if(error) { 
+                console.error("Student Add Error:", error);
+                alert('خطأ في الإضافة: ' + error.message); 
+            } else { 
+                alert('تمت الإضافة بنجاح'); 
+                document.getElementById('stdName').value=''; 
+                document.getElementById('stdClass').value=''; 
+                document.getElementById('stdCpr').value=''; 
+                loadStudents(); 
+            }
         }
 
         async function deleteStudent(id) {
             if(confirm('هل أنت متأكد من الحذف؟')) {
-                await supabaseClient.from('students').delete().eq('id', id);
-                loadStudents();
+                const { error } = await supabaseClient.from('students').delete().eq('id', id);
+                if(error) {
+                    console.error("Student Delete Error:", error);
+                    alert('خطأ أثناء الحذف: ' + error.message);
+                } else {
+                    alert('تم حذف الطالب بنجاح!');
+                    loadStudents();
+                }
             }
         }
 
         function downloadStudentTemplate() {
-            const ws = XLSX.utils.json_to_sheet([{ name: "محمد أحمد", class: "5ب4", cpr: "900000000" }]);
+            const ws = XLSX.utils.json_to_sheet([{ name: "محمد أحمد", cls: "5ب4", cpr: "900000000" }]);
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "الطلاب");
             XLSX.writeFile(wb, "student_template.xlsx");
@@ -283,17 +305,21 @@
                         keys.forEach(k => {
                             let lk = k.toLowerCase().trim();
                             if(lk.includes('name') || lk.includes('اسم') || lk.includes('طالب')) studentName = r[k];
-                            if(lk.includes('class') || lk.includes('صف') || lk.includes('شعبة')) studentClass = r[k];
+                            if(lk.includes('class') || lk.includes('cls') || lk.includes('صف') || lk.includes('شعبة')) studentClass = r[k];
                             if(lk.includes('cpr') || lk.includes('شخصي') || lk.includes('رقم')) studentCpr = r[k];
                         });
 
                         if(studentName && studentClass) {
                             const { error } = await supabaseClient.from('students').insert([{ 
                                 name: String(studentName).trim(), 
-                                class: String(studentClass).trim(), 
+                                cls: String(studentClass).trim(), 
                                 cpr: studentCpr ? String(studentCpr).trim() : null 
                             }]);
-                            if(!error) successCount++;
+                            if(!error) {
+                                successCount++;
+                            } else {
+                                console.error("Insert Row Error:", error);
+                            }
                         }
                     }
                     alert(`تم رفع واستيراد (${successCount}) طالباً بنجاح!`);
@@ -322,6 +348,7 @@
             tbody.innerHTML = '';
             if(data && data.length > 0) {
                 data.forEach(st => {
+                    if(!st.id) return;
                     tbody.innerHTML += `
                         <tr>
                             <td><input type="text" class="table-input" id="stf_name_${st.id}" value="${st.name || ''}"></td>
