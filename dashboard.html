@@ -269,7 +269,17 @@
                 const sheet = workbook.Sheets[workbook.SheetNames[0]];
                 const rows = XLSX.utils.sheet_to_json(sheet);
                 for(let r of rows) {
-                    await supabaseClient.from('students').insert([{ name: r.name || r['اسم الطالب'], class: r.class || r['الصف'], cpr: r.cpr ? String(r.cpr) : null }]);
+                    const studentName = r.name || r['اسم الطالب'] || r['الاسم'] || r['Student'];
+                    const studentClass = r.class || r['الصف'] || r['الشعبة'] || r['Class'];
+                    const studentCpr = r.cpr || r['الرقم الشخصي'] || r['CPR'];
+
+                    if(studentName && studentClass) {
+                        await supabaseClient.from('students').insert([{ 
+                            name: String(studentName).trim(), 
+                            class: String(studentClass).trim(), 
+                            cpr: studentCpr ? String(studentCpr).trim() : null 
+                        }]);
+                    }
                 }
                 alert('تم رفع واستيراد الطلاب بنجاح!');
                 loadStudents();
@@ -382,9 +392,23 @@
                 const sheet = workbook.Sheets[workbook.SheetNames[0]];
                 const rows = XLSX.utils.sheet_to_json(sheet);
                 for(let r of rows) {
-                    await supabaseClient.from('staff').insert([{
-                        name: r.name, cpr: String(r.cpr), email: r.email, password: r.password || '0', classes: r.classes, role: r.role || 'Teacher', username: r.cpr || r.email
-                    }]);
+                    const stName = r.name || r['اسم المعلم'] || r['الاسم'];
+                    const stCpr = r.cpr || r['الرقم الشخصي'];
+                    const stEmail = r.email || r['البريد الإلكتروني'];
+                    const stRole = r.role || r['الدور'] || 'Teacher';
+                    const stClasses = r.classes || r['الصفوف'] || '';
+
+                    if(stName) {
+                        await supabaseClient.from('staff').insert([{
+                            name: String(stName).trim(), 
+                            cpr: stCpr ? String(stCpr).trim() : null, 
+                            email: stEmail ? String(stEmail).trim() : null, 
+                            password: r.password ? String(r.password) : '0', 
+                            classes: String(stClasses).trim(), 
+                            role: String(stRole).trim(), 
+                            username: stCpr ? String(stCpr).trim() : (stEmail ? String(stEmail).trim() : null)
+                        }]);
+                    }
                 }
                 alert('تم رفع المعلمين بنجاح!');
                 loadStaff();
