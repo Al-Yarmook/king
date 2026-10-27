@@ -99,7 +99,7 @@
                 <div class="form-group"><label>الدور:</label><select id="stfRole"><option value="Teacher">معلم</option><option value="Supervisor">مشرف</option><option value="Admin">مدير</option></select></div>
                 <div class="form-group" style="align-self: flex-end;"><button class="btn" onclick="addStaffManual()">حفظ المعلم ➕</button></div>
             </div>
-            <h3>قائمة المعلمين (التعديل المباشر وصلاحية المدير لتغيير كلمة المرور)</h3>
+            <h3>قائمة المعلمين (التعديل المباشر، تغيير كلمة المرور، أو الحذف)</h3>
             <table id="staffTable">
                 <thead><tr><th>الاسم</th><th>الرقم الشخصي</th><th>البريد الإلكتروني</th><th>الدور</th><th>الصفوف</th><th>الإجراءات</th></tr></thead>
                 <tbody></tbody>
@@ -180,6 +180,10 @@
             }
         }
 
+        document.addEventListener('DOMContentLoaded', () => {
+            loadStudents();
+        });
+
         function switchTab(tabId) {
             const roleVal = String(currentUser.role || '').trim().toLowerCase();
             if((tabId === 'staff' || tabId === 'settings') && roleVal !== 'admin' && roleVal !== 'مدير') {
@@ -210,7 +214,7 @@
             const { data, error } = await query;
             const tbody = document.querySelector('#studentsTable tbody');
             tbody.innerHTML = '';
-            if(data) {
+            if(data && data.length > 0) {
                 data.forEach(s => {
                     tbody.innerHTML += `
                         <tr>
@@ -218,11 +222,13 @@
                             <td><input type="text" class="table-input" id="std_class_${s.id}" value="${s.class || ''}"></td>
                             <td><input type="text" class="table-input" id="std_cpr_${s.id}" value="${s.cpr || ''}"></td>
                             <td>
-                                <button class="btn btn-orange" onclick="updateStudentManual(${s.id})">حفظ التعديل 💾</button>
+                                <button class="btn btn-orange" onclick="updateStudentManual(${s.id})">حفظ 💾</button>
                                 <button class="btn" style="background:#d32f2f;" onclick="deleteStudent(${s.id})">حذف 🗑️</button>
                             </td>
                         </tr>`;
                 });
+            } else {
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#666;">لا توجد بيانات طلاب مسجلة حالياً.</td></tr>`;
             }
         }
 
@@ -262,27 +268,36 @@
 
         async function uploadStudentExcel(e) {
             const file = e.target.files[0];
+            if(!file) return;
             const reader = new FileReader();
             reader.onload = async function(evt) {
-                const data = new Uint8Array(evt.target.result);
-                const workbook = XLSX.read(data, {type: 'array'});
-                const sheet = workbook.Sheets[workbook.SheetNames[0]];
-                const rows = XLSX.utils.sheet_to_json(sheet);
-                for(let r of rows) {
-                    const studentName = r.name || r['اسم الطالب'] || r['الاسم'] || r['Student'];
-                    const studentClass = r.class || r['الصف'] || r['الشعبة'] || r['Class'];
-                    const studentCpr = r.cpr || r['الرقم الشخصي'] || r['CPR'];
+                try {
+                    const data = new Uint8Array(evt.target.result);
+                    const workbook = XLSX.read(data, {type: 'array'});
+                    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const rows = XLSX.utils.sheet_to_json(sheet);
+                    
+                    let successCount = 0;
+                    for(let r of rows) {
+                        const studentName = r.name || r['اسم الطالب'] || r['الاسم'] || r['Student'];
+                        const studentClass = r.class || r['الصف'] || r['الشعبة'] || r['Class'];
+                        const studentCpr = r.cpr || r['الرقم الشخصي'] || r['CPR'];
 
-                    if(studentName && studentClass) {
-                        await supabaseClient.from('students').insert([{ 
-                            name: String(studentName).trim(), 
-                            class: String(studentClass).trim(), 
-                            cpr: studentCpr ? String(studentCpr).trim() : null 
-                        }]);
+                        if(studentName && studentClass) {
+                            const { error } = await supabaseClient.from('students').insert([{ 
+                                name: String(studentName).trim(), 
+                                class: String(studentClass).trim(), 
+                                cpr: studentCpr ? String(studentCpr).trim() : null 
+                            }]);
+                            if(!error) successCount++;
+                        }
                     }
+                    alert(`تم رفع واستيراد (${successCount}) طالباً بنجاح!`);
+                    loadStudents();
+                } catch (err) {
+                    console.error("Excel Upload Error:", err);
+                    alert('حدث خطأ أثناء معالجة ملف الإكسل.');
                 }
-                alert('تم رفع واستيراد الطلاب بنجاح!');
-                loadStudents();
             };
             reader.readAsArrayBuffer(file);
         }
@@ -298,10 +313,10 @@
         async function loadStaff() {
             const roleVal = String(currentUser.role || '').trim().toLowerCase();
             if(roleVal !== 'admin' && roleVal !== 'مدير') { return; }
-            const { data } = await supabaseClient.from('staff').select('*');
+            const { data, error } = await supabaseClient.from('staff').select('*');
             const tbody = document.querySelector('#staffTable tbody');
             tbody.innerHTML = '';
-            if(data) {
+            if(data && data.length > 0) {
                 data.forEach(st => {
                     tbody.innerHTML += `
                         <tr>
@@ -312,10 +327,13 @@
                             <td><input type="text" class="table-input" id="stf_classes_${st.id}" value="${st.classes || ''}"></td>
                             <td>
                                 <button class="btn btn-orange" onclick="updateStaffManual(${st.id})">حفظ 💾</button>
-                                <button class="btn" style="background:#d32f2f; padding:5px 8px;" onclick="changeStaffPassManual(${st.id})">تغيير كلمة المرور 🔑</button>
+                                <button class="btn" style="background:#d32f2f; padding:5px 6px;" onclick="changeStaffPassManual(${st.id})">كلمة المرور 🔑</button>
+                                <button class="btn" style="background:#555; padding:5px 6px;" onclick="deleteStaffManual(${st.id})">حذف 🗑️</button>
                             </td>
                         </tr>`;
                 });
+            } else {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#666;">لا توجد بيانات معلمين مسجلة حالياً.</td></tr>`;
             }
         }
 
@@ -328,11 +346,29 @@
 
             const { error } = await supabaseClient.from('staff').update({ name, cpr, email, role, classes }).eq('id', id);
             if(error) { 
-                console.error("Staff Update Error:", error);
-                alert('خطأ أثناء تحديث المعلم'); 
+                console.error("Staff Update Error Details:", error);
+                alert('خطأ أثناء تحديث المعلم: ' + (error.message || 'يرجى التحقق من المدخلات')); 
             } else { 
                 alert('تم تحديث بيانات المعلم بنجاح!'); 
                 loadStaff(); 
+            }
+        }
+
+        async function deleteStaffManual(id) {
+            const roleVal = String(currentUser.role || '').trim().toLowerCase();
+            if(roleVal !== 'admin' && roleVal !== 'مدير') {
+                alert('عذراً، هذه الصلاحية مخصصة لمدير النظام فقط!');
+                return;
+            }
+
+            if(confirm('هل أنت متأكد من حذف هذا المعلم نهائياً من السجل؟')) {
+                const { error } = await supabaseClient.from('staff').delete().eq('id', id);
+                if(error) {
+                    alert('حدث خطأ أثناء محاولة حذف المعلم.');
+                } else {
+                    alert('تم حذف المعلم من السجل بنجاح!');
+                    loadStaff();
+                }
             }
         }
 
@@ -385,6 +421,7 @@
 
         async function uploadStaffExcel(e) {
             const file = e.target.files[0];
+            if(!file) return;
             const reader = new FileReader();
             reader.onload = async function(evt) {
                 const data = new Uint8Array(evt.target.result);
