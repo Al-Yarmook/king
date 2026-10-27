@@ -214,15 +214,16 @@
             tbody.innerHTML = '';
             if(data && data.length > 0) {
                 data.forEach(s => {
-                    if(!s.id) return;
+                    if(!s.id && !s.cpr) return;
+                    let rowId = s.id || s.cpr;
                     tbody.innerHTML += `
                         <tr>
-                            <td><input type="text" class="table-input" id="std_name_${s.id}" value="${s.name || ''}"></td>
-                            <td><input type="text" class="table-input" id="std_cls_${s.id}" value="${s.cls || ''}"></td>
-                            <td><input type="text" class="table-input" id="std_cpr_${s.id}" value="${s.cpr || ''}"></td>
+                            <td><input type="text" class="table-input" id="std_name_${rowId}" value="${s.name || ''}"></td>
+                            <td><input type="text" class="table-input" id="std_cls_${rowId}" value="${s.cls || ''}"></td>
+                            <td><input type="text" class="table-input" id="std_cpr_${rowId}" value="${s.cpr || ''}"></td>
                             <td>
-                                <button class="btn btn-orange" onclick="updateStudentManual(${s.id})">حفظ 💾</button>
-                                <button class="btn" style="background:#d32f2f;" onclick="deleteStudent(${s.id})">حذف 🗑️</button>
+                                <button class="btn btn-orange" onclick="updateStudentManual('${rowId}')">حفظ 💾</button>
+                                <button class="btn" style="background:#d32f2f;" onclick="deleteStudent('${rowId}')">حذف 🗑️</button>
                             </td>
                         </tr>`;
                 });
@@ -231,14 +232,21 @@
             }
         }
 
-        async function updateStudentManual(id) {
-            const name = document.getElementById(`std_name_${id}`).value.trim();
-            const cls = document.getElementById(`std_cls_${id}`).value.trim();
-            const cpr = document.getElementById(`std_cpr_${id}`).value.trim();
+        async function updateStudentManual(rowId) {
+            const name = document.getElementById(`std_name_${rowId}`).value.trim();
+            const cls = document.getElementById(`std_cls_${rowId}`).value.trim();
+            const cpr = document.getElementById(`std_cpr_${rowId}`).value.trim();
 
             if(!name || !cls) { alert('الاسم والصف حقول إجبارية!'); return; }
 
-            const { error } = await supabaseClient.from('students').update({ name, cls, cpr }).eq('id', id);
+            let query = supabaseClient.from('students').update({ name, cls, cpr });
+            if(!isNaN(rowId)) {
+                query = query.eq('id', rowId);
+            } else {
+                query = query.eq('cpr', rowId);
+            }
+
+            const { error } = await query;
             if(error) { 
                 console.error("Student Update Error:", error);
                 alert('خطأ أثناء التحديث: ' + error.message); 
@@ -266,9 +274,15 @@
             }
         }
 
-        async function deleteStudent(id) {
+        async function deleteStudent(rowId) {
             if(confirm('هل أنت متأكد من الحذف؟')) {
-                const { error } = await supabaseClient.from('students').delete().eq('id', id);
+                let query = supabaseClient.from('students').delete();
+                if(!isNaN(rowId)) {
+                    query = query.eq('id', rowId);
+                } else {
+                    query = query.eq('cpr', rowId);
+                }
+                const { error } = await query;
                 if(error) {
                     console.error("Student Delete Error:", error);
                     alert('خطأ أثناء الحذف: ' + error.message);
@@ -317,8 +331,6 @@
                             }]);
                             if(!error) {
                                 successCount++;
-                            } else {
-                                console.error("Insert Row Error:", error);
                             }
                         }
                     }
@@ -348,19 +360,20 @@
             tbody.innerHTML = '';
             if(data && data.length > 0) {
                 data.forEach(st => {
-                    if(!st.id) return;
+                    let staffKey = st.cpr || st.username;
+                    if(!staffKey) return;
                     tbody.innerHTML += `
                         <tr>
-                            <td><input type="text" class="table-input" id="stf_name_${st.id}" value="${st.name || ''}"></td>
-                            <td><input type="text" class="table-input" id="stf_cpr_${st.id}" value="${st.cpr || ''}"></td>
-                            <td><input type="text" class="table-input" id="stf_username_${st.id}" value="${st.username || ''}"></td>
-                            <td><input type="text" class="table-input" id="stf_email_${st.id}" value="${st.email || ''}"></td>
-                            <td><input type="text" class="table-input" id="stf_role_${st.id}" value="${st.role || ''}"></td>
-                            <td><input type="text" class="table-input" id="stf_classes_${st.id}" value="${st.classes || ''}"></td>
+                            <td><input type="text" class="table-input" id="stf_name_${staffKey}" value="${st.name || ''}"></td>
+                            <td><input type="text" class="table-input" id="stf_cpr_${staffKey}" value="${st.cpr || ''}"></td>
+                            <td><input type="text" class="table-input" id="stf_username_${staffKey}" value="${st.username || ''}"></td>
+                            <td><input type="text" class="table-input" id="stf_email_${staffKey}" value="${st.email || ''}"></td>
+                            <td><input type="text" class="table-input" id="stf_role_${staffKey}" value="${st.role || ''}"></td>
+                            <td><input type="text" class="table-input" id="stf_classes_${staffKey}" value="${st.classes || ''}"></td>
                             <td>
-                                <button class="btn btn-orange" onclick="updateStaffManual(${st.id})">حفظ 💾</button>
-                                <button class="btn" style="background:#d32f2f; padding:5px 6px;" onclick="changeStaffPassManual(${st.id})">كلمة المرور 🔑</button>
-                                <button class="btn" style="background:#555; padding:5px 6px;" onclick="deleteStaffManual(${st.id})">حذف 🗑️</button>
+                                <button class="btn btn-orange" onclick="updateStaffManual('${staffKey}')">حفظ 💾</button>
+                                <button class="btn" style="background:#d32f2f; padding:5px 6px;" onclick="changeStaffPassManual('${staffKey}')">كلمة المرور 🔑</button>
+                                <button class="btn" style="background:#555; padding:5px 6px;" onclick="deleteStaffManual('${staffKey}')">حذف 🗑️</button>
                             </td>
                         </tr>`;
                 });
@@ -369,15 +382,15 @@
             }
         }
 
-        async function updateStaffManual(id) {
-            const name = document.getElementById(`stf_name_${id}`).value.trim();
-            const cpr = document.getElementById(`stf_cpr_${id}`).value.trim();
-            const username = document.getElementById(`stf_username_${id}`).value.trim();
-            const email = document.getElementById(`stf_email_${id}`).value.trim();
-            const role = document.getElementById(`stf_role_${id}`).value.trim();
-            const classes = document.getElementById(`stf_classes_${id}`).value.trim();
+        async function updateStaffManual(staffKey) {
+            const name = document.getElementById(`stf_name_${staffKey}`).value.trim();
+            const cpr = document.getElementById(`stf_cpr_${staffKey}`).value.trim();
+            const username = document.getElementById(`stf_username_${staffKey}`).value.trim();
+            const email = document.getElementById(`stf_email_${staffKey}`).value.trim();
+            const role = document.getElementById(`stf_role_${staffKey}`).value.trim();
+            const classes = document.getElementById(`stf_classes_${staffKey}`).value.trim();
 
-            const { error } = await supabaseClient.from('staff').update({ name, cpr, username, email, role, classes }).eq('id', id);
+            const { error } = await supabaseClient.from('staff').update({ name, cpr, username, email, role, classes }).eq('cpr', staffKey);
             if(error) { 
                 console.error("Staff Update Error:", error);
                 alert('خطأ أثناء التحديث: ' + error.message); 
@@ -387,9 +400,9 @@
             }
         }
 
-        async function deleteStaffManual(id) {
+        async function deleteStaffManual(staffKey) {
             if(confirm('هل أنت متأكد من حذف هذا المعلم نهائياً؟')) {
-                const { error } = await supabaseClient.from('staff').delete().eq('id', id);
+                const { error } = await supabaseClient.from('staff').delete().eq('cpr', staffKey);
                 if(error) {
                     console.error("Staff Delete Error:", error);
                     alert('خطأ أثناء الحذف: ' + error.message);
@@ -400,7 +413,7 @@
             }
         }
 
-        async function changeStaffPassManual(id) {
+        async function changeStaffPassManual(staffKey) {
             const p1 = prompt('أدخل كلمة المرور الجديدة للمعلم:');
             if(p1 === null || !p1.trim()) return;
             const p2 = prompt('أعد إدخال كلمة المرور الجديدة للتأكيد:');
@@ -409,7 +422,7 @@
                 return;
             }
 
-            const { error } = await supabaseClient.from('staff').update({ password: p1.trim() }).eq('id', id);
+            const { error } = await supabaseClient.from('staff').update({ password: p1.trim() }).eq('cpr', staffKey);
             if(error) {
                 alert('خطأ أثناء تغيير كلمة المرور.');
             } else {
@@ -534,7 +547,11 @@
             if(newPass) updateData.password = newPass;
 
             let query = supabaseClient.from('staff').update(updateData);
-            if (currentUser.id) query = query.eq('id', currentUser.id);
+            if (currentUser.cpr) {
+                query = query.eq('cpr', currentUser.cpr);
+            } else if (currentUser.username) {
+                query = query.eq('username', currentUser.username);
+            }
 
             const { data, error } = await query.select();
             if(error) {
