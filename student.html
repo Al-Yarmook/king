@@ -3,171 +3,95 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>منصة ملك جدول الضرب - بوابة الطالب</title>
-    <!-- مكتبة Supabase -->
+    <title>اختر اسمك - ملك جدول الضرب</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="config.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --primary: #4f46e5;
-            --secondary: #ec4899;
-            --accent: #f59e0b;
-            --bg: #f8fafc;
-            --card-bg: #ffffff;
-            --text: #1e293b;
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background-color: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
-        header { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; padding: 20px; text-align: center; }
-        .container { max-width: 800px; margin: 30px auto; padding: 20px; flex: 1; width: 100%; }
-        .card { background: var(--card-bg); border-radius: 12px; padding: 30px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
-        .form-group { margin-bottom: 20px; text-align: right; }
-        .form-group label { display: block; margin-bottom: 8px; font-weight: bold; color: var(--primary); }
-        .form-group input, .form-group select { width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 1rem; }
-        .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
-        .tab-btn { flex: 1; padding: 10px; border: 2px solid var(--primary); background: white; color: var(--primary); font-weight: bold; border-radius: 8px; cursor: pointer; transition: 0.2s; }
-        .tab-btn.active { background: var(--primary); color: white; }
-        .my-btn { background: var(--primary); color: white; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-size: 1.1rem; font-weight: bold; width: 100%; transition: 0.2s; }
-        .my-btn:hover { opacity: 0.9; }
-        .back-link { display: inline-block; margin-top: 20px; color: var(--primary); text-decoration: none; font-weight: bold; }
-        .hidden { display: none; }
+        body { font-family: 'Cairo', sans-serif; background: #f4f7f6; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        .card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
+        h2 { color: #d81b60; margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: 600; text-align: right; color: #333; }
+        select, button { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 8px; font-family: 'Cairo'; box-sizing: border-box; }
+        select { background: white; }
+        .btn { background: #d81b60; color: white; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .btn:hover { background: #ad1457; }
     </style>
 </head>
 <body>
 
-    <header>
-        <h1>👨‍🎓 بوابة الطالب والتدريب</h1>
-    </header>
+    <div class="card">
+        <h2>اختر صفك واسمك للبدء 🎮</h2>
+        
+        <label>اختر الصف الدراسي:</label>
+        <select id="classSelect" onchange="loadStudentsByClass()">
+            <option value="">-- اختر الصف --</option>
+        </select>
 
-    <div class="container">
-        <div class="card">
-            <h2 style="margin-bottom: 20px; text-align: center; color: var(--primary);">اختر طريقة الدخول للتحدي</h2>
-            
-            <!-- أزرار تبديل وضع الدخول -->
-            <div class="tabs">
-                <button class="tab-btn active" id="tabStudent" onclick="switchMode('student')">طالب مسجل (من القائمة)</button>
-                <button class="tab-btn" id="tabGuest" onclick="switchMode('guest')">دخول كضيف 🎮</button>
-            </div>
+        <label>اختر اسم الطالب:</label>
+        <select id="studentSelect">
+            <option value="">-- اختر اسمك --</option>
+        </select>
 
-            <div class="form-group">
-                <label>اختر الصف الدراسي:</label>
-                <select id="studentGrade" onchange="loadStudentsList()">
-                    <option value="الرابع">الصف الرابع</option>
-                    <option value="الخامس" selected>الصف الخامس</option>
-                    <option value="السادس">الصف السادس</option>
-                </select>
-            </div>
-
-            <!-- قسم اختيار الطالب من القائمة -->
-            <div class="form-group" id="studentSelectGroup">
-                <label>اختر اسمك من القائمة:</label>
-                <select id="studentNameSelect">
-                    <option value="">-- جاري تحميل الأسماء من السحابة... --</option>
-                </select>
-            </div>
-
-            <!-- قسم كتابة الاسم يدويًا للضيف -->
-            <div class="form-group hidden" id="guestInputGroup">
-                <label>أدخل اسمك الكريم (ضيف):</label>
-                <input type="text" id="guestNameInput" placeholder="اكتب اسمك الثلاثي هنا...">
-            </div>
-
-            <button class="my-btn" onclick="startChallenge()">ابدأ التحدي 🚀</button>
-            
-            <div style="text-align: center;">
-                <a href="index.html" class="back-link">← العودة للرئيسية</a>
-            </div>
-        </div>
+        <button class="btn" onclick="startGame()">ابدأ اللعبة 🚀</button>
     </div>
 
     <script>
-        let loginMode = 'student'; // 'student' or 'guest'
+        let allStudents = [];
 
-        function switchMode(mode) {
-            loginMode = mode;
-            const tabStudent = document.getElementById('tabStudent');
-            const tabGuest = document.getElementById('tabGuest');
-            const studentGroup = document.getElementById('studentSelectGroup');
-            const guestGroup = document.getElementById('guestInputGroup');
+        document.addEventListener('DOMContentLoaded', async () => {
+            await fetchStudents();
+        });
 
-            if (mode === 'student') {
-                tabStudent.classList.add('active');
-                tabGuest.classList.remove('active');
-                studentGroup.classList.remove('hidden');
-                guestGroup.classList.add('hidden');
-            } else {
-                tabGuest.classList.add('active');
-                tabStudent.classList.remove('active');
-                guestGroup.classList.remove('hidden');
-                studentGroup.classList.add('hidden');
+        async function fetchStudents() {
+            // جلب بيانات الطلاب باستخدام عمود cls الصحيح في قاعدة البيانات
+            const { data, error } = await supabaseClient.from('students').select('*');
+            if(error) {
+                console.error("Error fetching students:", error);
+                alert('حدث خطأ أثناء تحميل بيانات الطلاب.');
+                return;
             }
-        }
 
-        // دالة لجلب أسماء الطلاب من جدول students في Supabase بناءً على الصف
-        async function loadStudentsList() {
-            const grade = document.getElementById('studentGrade').value;
-            const selectDropdown = document.getElementById('studentNameSelect');
-            selectDropdown.innerHTML = '<option value="">-- جاري التحميل... --</option>';
-
-            try {
-                const { data, error } = await supabaseClient
-                    .from('students')
-                    .select('name')
-                    .eq('grade', grade)
-                    .order('name', { ascending: true });
-
-                if (error) throw error;
-
-                selectDropdown.innerHTML = '';
-                if (!data || data.length === 0) {
-                    selectDropdown.innerHTML = '<option value="">لا توجد أسماء مسجلة لهذا الصف حالياً (يمكنك الدخول كضيف)</option>';
-                    return;
-                }
-
-                selectDropdown.innerHTML = '<option value="">-- اضغط لاختيار اسمك --</option>';
-                data.forEach(student => {
-                    const opt = document.createElement('option');
-                    opt.value = student.name;
-                    opt.textContent = student.name;
-                    selectDropdown.appendChild(opt);
+            if(data && data.length > 0) {
+                allStudents = data;
+                // استخراج الصفوف الفريدة وترتيبها
+                let classes = [...new Set(data.map(s => s.cls))].filter(Boolean);
+                const classSelect = document.getElementById('classSelect');
+                classSelect.innerHTML = '<option value="">-- اختر الصف --</option>';
+                
+                classes.forEach(cls => {
+                    classSelect.innerHTML += `<option value="${cls}">${cls}</option>`;
                 });
-
-            } catch (err) {
-                console.error(err);
-                selectDropdown.innerHTML = '<option value="">خطأ في جلب الأسماء من السحابة</option>';
             }
         }
 
-        function startChallenge() {
-            let name = '';
-            const grade = document.getElementById('studentGrade').value;
+        function loadStudentsByClass() {
+            const selectedClass = document.getElementById('classSelect').value;
+            const studentSelect = document.getElementById('studentSelect');
+            studentSelect.innerHTML = '<option value="">-- اختر اسمك --</option>';
 
-            if (loginMode === 'student') {
-                name = document.getElementById('studentNameSelect').value;
-                if (!name) {
-                    alert('الرجاء اختيار اسمك من القائمة!');
-                    return;
-                }
-            } else {
-                name = document.getElementById('guestNameInput').value.trim();
-                if (!name) {
-                    alert('الرجاء إدخال اسمك الكريم!');
-                    return;
-                }
-                name = name + ' (ضيف)';
-            }
+            if(!selectedClass) return;
 
-            localStorage.setItem('current_student_name', name);
-            localStorage.setItem('current_student_grade', grade);
-
-            alert('أهلاً بك يا ' + name + '! سنبدأ التحدي الآن.');
+            // فلترة الطلاب بناءً على الصف المختار باستخدام عمود cls
+            const filtered = allStudents.filter(s => s.cls === selectedClass);
+            filtered.forEach(s => {
+                studentSelect.innerHTML += `<option value="${s.name}">${s.name}</option>`;
+            });
         }
 
-        // تحميل قائمة الطلاب عند فتح الصفحة أول مرة
-        window.onload = function() {
-            loadStudentsList();
-        };
+        function startGame() {
+            const cls = document.getElementById('classSelect').value;
+            const name = document.getElementById('studentSelect').value;
+
+            if(!cls || !name) {
+                alert('الرجاء اختيار الصف واسم الطالب أولاً!');
+                return;
+            }
+
+            // حفظ بيانات الطالب في الجلسة للانتقال إلى شاشة اللعب
+            localStorage.setItem('current_student', JSON.stringify({ name, cls }));
+            window.location.href = 'game.html'; // أو اسم صفحة اللعبة لديك
+        }
     </script>
-
 </body>
 </html>
