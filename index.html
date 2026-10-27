@@ -3,95 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>اختر اسمك - ملك جدول الضرب</title>
+    <title>منصة ملك جدول الضرب</title>
+    <!-- مكتبة Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="config.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Cairo', sans-serif; background: #f4f7f6; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; height: 100vh; }
-        .card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
-        h2 { color: #d81b60; margin-bottom: 20px; }
-        label { display: block; margin-bottom: 8px; font-weight: 600; text-align: right; color: #333; }
-        select, button { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 8px; font-family: 'Cairo'; box-sizing: border-box; }
-        select { background: white; }
-        .btn { background: #d81b60; color: white; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        .btn:hover { background: #ad1457; }
+        :root {
+            --primary: #4f46e5;
+            --secondary: #ec4899;
+            --accent: #f59e0b;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
+        header { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; padding: 25px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        header h1 { font-size: 2.2rem; margin-bottom: 5px; }
+        .container { max-width: 900px; margin: 40px auto; padding: 20px; flex: 1; width: 100%; }
+        .card { background: var(--card-bg); border-radius: 12px; padding: 30px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); text-align: center; }
+        .my-btn { background: var(--primary); color: white; border: none; padding: 15px 35px; border-radius: 10px; cursor: pointer; font-size: 1.2rem; font-weight: bold; margin: 10px; transition: 0.2s; text-decoration: none; display: inline-block; }
+        .my-btn:hover { opacity: 0.9; transform: translateY(-2px); }
+        .btn-secondary { background: var(--secondary); }
+        .btn-accent { background: var(--accent); }
+        footer { background: #1e293b; color: white; text-align: center; padding: 20px; margin-top: auto; font-size: 1rem; }
     </style>
 </head>
 <body>
 
-    <div class="card">
-        <h2>اختر صفك واسمك للبدء 🎮</h2>
-        
-        <label>اختر الصف الدراسي:</label>
-        <select id="classSelect" onchange="loadStudentsByClass()">
-            <option value="">-- اختر الصف --</option>
-        </select>
+    <header>
+        <h1>👑 منصة ملك جدول الضرب</h1>
+        <p>نحو تميز تفاعلي وممتع في الرياضيات</p>
+    </header>
 
-        <label>اختر اسم الطالب:</label>
-        <select id="studentSelect">
-            <option value="">-- اختر اسمك --</option>
-        </select>
-
-        <button class="btn" onclick="startGame()">ابدأ اللعبة 🚀</button>
+    <div class="container">
+        <div class="card">
+            <h2 style="margin-bottom: 25px; color: var(--primary);">مرحباً بك! اختر نوع الدخول للبدء:</h2>
+            <div style="display: flex; justify-content: center; gap: 15px; flex-wrap: wrap;">
+                <a href="student.html" class="my-btn">👨‍🎓 دخول الطالب / ضيف</a>
+                <a href="staff.html" class="my-btn btn-secondary">👩‍🏫 دخول الكادر التعليمي والإدارة</a>
+                <a href="leaderboard.html" class="my-btn btn-accent">🏆 لوحة الملوك الكبرى</a>
+            </div>
+        </div>
     </div>
 
-    <script>
-        let allStudents = [];
+    <footer>
+        إعداد أ. صادق القلعاوي<br>
+        مدرسة اليرموك الابتدائية للبنين
+    </footer>
 
-        document.addEventListener('DOMContentLoaded', async () => {
-            await fetchStudents();
-        });
-
-        async function fetchStudents() {
-            // جلب بيانات الطلاب باستخدام عمود cls الصحيح في قاعدة البيانات
-            const { data, error } = await supabaseClient.from('students').select('*');
-            if(error) {
-                console.error("Error fetching students:", error);
-                alert('حدث خطأ أثناء تحميل بيانات الطلاب.');
-                return;
-            }
-
-            if(data && data.length > 0) {
-                allStudents = data;
-                // استخراج الصفوف الفريدة وترتيبها
-                let classes = [...new Set(data.map(s => s.cls))].filter(Boolean);
-                const classSelect = document.getElementById('classSelect');
-                classSelect.innerHTML = '<option value="">-- اختر الصف --</option>';
-                
-                classes.forEach(cls => {
-                    classSelect.innerHTML += `<option value="${cls}">${cls}</option>`;
-                });
-            }
-        }
-
-        function loadStudentsByClass() {
-            const selectedClass = document.getElementById('classSelect').value;
-            const studentSelect = document.getElementById('studentSelect');
-            studentSelect.innerHTML = '<option value="">-- اختر اسمك --</option>';
-
-            if(!selectedClass) return;
-
-            // فلترة الطلاب بناءً على الصف المختار باستخدام عمود cls
-            const filtered = allStudents.filter(s => s.cls === selectedClass);
-            filtered.forEach(s => {
-                studentSelect.innerHTML += `<option value="${s.name}">${s.name}</option>`;
-            });
-        }
-
-        function startGame() {
-            const cls = document.getElementById('classSelect').value;
-            const name = document.getElementById('studentSelect').value;
-
-            if(!cls || !name) {
-                alert('الرجاء اختيار الصف واسم الطالب أولاً!');
-                return;
-            }
-
-            // حفظ بيانات الطالب في الجلسة للانتقال إلى شاشة اللعب
-            localStorage.setItem('current_student', JSON.stringify({ name, cls }));
-            window.location.href = 'game.html'; // أو اسم صفحة اللعبة لديك
-        }
-    </script>
 </body>
 </html>
