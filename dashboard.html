@@ -364,6 +364,7 @@
             if(confirm('هل أنت متأكد من حذف هذا المعلم نهائياً من السجل؟')) {
                 const { error } = await supabaseClient.from('staff').delete().eq('id', id);
                 if(error) {
+                    console.error("Staff Delete Error:", error);
                     alert('حدث خطأ أثناء محاولة حذف المعلم.');
                 } else {
                     alert('تم حذف المعلم من السجل بنجاح!');
