@@ -106,10 +106,9 @@
             </table>
         </div>
 
-        <!-- 3. قسم إعداد الألعاب والمستويات (للمشرف والمدير فقط) -->
+        <!-- 3. قسم إعداد الألعاب والمستويات -->
         <div id="games" class="section-card">
             <h2>إعداد مستويات وجداول الضرب للألعاب (من الثاني حتى السادس)</h2>
-            <p>تحديد الحد الأقصى لجدول الضرب المطلوب لكل صف دراسي:</p>
             <div class="form-row">
                 <div class="form-group"><label>الصف الثاني الابتدائي:</label><input type="number" id="lvl2" value="3"></div>
                 <div class="form-group"><label>الصف الثالث الابتدائي:</label><input type="number" id="lvl3" value="5"></div>
@@ -135,12 +134,11 @@
             </table>
         </div>
 
-        <!-- 5. قسم الإعدادات وتصفير النتائج (للمدير فقط) -->
+        <!-- 5. قسم الإعدادات وتصفير النتائج -->
         <div id="settings" class="section-card">
             <h2>الإعدادات العامة وتصفير النتائج</h2>
             <div class="danger-zone">
                 <h3 style="color: #d32f2f; margin-top:0;">⚠️ منطقة الخطر: تصفير درجات الألعاب</h3>
-                <p>مسح جميع درجات ونتائج الطلاب المسجلة في قاعدة البيانات السحابية.</p>
                 <div class="form-row" style="max-width: 400px;">
                     <div class="form-group"><label>أدخل كلمة مرور الحساب للتأكيد:</label><input type="password" id="confirmResetPass"></div>
                 </div>
@@ -275,13 +273,22 @@
                     const data = new Uint8Array(evt.target.result);
                     const workbook = XLSX.read(data, {type: 'array'});
                     const sheet = workbook.Sheets[workbook.SheetNames[0]];
-                    const rows = XLSX.utils.sheet_to_json(sheet);
+                    const rows = XLSX.utils.sheet_to_json(sheet, {defval: ""});
                     
                     let successCount = 0;
                     for(let r of rows) {
-                        const studentName = r.name || r['اسم الطالب'] || r['الاسم'] || r['Student'];
-                        const studentClass = r.class || r['الصف'] || r['الشعبة'] || r['Class'];
-                        const studentCpr = r.cpr || r['الرقم الشخصي'] || r['CPR'];
+                        // استخراج القيم بمرونة تامة بغض النظر عن أسماء الأعمدة
+                        let keys = Object.keys(r);
+                        let studentName = "";
+                        let studentClass = "";
+                        let studentCpr = "";
+
+                        keys.forEach(k => {
+                            let lk = k.toLowerCase().trim();
+                            if(lk.includes('name') || lk.includes('اسم') || lk.includes('طالب')) studentName = r[k];
+                            if(lk.includes('class') || lk.includes('صف') || lk.includes('شعبة')) studentClass = r[k];
+                            if(lk.includes('cpr') || lk.includes('شخصي') || lk.includes('رقم')) studentCpr = r[k];
+                        });
 
                         if(studentName && studentClass) {
                             const { error } = await supabaseClient.from('students').insert([{ 
@@ -346,8 +353,8 @@
 
             const { error } = await supabaseClient.from('staff').update({ name, cpr, email, role, classes }).eq('id', id);
             if(error) { 
-                console.error("Staff Update Error Details:", error);
-                alert('خطأ أثناء تحديث المعلم: ' + (error.message || 'يرجى التحقق من المدخلات')); 
+                console.error("Staff Update Error:", error);
+                alert('خطأ أثناء التحديث: تأكد من تنفيذ أمر تعطيل RLS في Supabase'); 
             } else { 
                 alert('تم تحديث بيانات المعلم بنجاح!'); 
                 loadStaff(); 
@@ -355,48 +362,32 @@
         }
 
         async function deleteStaffManual(id) {
-            const roleVal = String(currentUser.role || '').trim().toLowerCase();
-            if(roleVal !== 'admin' && roleVal !== 'مدير') {
-                alert('عذراً، هذه الصلاحية مخصصة لمدير النظام فقط!');
-                return;
-            }
-
-            if(confirm('هل أنت متأكد من حذف هذا المعلم نهائياً من السجل؟')) {
+            if(confirm('هل أنت متأكد من حذف هذا المعلم نهائياً؟')) {
                 const { error } = await supabaseClient.from('staff').delete().eq('id', id);
                 if(error) {
                     console.error("Staff Delete Error:", error);
-                    alert('حدث خطأ أثناء محاولة حذف المعلم.');
+                    alert('خطأ أثناء الحذف: تأكد من تعطيل RLS في Supabase');
                 } else {
-                    alert('تم حذف المعلم من السجل بنجاح!');
+                    alert('تم حذف المعلم بنجاح!');
                     loadStaff();
                 }
             }
         }
 
         async function changeStaffPassManual(id) {
-            const roleVal = String(currentUser.role || '').trim().toLowerCase();
-            if(roleVal !== 'admin' && roleVal !== 'مدير') {
-                alert('عذراً، هذه الصلاحية مخصصة لمدير النظام فقط!');
-                return;
-            }
-
             const p1 = prompt('أدخل كلمة المرور الجديدة للمعلم:');
-            if(p1 === null) return;
-            if(!p1.trim()) { alert('كلمة المرور لا يمكن أن تكون فارغة!'); return; }
-            
+            if(p1 === null || !p1.trim()) return;
             const p2 = prompt('أعد إدخال كلمة المرور الجديدة للتأكيد:');
-            if(p2 === null) return;
-
-            if(p1 !== p2) {
-                alert('خطأ: كلمتا المرور غير متطابقتين! لم يتم التغيير.');
+            if(p2 === null || p1 !== p2) {
+                alert('كلمتا المرور غير متطابقتين!');
                 return;
             }
 
             const { error } = await supabaseClient.from('staff').update({ password: p1.trim() }).eq('id', id);
             if(error) {
-                alert('حدث خطأ أثناء تغيير كلمة المرور.');
+                alert('خطأ أثناء تغيير كلمة المرور.');
             } else {
-                alert('تم تغيير كلمة المرور للمعلم بنجاح وتحديثها في السحابة!');
+                alert('تم تغيير كلمة المرور بنجاح!');
             }
         }
 
@@ -407,9 +398,8 @@
             const password = document.getElementById('stfPass').value.trim() || '0';
             const classes = document.getElementById('stfClasses').value.trim();
             const role = document.getElementById('stfRole').value;
-            const username = cpr || email;
 
-            const { error } = await supabaseClient.from('staff').insert([{ name, cpr, email, password, classes, role, username }]);
+            const { error } = await supabaseClient.from('staff').insert([{ name, cpr, email, password, classes, role }]);
             if(error) { alert('خطأ في الإضافة'); } else { alert('تم إضافة المعلم بنجاح'); loadStaff(); }
         }
 
@@ -428,23 +418,29 @@
                 const data = new Uint8Array(evt.target.result);
                 const workbook = XLSX.read(data, {type: 'array'});
                 const sheet = workbook.Sheets[workbook.SheetNames[0]];
-                const rows = XLSX.utils.sheet_to_json(sheet);
+                const rows = XLSX.utils.sheet_to_json(sheet, {defval: ""});
+                
                 for(let r of rows) {
-                    const stName = r.name || r['اسم المعلم'] || r['الاسم'];
-                    const stCpr = r.cpr || r['الرقم الشخصي'];
-                    const stEmail = r.email || r['البريد الإلكتروني'];
-                    const stRole = r.role || r['الدور'] || 'Teacher';
-                    const stClasses = r.classes || r['الصفوف'] || '';
+                    let keys = Object.keys(r);
+                    let stName = "", stCpr = "", stEmail = "", stRole = "Teacher", stClasses = "";
+
+                    keys.forEach(k => {
+                        let lk = k.toLowerCase().trim();
+                        if(lk.includes('name') || lk.includes('اسم')) stName = r[k];
+                        if(lk.includes('cpr') || lk.includes('شخصي')) stCpr = r[k];
+                        if(lk.includes('email') || lk.includes('بريد')) stEmail = r[k];
+                        if(lk.includes('role') || lk.includes('دور')) stRole = r[k];
+                        if(lk.includes('class') || lk.includes('صفوف')) stClasses = r[k];
+                    });
 
                     if(stName) {
                         await supabaseClient.from('staff').insert([{
                             name: String(stName).trim(), 
                             cpr: stCpr ? String(stCpr).trim() : null, 
                             email: stEmail ? String(stEmail).trim() : null, 
-                            password: r.password ? String(r.password) : '0', 
+                            password: '0', 
                             classes: String(stClasses).trim(), 
-                            role: String(stRole).trim(), 
-                            username: stCpr ? String(stCpr).trim() : (stEmail ? String(stEmail).trim() : null)
+                            role: String(stRole).trim()
                         }]);
                     }
                 }
@@ -481,7 +477,7 @@
         }
 
         async function saveGameLevels() {
-            alert('تم حفظ إعدادات مستويات الصفوف (الثاني حتى السادس) بنجاح!');
+            alert('تم حفظ إعدادات مستويات الصفوف بنجاح!');
         }
 
         async function resetScoresData() {
@@ -509,20 +505,10 @@
             if(newPass) updateData.password = newPass;
 
             let query = supabaseClient.from('staff').update(updateData);
-            
-            if (currentUser.id) {
-                query = query.eq('id', currentUser.id);
-            } else if (currentUser.cpr) {
-                query = query.eq('cpr', currentUser.cpr);
-            } else {
-                alert('خطأ في بيانات الجلسة، يرجى تسجيل الخروج والدخول مرة أخرى.');
-                return;
-            }
+            if (currentUser.id) query = query.eq('id', currentUser.id);
 
             const { data, error } = await query.select();
-
             if(error) {
-                console.error("Update Error:", error);
                 alert('حدث خطأ أثناء التحديث في السحابة.');
             } else {
                 alert('تم تحديث ومزامنة بياناتك الشخصية بنجاح!');
