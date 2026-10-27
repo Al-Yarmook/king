@@ -1,45 +1,42 @@
 async function staffLogin() {
-            const inputVal = document.getElementById('staffEmail').value.trim();
-            const pass = document.getElementById('staffPass').value.trim();
+    const inputVal = document.getElementById('staffEmail').value.trim();
+    const pass = document.getElementById('staffPass').value.trim();
 
-            if(!inputVal || !pass) {
-                alert('الرجاء إدخال اسم المستخدم/الرقم وكلمة المرور!');
-                return;
-            }
+    if(!inputVal || !pass) {
+        alert('الرجاء إدخال اسم المستخدم/الرقم وكلمة المرور!');
+        return;
+    }
 
-            try {
-                // البحث في جدول staff إما عبر username أو cpr أو email
-                const { data, error } = await supabaseClient
-                    .from('staff')
-                    .select('*')
-                    .or(`username.eq.${inputVal},cpr.eq.${inputVal},email.eq.${inputVal}`)
-                    .maybeSingle();
+    try {
+        const { data, error } = await supabaseClient
+            .from('staff')
+            .select('*')
+            .or(`username.eq.${inputVal},cpr.eq.${inputVal},email.eq.${inputVal}`)
+            .maybeSingle();
 
-                if (error || !data) {
-                    alert('خطأ: اسم المستخدم أو الرقم غير صحيح.');
-                    return;
-                }
-
-                if (data.password !== pass) {
-                    alert('كلمة المرور غير صحيحة!');
-                    return;
-                }
-
-                // التحقق إذا كانت كلمة المرور المؤقتة هي 0
-                if (data.password === '0') {
-                    loggedInStaffId = data.id;
-                    document.getElementById('loginCard').classList.add('hidden');
-                    document.getElementById('resetCard').classList.remove('hidden');
-                    return;
-                }
-
-                // تسجيل الدخول العادي الناجح
-                alert('أهلاً بك يا أستاذ ' + (data.name || ''));
-                localStorage.setItem('current_staff_user', JSON.stringify(data));
-                window.location.href = 'dashboard.html';
-
-            } catch (err) {
-                console.error(err);
-                alert('حدث خطأ أثناء محاولة الاتصال بالسحابة.');
-            }
+        if (error || !data) {
+            alert('خطأ: اسم المستخدم أو الرقم غير صحيح.');
+            return;
         }
+
+        if (data.password !== pass) {
+            alert('كلمة المرور غير صحيحة!');
+            return;
+        }
+
+        if (data.password === '0') {
+            loggedInStaffId = data.id;
+            document.getElementById('loginCard').classList.add('hidden');
+            document.getElementById('resetCard').classList.remove('hidden');
+            return;
+        }
+
+        alert('أهلاً بك يا أستاذ ' + (data.name || ''));
+        localStorage.setItem('current_staff_user', JSON.stringify(data));
+        window.location.href = 'dashboard.html';
+
+    } catch (err) {
+        console.error(err);
+        alert('حدث خطأ أثناء محاولة الاتصال بالسحابة.');
+    }
+}
