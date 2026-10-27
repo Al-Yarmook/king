@@ -19,7 +19,7 @@
         .section-card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; display: none; }
         .section-card.active { display: block; }
         table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { border: 1px solid #ddd; padding: 10px; text-align: center; font-size: 14px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: center; font-size: 13px; }
         th { background: #d81b60; color: white; }
         .btn { background: #d81b60; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; font-family: 'Cairo'; transition: 0.3s; }
         .btn:hover { background: #ad1457; }
@@ -71,7 +71,7 @@
                 <div class="form-group"><label>الرقم الشخصي:</label><input type="text" id="stdCpr" placeholder="اختياري"></div>
                 <div class="form-group" style="align-self: flex-end;"><button class="btn" onclick="addStudentManual()">إضافة الطالب ➕</button></div>
             </div>
-            <h3>قائمة الطلاب المسجلين (التعديل المباشر في الجدول)</h3>
+            <h3>قائمة الطلاب المسجلين</h3>
             <table id="studentsTable">
                 <thead><tr><th>اسم الطالب</th><th>الصف/الفرقة</th><th>الرقم الشخصي</th><th>الإجراءات والتحديث</th></tr></thead>
                 <tbody></tbody>
@@ -99,9 +99,9 @@
                 <div class="form-group"><label>الدور:</label><select id="stfRole"><option value="Teacher">معلم</option><option value="Supervisor">مشرف</option><option value="Admin">مدير</option></select></div>
                 <div class="form-group" style="align-self: flex-end;"><button class="btn" onclick="addStaffManual()">حفظ المعلم ➕</button></div>
             </div>
-            <h3>قائمة المعلمين (التعديل المباشر، تغيير كلمة المرور، أو الحذف)</h3>
+            <h3>قائمة المعلمين (التعديل المباشر، كلمة المرور، أو الحذف)</h3>
             <table id="staffTable">
-                <thead><tr><th>الاسم</th><th>الرقم الشخصي</th><th>البريد الإلكتروني</th><th>الدور</th><th>الصفوف</th><th>الإجراءات</th></tr></thead>
+                <thead><tr><th>الاسم</th><th>الرقم الشخصي</th><th>اسم المستخدم</th><th>البريد</th><th>الدور</th><th>الصفوف</th><th>الإجراءات</th></tr></thead>
                 <tbody></tbody>
             </table>
         </div>
@@ -277,11 +277,8 @@
                     
                     let successCount = 0;
                     for(let r of rows) {
-                        // استخراج القيم بمرونة تامة بغض النظر عن أسماء الأعمدة
                         let keys = Object.keys(r);
-                        let studentName = "";
-                        let studentClass = "";
-                        let studentCpr = "";
+                        let studentName = "", studentClass = "", studentCpr = "";
 
                         keys.forEach(k => {
                             let lk = k.toLowerCase().trim();
@@ -329,6 +326,7 @@
                         <tr>
                             <td><input type="text" class="table-input" id="stf_name_${st.id}" value="${st.name || ''}"></td>
                             <td><input type="text" class="table-input" id="stf_cpr_${st.id}" value="${st.cpr || ''}"></td>
+                            <td><input type="text" class="table-input" id="stf_username_${st.id}" value="${st.username || ''}"></td>
                             <td><input type="text" class="table-input" id="stf_email_${st.id}" value="${st.email || ''}"></td>
                             <td><input type="text" class="table-input" id="stf_role_${st.id}" value="${st.role || ''}"></td>
                             <td><input type="text" class="table-input" id="stf_classes_${st.id}" value="${st.classes || ''}"></td>
@@ -340,21 +338,22 @@
                         </tr>`;
                 });
             } else {
-                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#666;">لا توجد بيانات معلمين مسجلة حالياً.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#666;">لا توجد بيانات معلمين مسجلة حالياً.</td></tr>`;
             }
         }
 
         async function updateStaffManual(id) {
             const name = document.getElementById(`stf_name_${id}`).value.trim();
             const cpr = document.getElementById(`stf_cpr_${id}`).value.trim();
+            const username = document.getElementById(`stf_username_${id}`).value.trim();
             const email = document.getElementById(`stf_email_${id}`).value.trim();
             const role = document.getElementById(`stf_role_${id}`).value.trim();
             const classes = document.getElementById(`stf_classes_${id}`).value.trim();
 
-            const { error } = await supabaseClient.from('staff').update({ name, cpr, email, role, classes }).eq('id', id);
+            const { error } = await supabaseClient.from('staff').update({ name, cpr, username, email, role, classes }).eq('id', id);
             if(error) { 
                 console.error("Staff Update Error:", error);
-                alert('خطأ أثناء التحديث: تأكد من تنفيذ أمر تعطيل RLS في Supabase'); 
+                alert('خطأ أثناء التحديث: ' + error.message); 
             } else { 
                 alert('تم تحديث بيانات المعلم بنجاح!'); 
                 loadStaff(); 
@@ -366,7 +365,7 @@
                 const { error } = await supabaseClient.from('staff').delete().eq('id', id);
                 if(error) {
                     console.error("Staff Delete Error:", error);
-                    alert('خطأ أثناء الحذف: تأكد من تعطيل RLS في Supabase');
+                    alert('خطأ أثناء الحذف: ' + error.message);
                 } else {
                     alert('تم حذف المعلم بنجاح!');
                     loadStaff();
@@ -398,13 +397,14 @@
             const password = document.getElementById('stfPass').value.trim() || '0';
             const classes = document.getElementById('stfClasses').value.trim();
             const role = document.getElementById('stfRole').value;
+            const username = cpr || email;
 
-            const { error } = await supabaseClient.from('staff').insert([{ name, cpr, email, password, classes, role }]);
-            if(error) { alert('خطأ في الإضافة'); } else { alert('تم إضافة المعلم بنجاح'); loadStaff(); }
+            const { error } = await supabaseClient.from('staff').insert([{ name, cpr, username, email, password, classes, role }]);
+            if(error) { alert('خطأ في الإضافة: ' + error.message); } else { alert('تم إضافة المعلم بنجاح'); loadStaff(); }
         }
 
         function downloadStaffTemplate() {
-            const ws = XLSX.utils.json_to_sheet([{ name: "أحمد علي", cpr: "900000000", email: "teacher@yarmook.bh", password: "0", classes: "5ب4", role: "Teacher" }]);
+            const ws = XLSX.utils.json_to_sheet([{ name: "أحمد علي", cpr: "900000000", username: "900000000", email: "teacher@yarmook.bh", password: "0", classes: "5ب4", role: "Teacher" }]);
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "المعلمين");
             XLSX.writeFile(wb, "staff_template.xlsx");
@@ -422,12 +422,13 @@
                 
                 for(let r of rows) {
                     let keys = Object.keys(r);
-                    let stName = "", stCpr = "", stEmail = "", stRole = "Teacher", stClasses = "";
+                    let stName = "", stCpr = "", stUsername = "", stEmail = "", stRole = "Teacher", stClasses = "";
 
                     keys.forEach(k => {
                         let lk = k.toLowerCase().trim();
                         if(lk.includes('name') || lk.includes('اسم')) stName = r[k];
                         if(lk.includes('cpr') || lk.includes('شخصي')) stCpr = r[k];
+                        if(lk.includes('username') || lk.includes('مستخدم')) stUsername = r[k];
                         if(lk.includes('email') || lk.includes('بريد')) stEmail = r[k];
                         if(lk.includes('role') || lk.includes('دور')) stRole = r[k];
                         if(lk.includes('class') || lk.includes('صفوف')) stClasses = r[k];
@@ -437,6 +438,7 @@
                         await supabaseClient.from('staff').insert([{
                             name: String(stName).trim(), 
                             cpr: stCpr ? String(stCpr).trim() : null, 
+                            username: stUsername ? String(stUsername).trim() : (stCpr ? String(stCpr).trim() : stEmail),
                             email: stEmail ? String(stEmail).trim() : null, 
                             password: '0', 
                             classes: String(stClasses).trim(), 
@@ -451,7 +453,7 @@
         }
 
         async function exportStaffExcel() {
-            const { data } = await supabaseClient.from('staff').select('name, cpr, email, role, classes');
+            const { data } = await supabaseClient.from('staff').select('name, cpr, username, email, role, classes');
             const ws = XLSX.utils.json_to_sheet(data);
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "المعلمين");
