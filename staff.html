@@ -30,7 +30,7 @@
     <div class="card" id="loginCard">
         <h2>تسجيل دخول المعلمين والإدارة</h2>
         <div class="form-group">
-            <label>البريد الإلكتروني أو اسم المستخدم / الرقم الشخصي:</label>
+            <label>اسم المستخدم أو الرقم الشخصي أو البريد:</label>
             <input type="text" id="staffEmail" placeholder="أدخل اسم المستخدم أو الرقم">
         </div>
         <div class="form-group">
@@ -107,32 +107,80 @@
             document.getElementById('loginBtn').addEventListener('click', async () => {
                 const inputVal = document.getElementById('staffEmail').value.trim();
                 const pass = document.getElementById('staffPass').value.trim();
-                if(!inputVal || !pass) { alert('الرجاء إدخال البيانات!'); return; }
-
-                const { data, error } = await supabaseClient.from('staff').select('*').or(`username.eq.${inputVal},cpr.eq.${inputVal},email.eq.${inputVal}`).maybeSingle();
-                if (error || !data) { alert('خطأ: اسم المستخدم أو الرقم غير صحيح.'); return; }
-                if (data.password !== pass) { alert('كلمة المرور غير صحيحة!'); return; }
-
-                if (data.password === '0') {
-                    tempStaffData = data;
-                    document.getElementById('loginCard').classList.add('hidden');
-                    document.getElementById('resetCard').classList.remove('hidden');
-                    return;
+                
+                if(!inputVal || !pass) { 
+                    alert('الرجاء إدخال اسم المستخدم وكلمة المرور!'); 
+                    return; 
                 }
 
-                localStorage.setItem('current_staff_user', JSON.stringify(data));
-                window.location.href = 'dashboard.html';
+                try {
+                    // البحث الدقيق في جدول staff بالاسم أو الرقم أو البريد
+                    const { data, error } = await supabaseClient
+                        .from('staff')
+                        .select('*')
+                        .or(`username.eq.${inputVal},cpr.eq.${inputVal},email.eq.${inputVal}`)
+                        .maybeSingle();
+
+                    if (error) {
+                        console.error("Supabase Error:", error);
+                        alert('حدث خطأ في الاتصال بقاعدة البيانات.');
+                        return;
+                    }
+
+                    if (!data) {
+                        alert('خطأ: اسم المستخدم أو الرقم غير موجود في النظام.');
+                        return;
+                    }
+
+                    if (String(data.password) !== String(pass)) {
+                        alert('كلمة المرور غير صحيحة!');
+                        return;
+                    }
+
+                    // إذا كانت كلمة المرور المؤقتة 0
+                    if (String(data.password) === '0') {
+                        tempStaffData = data;
+                        document.getElementById('loginCard').classList.add('hidden');
+                        document.getElementById('resetCard').classList.remove('hidden');
+                        return;
+                    }
+
+                    // تسجيل الدخول بنجاح والانتقال للوحة التحكم
+                    localStorage.setItem('current_staff_user', JSON.stringify(data));
+                    window.location.href = 'dashboard.html';
+
+                } catch (err) {
+                    console.error("Login Exception:", err);
+                    alert('حدث خطأ غير متوقع أثناء تسجيل الدخول.');
+                }
             });
 
             document.getElementById('updatePassBtn').addEventListener('click', async () => {
                 const newPass = document.getElementById('newPass').value.trim();
                 const confirmPass = document.getElementById('confirmPass').value.trim();
-                if(!newPass || newPass !== confirmPass) { alert('كلمتا المرور غير متطابقتين!'); return; }
+                
+                if(!newPass || !confirmPass) { alert('الرجاء تعبئة خانات كلمة المرور!'); return; }
+                if(newPass !== confirmPass) { alert('كلمتا المرور غير متطابقتين!'); return; }
+                if(newPass === '0') { alert('لا يمكن تعيين كلمة المرور لتكون 0.'); return; }
 
-                await supabaseClient.from('staff').update({ password: newPass }).eq('id', tempStaffData.id);
-                alert('تم التحديث بنجاح!');
-                const { data } = await supabaseClient.from('staff').select('*').eq('id', tempStaffData.id).single();
-                localStorage.setItem('current_staff_user', JSON.stringify(data));
+                const targetId = tempStaffData ? tempStaffData.id : null;
+                if(!targetId) { alert('حدث خطأ في تحديد المستخدم، يرجى إعادة تسجيل الدخول.'); showLoginCard(); return; }
+
+                const { error } = await supabaseClient
+                    .from('staff')
+                    .update({ password: newPass })
+                    .eq('id', targetId);
+
+                if(error) {
+                    alert('حدث خطأ أثناء تحديث كلمة المرور.');
+                    return;
+                }
+
+                alert('تم تحديث كلمة المرور بنجاح! جاري تحويلك للوحة التحكم...');
+                const { data: updatedData } = await supabaseClient.from('staff').select('*').eq('id', targetId).single();
+                if(updatedData) {
+                    localStorage.setItem('current_staff_user', JSON.stringify(updatedData));
+                }
                 window.location.href = 'dashboard.html';
             });
 
@@ -140,12 +188,28 @@
                 const cpr = document.getElementById('forgotCpr').value.trim();
                 const email = document.getElementById('forgotEmail').value.trim();
                 const newPass = document.getElementById('forgotNewPass').value.trim();
+                
                 if(!cpr || !email || !newPass) { alert('الرجاء تعبئة جميع الحقول!'); return; }
 
-                const { data, error } = await supabaseClient.from('staff').select('*').eq('cpr', cpr).eq('email', email).maybeSingle();
-                if(error || !data) { alert('البيانات غير مطابقة لسجلات المعلمين!'); return; }
+                const { data, error } = await supabaseClient
+                    .from('staff')
+                    .select('*')
+                    .eq('cpr', cpr)
+                    .eq('email', email)
+                    .maybeSingle();
 
-                await supabaseClient.from('staff').update({ password: newPass }).eq('id', data.id);
+                if(error || !data) { alert('الرقم الشخصي أو البريد الإلكتروني غير مطابق!'); return; }
+
+                const { error: updateErr } = await supabaseClient
+                    .from('staff')
+                    .update({ password: newPass })
+                    .eq('id', data.id);
+
+                if(updateErr) {
+                    alert('حدث خطأ أثناء تحديث كلمة المرور.');
+                    return;
+                }
+
                 alert('تم تغيير كلمة المرور بنجاح! يمكنك تسجيل الدخول الآن.');
                 showLoginCard();
             });
