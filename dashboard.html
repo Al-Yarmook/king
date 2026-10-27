@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+\<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
@@ -159,7 +159,10 @@
         if(!currentUser) { 
             window.location.href = 'staff.html'; 
         } else {
-            document.getElementById('welcomeTitle').textContent = `أهلاً بك يا ${currentUser.name || 'مستخدم'} (${currentUser.role === 'Admin' ? 'مدير النظام' : currentUser.role === 'Supervisor' ? 'مشرف' : 'معلم'})`;
+            // تطبيع الدور ليكون آمناً بغض النظر عن حالة الأحرف
+            const roleVal = String(currentUser.role || 'Teacher').trim().toLowerCase();
+            const roleName = (roleVal === 'admin' || roleVal === 'مدير') ? 'مدير النظام' : (roleVal === 'supervisor' || roleVal === 'مشرف') ? 'مشرف' : 'معلم';
+            document.getElementById('welcomeTitle').textContent = `أهلاً بك يا ${currentUser.name || 'مستخدم'} (${roleName})`;
         }
 
         function switchTab(tabId) {
@@ -175,7 +178,8 @@
 
         async function loadStudents() {
             let query = supabaseClient.from('students').select('*');
-            if(currentUser.role === 'Teacher' && currentUser.classes) {
+            const roleVal = String(currentUser.role || '').trim().toLowerCase();
+            if(roleVal === 'teacher' && currentUser.classes) {
                 let clsList = currentUser.classes.split(',').map(c => c.trim());
                 query = query.in('class', clsList);
             }
@@ -237,7 +241,11 @@
         }
 
         async function loadStaff() {
-            if(currentUser.role !== 'Admin') { document.getElementById('staff').innerHTML = '<h2>عذراً، هذه الصفحة خاصة بمدير النظام فقط.</h2>'; return; }
+            const roleVal = String(currentUser.role || '').trim().toLowerCase();
+            if(roleVal !== 'admin' && roleVal !== 'مدير') { 
+                document.getElementById('staff').innerHTML = '<h2>عذراً، هذه الصفحة خاصة بمدير النظام فقط.</h2>'; 
+                return; 
+            }
             const { data } = await supabaseClient.from('staff').select('*');
             const tbody = document.querySelector('#staffTable tbody');
             tbody.innerHTML = '';
@@ -350,7 +358,6 @@
 
             let query = supabaseClient.from('staff').update(updateData);
             
-            // التحديث إما بالـ id أو بالرقم الشخصي الأصلي لضمان نجاح العملية بدون أخطاء
             if (currentUser.id) {
                 query = query.eq('id', currentUser.id);
             } else if (currentUser.cpr) {
