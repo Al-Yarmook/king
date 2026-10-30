@@ -10,21 +10,20 @@
     <style>
         body { font-family: 'Cairo', sans-serif; background: radial-gradient(circle, #1a1c29 0%, #0d0e15 100%); color: white; margin: 0; padding: 0; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; }
         .game-container { width: 100%; max-width: 600px; height: 100vh; background: rgba(15, 23, 42, 0.95); position: relative; box-shadow: 0 0 30px rgba(79, 70, 229, 0.4); display: flex; flex-direction: column; justify-content: space-between; border-left: 2px solid #334155; border-right: 2px solid #334155; box-sizing: border-box; overflow: hidden; }
-        .hud { display: flex; justify-content: space-between; padding: 15px 20px; background: rgba(30, 41, 59, 0.95); font-size: 16px; font-weight: bold; border-bottom: 2px solid #4f46e5; z-index: 10; }
+        .hud { display: flex; justify-content: space-between; padding: 15px 20px; background: rgba(30, 41, 59, 0.95); font-size: 16px; font-weight: bold; border-bottom: 2px solid #4f46e5; z-index: 10; position: relative; }
         .hud span { color: #f59e0b; }
+        
+        /* تنبيه الوقت الإضافي داخل اللعبة بدون رسالة منبثقة */
+        .bonus-float-msg { position: absolute; top: 65px; left: 50%; transform: translateX(-50%); background: #10b981; color: white; padding: 4px 15px; border-radius: 20px; font-size: 14px; font-weight: bold; box-shadow: 0 0 15px #10b981; pointer-events: none; opacity: 0; transition: 0.3s; z-index: 20; }
+        .bonus-float-msg.show { opacity: 1; transform: translateX(-50%) translateY(-5px); }
+
         .arena { flex: 1; position: relative; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; cursor: crosshair; }
         .question-box { background: rgba(79, 70, 229, 0.9); padding: 10px 30px; border-radius: 12px; font-size: 32px; font-weight: 900; margin-top: 15px; box-shadow: 0 0 20px rgba(79, 70, 229, 0.8); letter-spacing: 2px; z-index: 5; }
         
-        /* شكل النيازك كأجرام صخرية تتحرك بعشوائية بدون دوران */
         .falling-asteroid { position: absolute; background: linear-gradient(135deg, #64748b, #334155, #1e293b); border: 2px solid #94a3b8; color: white; border-radius: 35% 65% 50% 50% / 40% 45% 55% 60%; width: 75px; height: 75px; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: bold; cursor: pointer; box-shadow: inset -5px -5px 15px rgba(0,0,0,0.7), 0 4px 15px rgba(0,0,0,0.5); user-select: none; }
-
-        /* الصاروخ الثابت في الأسفل */
         .rocket-ship { position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); font-size: 55px; user-select: none; z-index: 5; }
-
-        /* شعاع الليزر المنطلق من الصاروخ */
         .laser-beam { position: absolute; bottom: 70px; width: 4px; background: linear-gradient(to top, #ef4444, #f87171, #fef08a); transform-origin: bottom center; z-index: 4; box-shadow: 0 0 10px #ef4444; border-radius: 2px; pointer-events: none; }
 
-        /* الشاشات التداخلية */
         .modal { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(13, 14, 21, 0.96); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; text-align: center; padding: 30px; box-sizing: border-box; }
         .modal h1 { color: #ec4899; font-size: 32px; margin-bottom: 15px; }
         .modal p { font-size: 18px; margin-bottom: 15px; color: #cbd5e1; line-height: 1.6; }
@@ -32,7 +31,6 @@
         .instructions-box { background: rgba(30, 41, 59, 0.9); padding: 15px; border-radius: 12px; border: 1px solid #4f46e5; text-align: right; margin-bottom: 20px; width: 100%; max-width: 450px; }
         .instructions-box li { margin-bottom: 8px; font-size: 14px; color: #e2e8f0; }
 
-        /* لوحة الصدارة المصغرة */
         .leaderboard-box { background: rgba(15, 23, 42, 0.95); border: 2px solid #f59e0b; border-radius: 10px; padding: 15px; width: 100%; max-width: 400px; margin-bottom: 20px; text-align: right; }
         .leaderboard-box h3 { color: #f59e0b; margin-top: 0; margin-bottom: 10px; text-align: center; font-size: 18px; }
         .lb-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px dashed #334155; font-size: 14px; }
@@ -51,8 +49,8 @@
             <div class="instructions-box">
                 <ul>
                     <li>🎯 <b>طريقة التصويب:</b> انقر في أي مكان بالساحة، وسيطلق صاروخك شعاع ليزر مستقيم نحو الناتج الصحيح للجرم الفضائي!</li>
-                    <li>🪐 <b>حركة الأجرام:</b> تتحرك الأجرام الصخرية يميناً ويساراً وأعلى وشهيقاً بعشوائية لزيادة التحدي.</li>
-                    <li>⏱️ <b>الوقت والمكافآت:</b> لديك وقت محدد للجولة، وكل ٥ إجابات صحيحة متتالية تمنحك وقتاً إضافياً.</li>
+                    <li>🪐 <b>حركة الأجرام:</b> تتحرك الأجرام الصخرية يميناً ويساراً وأعلى وأسفل بعشوائية دون دوران.</li>
+                    <li>⏱️ <b>الوقت والمكافآت:</b> كل ٥ إجابات صحيحة متتالية تمنحك +٣٠ ثانية إضافية تظهر مباشرة في الأعلى.</li>
                 </ul>
             </div>
             <button class="btn" onclick="startTheGameSession()">ابدأ التحدي الآن 🎮</button>
@@ -64,6 +62,8 @@
             <div>⏱️ الوقت: <span id="timeLeft">٩٠</span>ث</div>
             <div>🔥 السلسلة: <span id="streakCount">٠</span></div>
             <div>⭐ النقاط: <span id="scoreVal">٠</span></div>
+            <!-- رسالة الوقت الإضافي المتحركة داخل اللعبة -->
+            <div class="bonus-float-msg" id="bonusMsg">+٣٠ ثانية! ⏱️</div>
         </div>
 
         <!-- ساحة اللعب الحركية -->
@@ -205,6 +205,14 @@
             document.getElementById('streakCount').textContent = toArabicNum(streak);
         }
 
+        function showBonusMessage() {
+            const msg = document.getElementById('bonusMsg');
+            msg.classList.add('show');
+            setTimeout(() => {
+                msg.classList.remove('show');
+            }, 2000);
+        }
+
         function generateNewWave() {
             asteroids.forEach(ast => ast.element.remove());
             asteroids = [];
@@ -226,7 +234,6 @@
 
             const arena = document.getElementById('arenaBox');
             const arenaWidth = arena.clientWidth || 500;
-            const arenaHeight = arena.clientHeight || 500;
 
             options.forEach((opt, index) => {
                 let astEl = document.createElement('div');
@@ -244,14 +251,13 @@
                     element: astEl,
                     x: startX,
                     y: startY,
-                    vx: (Math.random() - 0.5) * 2.5, // سرعة أفقية عشوائية
-                    vy: 0.8 + Math.random() * 0.8,    // سرعة رأسية
+                    vx: (Math.random() - 0.5) * 2.5,
+                    vy: 0.8 + Math.random() * 0.8,
                     value: opt
                 });
             });
         }
 
-        // تحديث الحركة العشوائية (أفقياً وعمودياً) بدون دوران
         function updatePhysics() {
             const arena = document.getElementById('arenaBox');
             const arenaWidth = arena.clientWidth || 500;
@@ -261,12 +267,10 @@
                 ast.x += ast.vx;
                 ast.y += ast.vy;
 
-                // الارتداد أفقياً عن حواف الشاشة
                 if (ast.x < 10 || ast.x > arenaWidth - 85) {
                     ast.vx *= -1;
                 }
 
-                // إذا وصل الجرم لأسفل الشاشة يعود للأعلى
                 if (ast.y > arenaHeight - 120) {
                     ast.y = 70;
                     ast.x = Math.random() * (arenaWidth - 100);
@@ -277,7 +281,6 @@
             });
         }
 
-        // التعامل مع النقر في أي مكان لإطلاق الليزر واصابت الجرم الصحيح تلقائياً
         function handleArenaClick(e) {
             playSound('laser');
             const arena = document.getElementById('arenaBox');
@@ -290,7 +293,6 @@
             const startX = (rocketRect.left + rocketRect.right) / 2 - rect.left;
             const startY = arena.clientHeight - 40;
 
-            // العثور على الجرم الأقرب لمكان النقر أو النقر المباشر عليه
             let targetAst = null;
             let minDistance = 9999;
 
@@ -304,7 +306,6 @@
                 }
             });
 
-            // رسم شعاع الليزر نحو مكان النقر أو الجرم المستهدف
             let endX = targetAst ? (targetAst.x + 37) : clickX;
             let endY = targetAst ? (targetAst.y + 37) : clickY;
 
@@ -334,7 +335,7 @@
 
                 if (streak > 0 && streak % customSettings.streakCount === 0) {
                     timeLeft += customSettings.bonusTime;
-                    alert(`🔥 أداء مبهر! حصلت على +${toArabicNum(customSettings.bonusTime)} ثوانٍ إضافية.`);
+                    showBonusMessage(); // عرض التنبيه داخل اللعبة بدون رسالة منبثقة
                 }
                 generateNewWave();
             } else {
@@ -351,6 +352,7 @@
             document.getElementById('saveStatus').textContent = 'جاري حفظ النتيجة في سحابة مدرسة اليرموك...';
 
             try {
+                // تصحيح وحفظ البيانات في جدول scores في Supabase مع التأكد من توافق الأعمدة
                 const { error } = await supabaseClient.from('scores').insert([{
                     student_name: studentData.name,
                     student_class: studentData.cls,
@@ -368,7 +370,6 @@
             }
         }
 
-        // جلب وعرض أعلى النتائج داخل لوحة نهاية اللعبة
         async function loadLeaderboardInModal() {
             const lbList = document.getElementById('leaderboardList');
             lbList.innerHTML = 'جاري التحميل...';
