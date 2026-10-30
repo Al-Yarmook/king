@@ -21,6 +21,7 @@
         input, select { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; box-sizing: border-box; font-family: 'Cairo'; }
         .btn { background: #d81b60; color: white; border: none; padding: 10px 25px; border-radius: 8px; font-weight: bold; cursor: pointer; font-family: 'Cairo'; transition: 0.3s; }
         .btn:hover { background: #ad1457; }
+        .btn-sm { padding: 5px 10px; font-size: 13px; border-radius: 5px; cursor: pointer; border: none; }
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         table { width: 100%; border-collapse: collapse; margin-top: 15px; }
         th, td { border: 1px solid #e2e8f0; padding: 10px; text-align: center; font-size: 14px; }
@@ -32,11 +33,10 @@
     <div class="container">
         <h1>لوحة التحكم الشاملة ⚙️</h1>
         
-        <!-- أزرار التنقل بين جميع الأقسام والتبويبات -->
+        <!-- أزرار التنقل بين التبويبات -->
         <div class="nav-tabs">
             <button class="tab-btn active" onclick="switchTab('rocketSettingsTab', event)">🚀 إعدادات الصواريخ</button>
             <button class="tab-btn" onclick="switchTab('studentsTab', event)">👥 بيانات الطلبة</button>
-            <button class="tab-btn" onclick="switchTab('teachersTab', event)">👨‍🏫 إدارة المعلمين</button>
             <button class="tab-btn" onclick="switchTab('gamesConfigTab', event)">🎮 إعداد الألعاب</button>
             <button class="tab-btn" onclick="switchTab('scoresTab', event)">🏆 لوحة النتائج</button>
             <button class="tab-btn" onclick="switchTab('exportTab', event)">📥 تصفير وتصدير</button>
@@ -70,9 +70,9 @@
             <button class="btn" onclick="saveRocketSettings()">حفظ إعدادات لعبة الصواريخ 💾</button>
         </div>
 
-        <!-- 2. قسم إدارة الطلبة -->
+        <!-- 2. قسم إدارة الطلبة مع إمكانية التعديل -->
         <div id="studentsTab" class="tab-content">
-            <h2>إدارة وعرض الطلبة المسجلين 👥</h2>
+            <h2>إدارة وعرض وتعديل بيانات الطلبة 👥</h2>
             <div class="form-group grid-2">
                 <div>
                     <label>اسم الطالب الجديد:</label>
@@ -90,7 +90,7 @@
                     <tr>
                         <th>اسم الطالب</th>
                         <th>الصف الدراسي</th>
-                        <th>الإجراء</th>
+                        <th>الإجراءات</th>
                     </tr>
                 </thead>
                 <tbody id="studentsTableBody">
@@ -99,24 +99,7 @@
             </table>
         </div>
 
-        <!-- 3. قسم إدارة المعلمين -->
-        <div id="teachersTab" class="tab-content">
-            <h2>إدارة المعلمين والمشرفين 👨‍🏫</h2>
-            <p style="color: #64748b;">هذا القسم مخصص لإدارة حسابات وصلاحيات المعلمين في مدرسة اليرموك الابتدائية للبنين.</p>
-            <div class="form-group grid-2">
-                <div>
-                    <label>اسم المعلم:</label>
-                    <input type="text" id="teacherName" placeholder="اسم المعلم ثلاثي">
-                </div>
-                <div>
-                    <label>التخصص / المادة:</label>
-                    <input type="text" id="teacherSubject" placeholder="رياضيات / علوم">
-                </div>
-            </div>
-            <button class="btn" onclick="alert('تم حفظ بيانات المعلم بنجاح')">إضافة معلم ➕</button>
-        </div>
-
-        <!-- 4. قسم إعداد الألعاب والمستويات -->
+        <!-- 3. قسم إعداد الألعاب والمستويات -->
         <div id="gamesConfigTab" class="tab-content">
             <h2>إعداد الألعاب والمستويات الدراسية 🎮</h2>
             <div class="form-group">
@@ -129,7 +112,7 @@
             <button class="btn" onclick="alert('تم تحديث إعدادات المستويات بنجاح')">حفظ إعدادات المستويات 💾</button>
         </div>
 
-        <!-- 5. لوحة النتائج -->
+        <!-- 4. لوحة النتائج -->
         <div id="scoresTab" class="tab-content">
             <h2>سجل درجات ونقاط الأبطال 🏆</h2>
             <button class="btn" onclick="loadScores()">تحديث القائمة 🔄</button>
@@ -148,10 +131,10 @@
             </table>
         </div>
 
-        <!-- 6. قسم التصفير وتصدير النتائج -->
+        <!-- 5. قسم التصفير وتصدير النتائج -->
         <div id="exportTab" class="tab-content">
             <h2>تصفير وتصدير النتائج والبيانات 📥</h2>
-            <p style="color: #64748b;">يمكنك تصدير تقارير الأداء أو إعادة تعيين النقاط عند بداية كل فصل دراسي جديد.</p>
+            <p style="color: #64748b;">يمكنك تصفير سجل النقاط عند بداية كل فصل دراسي جديد.</p>
             <button class="btn" style="background:#ef4444;" onclick="alert('هذه الميزة متاحة للمسؤولين فقط')">تصفير سجل النقاط بالكامل ⚠️</button>
         </div>
     </div>
@@ -208,13 +191,52 @@
             tbody.innerHTML = '';
             data.forEach(s => {
                 tbody.innerHTML += `
-                    <tr>
-                        <td>${s.name}</td>
-                        <td>${s.cls}</td>
-                        <td><button style="background:#ef4444; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;" onclick="deleteStudent('${s.id}')">حذف</button></td>
+                    <tr id="row-${s.id}">
+                        <td><span id="name-txt-${s.id}">${s.name}</span><input type="text" id="name-input-${s.id}" value="${s.name}" style="display:none;"></td>
+                        <td><span id="cls-txt-${s.id}">${s.cls}</span><input type="text" id="cls-input-${s.id}" value="${s.cls}" style="display:none; width:80px;"></td>
+                        <td>
+                            <button id="edit-btn-${s.id}" class="btn-sm" style="background:#f59e0b; color:white;" onclick="enableEdit('${s.id}')">تعديل</button>
+                            <button id="save-btn-${s.id}" class="btn-sm" style="background:#10b981; color:white; display:none;" onclick="saveEdit('${s.id}')">حفظ</button>
+                            <button class="btn-sm" style="background:#ef4444; color:white;" onclick="deleteStudent('${s.id}')">حذف</button>
+                        </td>
                     </tr>
                 `;
             });
+        }
+
+        // تفعيل وضع التعديل المباشر للطالب
+        function enableEdit(id) {
+            document.getElementById(`name-txt-${id}`).style.display = 'none';
+            document.getElementById(`name-input-${id}`).style.display = 'block';
+            document.getElementById(`cls-txt-${id}`).style.display = 'none';
+            document.getElementById(`cls-input-${id}`).style.display = 'block';
+            
+            document.getElementById(`edit-btn-${id}`).style.display = 'none';
+            document.getElementById(`save-btn-${id}`).style.display = 'inline-block';
+        }
+
+        // حفظ التعديلات في سحابة Supabase
+        async function saveEdit(id) {
+            const newName = document.getElementById(`name-input-${id}`).value.trim();
+            const newCls = document.getElementById(`cls-input-${id}`).value.trim();
+
+            if(!newName || !newCls) {
+                alert('الرجاء التأكد من إدخال الاسم والصف.');
+                return;
+            }
+
+            const { error } = await supabaseClient
+                .from('students')
+                .update({ name: newName, cls: newCls })
+                .eq('id', id);
+
+            if(error) {
+                alert('خطأ أثناء تحديث بيانات الطالب: ' + error.message);
+                return;
+            }
+
+            alert('✅ تم تحديث بيانات الطالب بنجاح!');
+            loadStudents();
         }
 
         async function addStudent() {
@@ -222,7 +244,7 @@
             const cls = document.getElementById('newStudentClass').value.trim();
 
             if(!name || !cls) {
-                alert('الرجاء إدخال اسم الطالب الصف الدراسي.');
+                alert('الرجاء إدخال اسم الطالب والصف الدراسي.');
                 return;
             }
 
