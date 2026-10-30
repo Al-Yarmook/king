@@ -50,6 +50,7 @@
             <button class="tab-btn active" onclick="switchTab('students')">👥 بيانات الطلبة</button>
             <button class="tab-btn admin-only" onclick="switchTab('staff')">👨‍🏫 إدارة المعلمين</button>
             <button class="tab-btn supervisor-allowed" onclick="switchTab('games')">🎮 إعداد الألعاب والمستويات</button>
+            <button class="tab-btn supervisor-allowed" onclick="switchTab('rocket')">🚀 إعدادات لعبة الصواريخ</button>
             <button class="tab-btn" onclick="switchTab('scores')">📊 درجات الطلبة</button>
             <button class="tab-btn admin-only" onclick="switchTab('settings')">⚙️ تصفير النتائج</button>
             <button class="tab-btn" onclick="switchTab('profile')">👤 بياناتي الشخصية</button>
@@ -121,7 +122,22 @@
             <button class="btn" onclick="saveGameLevels()">حفظ إعدادات المستويات 💾</button>
         </div>
 
-        <!-- 4. قسم درجات الطلبة -->
+        <!-- 4. قسم إعدادات لعبة سباق الصواريخ (القسم الجديد) -->
+        <div id="rocket" class="section-card">
+            <h2>إعدادات لعبة "سباق صواريخ الفضاء" 🚀</h2>
+            <div class="form-row">
+                <div class="form-group"><label>وقت الجولة الافتراضي (بالثواني):</label><input type="number" id="settingGameTime" value="60"></div>
+                <div class="form-group"><label>نقاط الإجابة الصحيحة:</label><input type="number" id="settingCorrectPoints" value="100"></div>
+                <div class="form-group"><label>نقاط الخصم للإجابة الخاطئة:</label><input type="number" id="settingWrongPenalty" value="30"></div>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>عدد الإجابات المتتالية للمكافأة (Streak):</label><input type="number" id="settingStreakCount" value="5"></div>
+                <div class="form-group"><label>الوقت الإضافي للمكافأة (بالثواني):</label><input type="number" id="settingBonusTime" value="10"></div>
+            </div>
+            <button class="btn" onclick="saveRocketSettings()">حفظ إعدادات لعبة الصواريخ 💾</button>
+        </div>
+
+        <!-- 5. قسم درجات الطلبة -->
         <div id="scores" class="section-card">
             <h2>مشاهدة وتحميل درجات الطلبة</h2>
             <div class="form-row">
@@ -134,7 +150,7 @@
             </table>
         </div>
 
-        <!-- 5. قسم الإعدادات وتصفير النتائج -->
+        <!-- 6. قسم الإعدادات وتصفير النتائج -->
         <div id="settings" class="section-card">
             <h2>الإعدادات العامة وتصفير النتائج</h2>
             <div class="danger-zone">
@@ -146,7 +162,7 @@
             </div>
         </div>
 
-        <!-- 6. الملف الشخصي -->
+        <!-- 7. الملف الشخصي -->
         <div id="profile" class="section-card">
             <h2>البيانات الشخصية وتغيير كلمة المرور</h2>
             <div class="form-row">
@@ -180,6 +196,7 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             loadStudents();
+            loadRocketSettingsUI();
         });
 
         function switchTab(tabId) {
@@ -188,7 +205,7 @@
                 alert('عذراً، هذه الصلاحية خاصة بمدير النظام فقط.');
                 return;
             }
-            if(tabId === 'games' && roleVal === 'teacher') {
+            if((tabId === 'games' || tabId === 'rocket') && roleVal === 'teacher') {
                 alert('عذراً، إعدادات الألعاب خاصة بالمشرف والمدير فقط.');
                 return;
             }
@@ -200,6 +217,30 @@
             if(tabId === 'staff') loadStaff();
             if(tabId === 'scores') loadScores();
             if(tabId === 'profile') loadProfile();
+            if(tabId === 'rocket') loadRocketSettingsUI();
+        }
+
+        function loadRocketSettingsUI() {
+            const savedSettings = JSON.parse(localStorage.getItem('rocket_game_settings'));
+            if(savedSettings) {
+                document.getElementById('settingGameTime').value = savedSettings.gameTime || 60;
+                document.getElementById('settingCorrectPoints').value = savedSettings.correctPoints || 100;
+                document.getElementById('settingWrongPenalty').value = savedSettings.wrongPenalty || 30;
+                document.getElementById('settingStreakCount').value = savedSettings.streakCount || 5;
+                document.getElementById('settingBonusTime').value = savedSettings.bonusTime || 10;
+            }
+        }
+
+        function saveRocketSettings() {
+            const settings = {
+                gameTime: parseInt(document.getElementById('settingGameTime').value) || 60,
+                correctPoints: parseInt(document.getElementById('settingCorrectPoints').value) || 100,
+                wrongPenalty: parseInt(document.getElementById('settingWrongPenalty').value) || 30,
+                streakCount: parseInt(document.getElementById('settingStreakCount').value) || 5,
+                bonusTime: parseInt(document.getElementById('settingBonusTime').value) || 10
+            };
+            localStorage.setItem('rocket_game_settings', JSON.stringify(settings));
+            alert('✅ تم حفظ إعدادات لعبة الصواريخ ومزامنتها بنجاح!');
         }
 
         async function loadStudents() {
@@ -507,7 +548,7 @@
             tbody.innerHTML = '';
             if(data) {
                 data.forEach(sc => {
-                    tbody.innerHTML += `<tr><td>${sc.student_name || 'طالب'}</td><td>${sc.student_class || ''}</td><td>${sc.game_name || 'لعبة جدول الضرب'}</td><td>${sc.score}</td><td>${new Date(sc.created_at).toLocaleString()}</td></tr>`;
+                    tbody.innerHTML += `<tr><td>${sc.student_name || 'طالب'}</td><td>${sc.student_class || sc.cls || ''}</td><td>${sc.game_name || 'سباق صواريخ الفضاء'}</td><td>${sc.score || sc.points || 0}</td><td>${sc.created_at ? new Date(sc.created_at).toLocaleString() : '-'}</td></tr>`;
                 });
             }
         }
@@ -527,7 +568,7 @@
             if(pass !== currentUser.password) { alert('كلمة المرور غير صحيحة!'); return; }
             if(confirm('هل أنت متأكد تماماً من تصفير جميع النتائج؟')) {
                 const { error } = await supabaseClient.from('scores').delete().neq('id', 0);
-                if(!error) { alert('تم تصفير النتائج بنجاح'); }
+                if(!error) { alert('تم تصفير النتائج بنجاح'); loadScores(); }
             }
         }
 
