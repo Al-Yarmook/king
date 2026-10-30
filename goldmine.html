@@ -26,33 +26,44 @@
         .step-node.done { background: #10b981; color: white; border-color: #a7f3d0; }
         
         /* منطقة الصخرة والفأس التفاعلي */
-        .rock-stage { position: relative; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 10px 0; }
+        .rock-stage { position: relative; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 10px 0; min-height: 220px; }
         
         /* الفأس المتحرك */
-        .pickaxe { position: absolute; top: -60px; right: 20%; font-size: 65px; z-index: 15; pointer-events: none; opacity: 0; transform-origin: bottom left; }
-        .pickaxe.swing { animation: axeSwing 0.5s ease-in-out; }
+        .pickaxe { position: absolute; top: -40px; right: 15%; font-size: 70px; z-index: 15; pointer-events: none; opacity: 0; transform-origin: bottom left; }
+        .pickaxe.swing { animation: axeSwing 0.4s ease-in-out; }
 
         @keyframes axeSwing {
             0% { opacity: 1; transform: rotate(0deg) translate(0, 0); }
-            50% { transform: rotate(-45deg) translate(-20px, -20px); }
-            80% { transform: rotate(30deg) translate(-30px, 40px); }
+            40% { transform: rotate(-50deg) translate(-25px, -15px); }
+            75% { transform: rotate(35deg) translate(-20px, 35px); }
             100% { opacity: 0; transform: rotate(0deg); }
         }
 
-        /* الصخرة الجدارية التي تحمل السؤال */
-        .rock-card { background: radial-gradient(circle, #57534e 0%, #292524 100%); border: 4px solid #78716c; border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%; padding: 25px 20px; width: 85%; text-align: center; box-shadow: inset -8px -8px 20px rgba(0,0,0,0.8), 0 15px 30px rgba(0,0,0,0.7); position: relative; z-index: 5; transition: transform 0.2s; }
-        .rock-card.break { animation: rockShake 0.4s ease-in-out; }
+        /* الصخرة الجدارية بتصميم واقعي ومتغير الحجم والشكل */
+        .rock-card { 
+            background: radial-gradient(circle at 30% 30%, #68645f 0%, #38322e 60%, #1c1917 100%); 
+            border: 5px solid #8c827a; 
+            padding: 25px 20px; 
+            width: 85%; 
+            text-align: center; 
+            box-shadow: inset -10px -10px 25px rgba(0,0,0,0.9), 0 15px 35px rgba(0,0,0,0.8); 
+            position: relative; 
+            z-index: 5; 
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        
+        .rock-card.break { animation: rockBreakAnim 0.45s ease-in-out; }
 
-        @keyframes rockShake {
-            0% { transform: scale(1) rotate(0deg); }
-            20% { transform: scale(1.05) rotate(-3deg); }
-            40% { transform: scale(0.95) rotate(3deg); }
-            60% { transform: scale(1.02) rotate(-2deg); }
-            100% { transform: scale(1) rotate(0deg); }
+        @keyframes rockBreakAnim {
+            0% { transform: scale(1) rotate(0deg); filter: brightness(1); }
+            25% { transform: scale(1.08) rotate(-4deg); filter: brightness(1.4); }
+            50% { transform: scale(0.90) rotate(4deg) skew(5deg); filter: brightness(0.6); }
+            75% { transform: scale(1.04) rotate(-2deg); }
+            100% { transform: scale(0) rotate(10deg); opacity: 0; }
         }
 
         .door-title { color: #fef08a; font-size: 15px; margin-bottom: 8px; font-weight: bold; text-shadow: 1px 1px 3px black; }
-        .question-box { background: rgba(0,0,0,0.6); border: 2px dashed #f59e0b; padding: 12px 15px; border-radius: 12px; font-size: 26px; font-weight: 900; color: #ffffff; letter-spacing: 1px; margin: 10px 0; }
+        .question-box { background: rgba(0,0,0,0.65); border: 2px dashed #f59e0b; padding: 12px 15px; border-radius: 12px; font-size: 26px; font-weight: 900; color: #ffffff; letter-spacing: 1px; margin: 10px 0; }
         
         /* أزرار الخيارات */
         .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; max-width: 450px; }
@@ -84,7 +95,7 @@
             <h1>⛏️ تعليمات لغز منجم الذهب</h1>
             <div class="instructions-box">
                 <ul>
-                    <li>🪨 <b>المهمة:</b> اكسر الحجارة الحاملة للغاز وافتح طريقك لصندوق الذهب!</li>
+                    <li>🪨 <b>المهمة:</b> اكسر الحجارة المتنوعة الحاملة للألغاز وافتح طريقك لصندوق الذهب!</li>
                     <li>⛏️ <b>المحاولات:</b> لديك <span id="ruleLives" style="color:#ef4444; font-weight:bold;">--</span> محاولات تنقيب.</li>
                     <li>💰 <b>القطع الذهبية:</b> كل حجر تكسره بنجاح يمنحك <span id="rulePoints" style="color:#f59e0b; font-weight:bold;">--</span> قطعة ذهب.</li>
                     <li>🎯 <b>الأسئلة:</b> تتكون هذه الجولة من <span id="ruleQuestions" style="color:#38bdf8; font-weight:bold;">--</span> حجرة.</li>
@@ -180,12 +191,12 @@
                     osc.stop(audioCtx.currentTime + 0.3);
                 } else if (type === 'break') {
                     osc.type = 'square';
-                    osc.frequency.setValueAtTime(100, audioCtx.currentTime);
-                    osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.15);
+                    osc.frequency.setValueAtTime(120, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 0.2);
                     gainNode.gain.setValueAtTime(0.4, audioCtx.currentTime);
-                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
                     osc.start();
-                    osc.stop(audioCtx.currentTime + 0.2);
+                    osc.stop(audioCtx.currentTime + 0.25);
                 }
             } catch (e) { console.log("Audio error", e); }
         }
@@ -195,7 +206,6 @@
             return String(num).replace(/\d/g, (d) => arabicNumbers[d]);
         }
 
-        // الإعدادات السحابية الافتراضية
         let customSettings = {
             maxLives: 3,
             goldPerDoor: 100,
@@ -292,14 +302,34 @@
             setTimeout(() => msg.classList.remove('show'), 2000);
         }
 
+        // توليد شكل وحجم عشوائي واقعي للصخرة مع كل سؤال جديد
+        function applyRandomRockShape() {
+            const rock = document.getElementById('rockCard');
+            // زوايا عشوائية غير منتظمة لتشبه الصخور الطبيعية
+            const r1 = Math.floor(Math.random() * 25) + 15;
+            const r2 = Math.floor(Math.random() * 25) + 15;
+            const r3 = Math.floor(Math.random() * 25) + 15;
+            const r4 = Math.floor(Math.random() * 25) + 15;
+            const r5 = Math.floor(Math.random() * 25) + 65;
+            const r6 = Math.floor(Math.random() * 25) + 65;
+            const r7 = Math.floor(Math.random() * 25) + 65;
+            const r8 = Math.floor(Math.random() * 25) + 65;
+            
+            rock.style.borderRadius = `${r1}% ${r5}% ${r3}% ${r7}% / ${r8}% ${r2}% ${r6}% ${r4}%`;
+            
+            // تباين طفيف في الحجم والعرض
+            const randomWidth = Math.floor(Math.random() * 12) + 80; // بين 80% و 92%
+            rock.style.width = `${randomWidth}%`;
+        }
+
         function generateNewPuzzle() {
             document.getElementById('hintBox').style.display = 'none';
+            applyRandomRockShape();
 
             let num1 = Math.floor(Math.random() * (maxTable - 1)) + 2;
             let num2 = Math.floor(Math.random() * 10) + 1;
             currentCorrectAnswer = num1 * num2;
 
-            // تحديد نوع السؤال بناءً على إعدادات المدير
             let mode = 'product';
             if (customSettings.enableMissingFactor && customSettings.enableProduct) {
                 mode = Math.random() > 0.5 ? 'missing' : 'product';
@@ -339,37 +369,39 @@
 
         function checkAnswer(selectedOpt, correctVal) {
             if (selectedOpt === correctVal) {
-                // تأثير الفأس وتكسير الصخرة
                 playSound('break');
                 playSound('correct');
 
                 const axe = document.getElementById('pickAxeIcon');
                 const rock = document.getElementById('rockCard');
+                
+                // تشغيل تأثير الفأس وتكسير الصخرة الحالية بتهشم واقعي
                 axe.classList.add('swing');
                 rock.classList.add('break');
 
                 setTimeout(() => {
                     axe.classList.remove('swing');
                     rock.classList.remove('break');
-                }, 500);
 
-                score += customSettings.goldPerDoor;
-                streak++;
+                    score += customSettings.goldPerDoor;
+                    streak++;
 
-                if (streak > 0 && streak % 3 === 0) {
-                    let bonus = customSettings.streakBonusGold;
-                    score += bonus;
-                    showBonusMessage(bonus);
-                }
+                    if (streak > 0 && streak % 3 === 0) {
+                        let bonus = customSettings.streakBonusGold;
+                        score += bonus;
+                        showBonusMessage(bonus);
+                    }
 
-                currentRoom++;
-                updateHUD();
+                    currentRoom++;
+                    updateHUD();
 
-                if (currentRoom >= customSettings.totalRooms) {
-                    setTimeout(() => endGame(true), 600);
-                } else {
-                    setTimeout(generateNewPuzzle, 500);
-                }
+                    if (currentRoom >= customSettings.totalRooms) {
+                        endGame(true);
+                    } else {
+                        generateNewPuzzle();
+                    }
+                }, 450);
+
             } else {
                 playSound('wrong');
                 lives -= customSettings.wrongPenaltyLives;
@@ -382,7 +414,7 @@
                 updateHUD();
 
                 if (lives <= 0) {
-                    setTimeout(() => endGame(false), 500);
+                    setTimeout(() => endGame(false), 400);
                 }
             }
         }
@@ -402,14 +434,11 @@
             document.getElementById('saveStatus').textContent = 'جاري حفظ رصيد الذهب بالسحابة...';
 
             try {
-                // حفظ النتيجة مفصولة باسم "لغز منجم الذهب"
-                const { error } = await supabaseClient.from('scores').insert([{
+                const { error } = await supabaseClient.from('goldmine_scores').insert([{
                     student_name: studentData.name,
                     cls: studentData.cls,
-                    game_name: 'لغز منجم الذهب',
                     points: score,
-                    weekly_points: score,
-                    is_guest: false
+                    weekly_points: score
                 }]);
 
                 if (error) throw error;
@@ -426,9 +455,8 @@
             lbList.innerHTML = 'جاري تحضير الأبطال...';
             try {
                 const { data } = await supabaseClient
-                    .from('scores')
+                    .from('goldmine_scores')
                     .select('student_name, points')
-                    .eq('game_name', 'لغز منجم الذهب')
                     .order('points', { ascending: false })
                     .limit(5);
 
