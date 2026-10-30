@@ -19,13 +19,23 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
         header { background: linear-gradient(135deg, var(--accent), var(--primary)); color: white; padding: 20px; text-align: center; }
-        .container { max-width: 900px; margin: 30px auto; padding: 20px; flex: 1; width: 100%; }
-        .card { background: var(--card-bg); border-radius: 12px; padding: 30px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; text-align: center; }
-        th, td { padding: 12px; border-bottom: 1px solid #e2e8f0; }
+        .container { max-width: 1000px; margin: 30px auto; padding: 20px; flex: 1; width: 100%; }
+        .card { background: var(--card-bg); border-radius: 12px; padding: 25px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin-bottom: 25px; }
+        
+        .filters-bar { display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; justify-content: center; align-items: center; }
+        .filters-bar select { padding: 10px 15px; border-radius: 8px; border: 1px solid #cbd5e1; font-family: 'Segoe UI'; font-size: 14px; background: #fff; color: var(--text); cursor: pointer; }
+
+        h2 { color: var(--accent); margin-bottom: 15px; text-align: center; font-size: 22px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; text-align: center; }
+        th, td { padding: 12px; border-bottom: 1px solid #e2e8f0; font-size: 14px; }
         th { background: var(--accent); color: white; }
         tr:hover { background: #f1f5f9; }
-        .back-link { display: inline-block; margin-top: 20px; color: var(--primary); text-decoration: none; font-weight: bold; }
+        
+        .badge-game { background: #e0e7ff; color: #3730a3; padding: 3px 8px; border-radius: 6px; font-weight: bold; font-size: 12px; }
+        .badge-mine { background: #fef3c7; color: #92400e; padding: 3px 8px; border-radius: 6px; font-weight: bold; font-size: 12px; }
+        
+        .back-link { display: inline-block; margin-top: 10px; color: var(--primary); text-decoration: none; font-weight: bold; }
+        .back-link:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
@@ -35,76 +45,213 @@
     </header>
 
     <div class="container">
+        <!-- شريط التصفية والفلترة -->
+        <div class="filters-bar">
+            <div>
+                <label style="font-weight: bold; margin-left: 8px;">عرض حسب اللعبة:</label>
+                <select id="gameFilter" onchange="fetchAndRenderLeaderboard()">
+                    <option value="all">جميع الألعاب 🎮</option>
+                    <option value="rocket">سباق صواريخ الفضاء 🚀</option>
+                    <option value="mine">لغز منجم الذهب ⛏️</option>
+                </select>
+            </div>
+            <div>
+                <label style="font-weight: bold; margin-left: 8px;">تصفية الصف الدراسي:</label>
+                <select id="classFilter" onchange="fetchAndRenderLeaderboard()">
+                    <option value="all">جميع الصفوف النشطة 🏫</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- 1. لوحة صدارة النقاط (الملوك الكبرى) -->
         <div class="card">
-            <h2 style="margin-bottom: 20px; text-align: center; color: var(--accent);">لوحة الشرف والتميز</h2>
-            
-            <table id="leaderboardTable">
+            <h2>👑 أبطال الصدارة والنتيجة الأكبر</h2>
+            <table id="topScoresTable">
                 <thead>
                     <tr>
                         <th>المركز 👑</th>
                         <th>اسم الطالب</th>
                         <th>الصف</th>
-                        <th>النقاط ⭐️</th>
+                        <th>اللعبة</th>
+                        <th>النقاط العظمى ⭐️</th>
                     </tr>
                 </thead>
                 <tbody>
+                    <tr><td colspan="5">جاري جلب ملوك الصدارة...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 2. لوحة الأكثر لعباً وإصراراً هذا الأسبوع -->
+        <div class="card">
+            <h2>🔥 لوحة الأكثر نشاطاً وإصراراً (الأكثر لعباً هذا الأسبوع)</h2>
+            <table id="mostActiveTable">
+                <thead>
                     <tr>
-                        <td colspan="4">جاري تحميل قائمة الأبطال من السحابة...</td>
+                        <th>المركز ⭐️</th>
+                        <th>اسم الطالب</th>
+                        <th>الصف</th>
+                        <th>عدد محاولات اللعب 🔄</th>
                     </tr>
+                </thead>
+                <tbody>
+                    <tr><td colspan="4">جاري تحليل الأنشطة...</td></tr>
                 </tbody>
             </table>
 
-            <div style="text-align: center;">
+            <div style="text-align: center; margin-top: 20px;">
                 <a href="index.html" class="back-link">← العودة للرئيسية</a>
             </div>
         </div>
     </div>
 
     <script>
-        async function loadLeaderboard() {
-            const tableBody = document.querySelector('#leaderboardTable tbody');
-            
+        let globalScoresData = [];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchAndRenderLeaderboard();
+        });
+
+        async function fetchAndRenderLeaderboard() {
+            const topTableBody = document.querySelector('#topScoresTable tbody');
+            const activeTableBody = document.querySelector('#mostActiveTable tbody');
+            const selectedGame = document.getElementById('gameFilter').value;
+            const selectedClass = document.getElementById('classFilter').value;
+
+            topTableBody.innerHTML = '<tr><td colspan="5">جاري التحميل...</td></tr>';
+            activeTableBody.innerHTML = '<tr><td colspan="4">جاري التحميل...</td></tr>';
+
             try {
-                // جلب أعلى النتائج من جدول scores في Supabase
-                const { data, error } = await supabaseClient
-                    .from('scores')
-                    .select('student_name, grade, score')
-                    .order('score', { ascending: false })
-                    .limit(10);
+                let rocketData = [];
+                let mineData = [];
 
-                if (error) throw error;
+                // 1. جلب البيانات بناءً على اللعبة المحددة
+                if (selectedGame === 'all' || selectedGame === 'rocket') {
+                    const { data: rData, error: rErr } = await supabaseClient.from('rocket_scores').select('*');
+                    if (!rErr && rData) {
+                        rocketData = rData.map(item => ({
+                            student_name: item.student_name,
+                            cls: item.cls || 'غير مصنف',
+                            points: item.points || 0,
+                            game_name: 'سباق صواريخ الفضاء',
+                            game_type: 'rocket',
+                            created_at: item.created_at || new Date().toISOString()
+                        }));
+                    }
+                }
 
-                tableBody.innerHTML = '';
-                if (!data || data.length === 0) {
-                    tableBody.innerHTML = '<tr><td colspan="4">لا توجد نتائج مسجلة حتى الآن. كن أول الأبطال!</td></tr>';
+                if (selectedGame === 'all' || selectedGame === 'mine') {
+                    const { data: mData, error: mErr } = await supabaseClient.from('goldmine_scores').select('*');
+                    if (!mErr && mData) {
+                        mineData = mData.map(item => ({
+                            student_name: item.student_name,
+                            cls: item.cls || 'غير مصنف',
+                            points: item.points || 0,
+                            game_name: 'لغز منجم الذهب',
+                            game_type: 'mine',
+                            created_at: item.created_at || new Date().toISOString()
+                        }));
+                    }
+                }
+
+                globalScoresData = [...rocketData, ...mineData];
+
+                // تعبئة قائمة الصفوف المتاحة ديناميكياً (بحيث تظهر فقط الصفوف التي لعب طلابها)
+                populateClassDropdown(globalScoresData, selectedClass);
+
+                // تصفية البيانات حسب الصف المختار
+                let filteredData = globalScoresData;
+                if (selectedClass !== 'all') {
+                    filteredData = globalScoresData.filter(s => s.cls.trim() === selectedClass);
+                }
+
+                if (filteredData.length === 0) {
+                    topTableBody.innerHTML = '<tr><td colspan="5">لا توجد نتائج مسجلة لهذا الصف حتى الآن.</td></tr>';
+                    activeTableBody.innerHTML = '<tr><td colspan="4">لا توجد سجلات نشاط لهذا الصف حتى الآن.</td></tr>';
                     return;
                 }
 
-                data.forEach((row, index) => {
+                // 2. معالجة جدول الصدارة (أعلى نقاط لكل طالب)
+                let studentBestScores = {};
+                filteredData.forEach(item => {
+                    let key = item.student_name + '_' + item.cls;
+                    if (!studentBestScores[key] || item.points > studentBestScores[key].points) {
+                        studentBestScores[key] = item;
+                    }
+                });
+
+                let topPlayersArray = Object.values(studentBestScores).sort((a, b) => b.points - a.points).slice(0, 10);
+
+                topTableBody.innerHTML = '';
+                topPlayersArray.forEach((row, index) => {
                     let medal = index + 1;
-                    if (index === 0) medal = '🥇 1';
-                    else if (index === 1) medal = '🥈 2';
-                    else if (index === 2) medal = '🥉 3';
+                    if (index === 0) medal = '🥇 الأول';
+                    else if (index === 1) medal = '🥈 الثاني';
+                    else if (index === 2) medal = '🥉 الثالث';
+
+                    let badgeClass = row.game_type === 'mine' ? 'badge-mine' : 'badge-game';
 
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
-                        <td>${medal}</td>
-                        <td>${row.student_name}</td>
-                        <td>${row.grade || 'الخامس'}</td>
-                        <td><b>${row.score}</b></td>
+                        <td><b>${medal}</b></td>
+                        <td><b>${row.student_name}</b></td>
+                        <td>${row.cls}</td>
+                        <td><span class="${badgeClass}">${row.game_name}</span></td>
+                        <td><b style="color: #2e7d32; font-size: 16px;">${row.points}</b></td>
                     `;
-                    tableBody.appendChild(tr);
+                    topTableBody.appendChild(tr);
+                });
+
+                // 3. معالجة جدول الأكثر نشاطاً (حسب عدد محاولات اللعب بغض النظر عن النتيجة)
+                let studentPlayCounts = {};
+                filteredData.forEach(item => {
+                    let key = item.student_name + '_' + item.cls;
+                    if (!studentPlayCounts[key]) {
+                        studentPlayCounts[key] = {
+                            student_name: item.student_name,
+                            cls: item.cls,
+                            count: 0
+                        };
+                    }
+                    studentPlayCounts[key].count++;
+                });
+
+                let activePlayersArray = Object.values(studentPlayCounts).sort((a, b) => b.count - a.count).slice(0, 10);
+
+                activeTableBody.innerHTML = '';
+                activePlayersArray.forEach((row, index) => {
+                    let starRank = index === 0 ? '⭐️ نجم الأسبوع' : (index + 1);
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td><b>${starRank}</b></td>
+                        <td><b>${row.student_name}</b></td>
+                        <td>${row.cls}</td>
+                        <td><b style="color: var(--primary); font-size: 15px;">${row.count} مرات</b></td>
+                    `;
+                    activeTableBody.appendChild(tr);
                 });
 
             } catch (err) {
-                console.error(err);
-                tableBody.innerHTML = '<tr><td colspan="4">حدث خطأ أثناء جلب لوحة الشرف من السحابة.</td></tr>';
+                console.error("Leaderboard Error:", err);
+                topTableBody.innerHTML = '<tr><td colspan="5">حدث خطأ أثناء جلب البيانات من السحابة.</td></tr>';
+                activeTableBody.innerHTML = '<tr><td colspan="4">حدث خطأ أثناء جلب بيانات النشاط.</td></tr>';
             }
         }
 
-        window.onload = function() {
-            loadLeaderboard();
-        };
+        // دالة لملء قائمة الصفوف ديناميكياً بناءً على الصفوف التي شارك طلابها فقط
+        function populateClassDropdown(data, currentSelected) {
+            const classSelect = document.getElementById('classFilter');
+            let uniqueClasses = [...new Set(data.map(item => item.cls))].filter(Boolean);
+            
+            // ترتيب تصاعدي منطقي للصفوف (مثل 3ب4، 6ب2...)
+            uniqueClasses.sort();
+
+            classSelect.innerHTML = '<option value="all">جميع الصفوف النشطة 🏫</option>';
+            uniqueClasses.forEach(cls => {
+                let selectedAttr = (cls === currentSelected) ? 'selected' : '';
+                classSelect.innerHTML += `<option value="${cls}" ${selectedAttr}>الصف ${cls}</option>`;
+            });
+        }
     </script>
 
 </body>
