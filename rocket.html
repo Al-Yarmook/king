@@ -15,23 +15,28 @@
         .arena { flex: 1; position: relative; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; cursor: crosshair; }
         .question-box { background: rgba(79, 70, 229, 0.9); padding: 10px 30px; border-radius: 12px; font-size: 32px; font-weight: 900; margin-top: 15px; box-shadow: 0 0 20px rgba(79, 70, 229, 0.8); letter-spacing: 2px; z-index: 5; }
         
-        /* شكل النيازك كأجرام صخرية غير منتظمة */
-        .falling-asteroid { position: absolute; background: linear-gradient(135deg, #64748b, #334155, #1e293b); border: 2px solid #94a3b8; color: white; border-radius: 35% 65% 50% 50% / 40% 45% 55% 60%; width: 75px; height: 75px; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: bold; cursor: pointer; box-shadow: inset -5px -5px 15px rgba(0,0,0,0.7), 0 4px 15px rgba(0,0,0,0.5); user-select: none; transition: transform 0.1s; animation: rotateAsteroid 6s infinite linear; }
-        @keyframes rotateAsteroid { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .falling-asteroid:hover { border-color: #f59e0b; transform: scale(1.1); }
+        /* شكل النيازك كأجرام صخرية تتحرك بعشوائية بدون دوران */
+        .falling-asteroid { position: absolute; background: linear-gradient(135deg, #64748b, #334155, #1e293b); border: 2px solid #94a3b8; color: white; border-radius: 35% 65% 50% 50% / 40% 45% 55% 60%; width: 75px; height: 75px; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: bold; cursor: pointer; box-shadow: inset -5px -5px 15px rgba(0,0,0,0.7), 0 4px 15px rgba(0,0,0,0.5); user-select: none; }
 
-        /* الصاروخ الثابت في الأسفل لإطلاق الليزر */
+        /* الصاروخ الثابت في الأسفل */
         .rocket-ship { position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); font-size: 55px; user-select: none; z-index: 5; }
 
-        /* شعاع الليزر المنطلق عند النقر */
+        /* شعاع الليزر المنطلق من الصاروخ */
         .laser-beam { position: absolute; bottom: 70px; width: 4px; background: linear-gradient(to top, #ef4444, #f87171, #fef08a); transform-origin: bottom center; z-index: 4; box-shadow: 0 0 10px #ef4444; border-radius: 2px; pointer-events: none; }
 
-        /* الشاشات التداخلية (لوحة التعليمات والنهاية) */
+        /* الشاشات التداخلية */
         .modal { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(13, 14, 21, 0.96); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; text-align: center; padding: 30px; box-sizing: border-box; }
         .modal h1 { color: #ec4899; font-size: 32px; margin-bottom: 15px; }
         .modal p { font-size: 18px; margin-bottom: 15px; color: #cbd5e1; line-height: 1.6; }
-        .instructions-box { background: rgba(30, 41, 59, 0.9); padding: 20px; border-radius: 12px; border: 1px solid #4f46e5; text-align: right; margin-bottom: 20px; width: 100%; max-width: 450px; }
-        .instructions-box li { margin-bottom: 10px; font-size: 15px; color: #e2e8f0; }
+        
+        .instructions-box { background: rgba(30, 41, 59, 0.9); padding: 15px; border-radius: 12px; border: 1px solid #4f46e5; text-align: right; margin-bottom: 20px; width: 100%; max-width: 450px; }
+        .instructions-box li { margin-bottom: 8px; font-size: 14px; color: #e2e8f0; }
+
+        /* لوحة الصدارة المصغرة */
+        .leaderboard-box { background: rgba(15, 23, 42, 0.95); border: 2px solid #f59e0b; border-radius: 10px; padding: 15px; width: 100%; max-width: 400px; margin-bottom: 20px; text-align: right; }
+        .leaderboard-box h3 { color: #f59e0b; margin-top: 0; margin-bottom: 10px; text-align: center; font-size: 18px; }
+        .lb-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px dashed #334155; font-size: 14px; }
+
         .btn { background: #4f46e5; color: white; border: none; padding: 12px 35px; font-size: 18px; font-weight: bold; border-radius: 10px; cursor: pointer; transition: 0.3s; font-family: 'Cairo'; }
         .btn:hover { background: #4338ca; transform: translateY(-2px); }
         .hidden { display: none !important; }
@@ -45,10 +50,9 @@
             <h1>🚀 تعليمات وقواعد سباق الصواريخ</h1>
             <div class="instructions-box">
                 <ul>
-                    <li>🎯 <b>طريقة اللعب:</b> انقر مباشرة على الأجرام الفضائية المتحركة التي تحمل الناتج الصحيح لعملية الضرب في الأعلى.</li>
-                    <li>⚡ <b>شعاع الليزر:</b> عند النقر، سيطلق صاروخك شعاع ليزر مضيء نحو الهدف مباشرة!</li>
+                    <li>🎯 <b>طريقة التصويب:</b> انقر في أي مكان بالساحة، وسيطلق صاروخك شعاع ليزر مستقيم نحو الناتج الصحيح للجرم الفضائي!</li>
+                    <li>🪐 <b>حركة الأجرام:</b> تتحرك الأجرام الصخرية يميناً ويساراً وأعلى وشهيقاً بعشوائية لزيادة التحدي.</li>
                     <li>⏱️ <b>الوقت والمكافآت:</b> لديك وقت محدد للجولة، وكل ٥ إجابات صحيحة متتالية تمنحك وقتاً إضافياً.</li>
-                    <li>⚠️ <b>تنبيه:</b> الإجابة الخاطئة تخصم من نقاطك، فكن دقيقاً وسريعاً!</li>
                 </ul>
             </div>
             <button class="btn" onclick="startTheGameSession()">ابدأ التحدي الآن 🎮</button>
@@ -63,16 +67,23 @@
         </div>
 
         <!-- ساحة اللعب الحركية -->
-        <div class="arena" id="arenaBox" onclick="fireLaser(event)">
+        <div class="arena" id="arenaBox" onclick="handleArenaClick(event)">
             <div class="question-box" id="questionDisplay">؟ × ؟</div>
             <div class="rocket-ship" id="rocketShip">🚀</div>
         </div>
 
-        <!-- شاشة النهاية والنتيجة -->
+        <!-- شاشة النهاية والنتيجة مع لوحة الصدارة -->
         <div class="modal hidden" id="gameOverModal">
             <h1>انتهى السباق! 🏆</h1>
             <p id="finalScoreText">لقد جمعت ٠ نقطة</p>
-            <p id="saveStatus" style="color: #38bdf8; font-size: 16px;"></p>
+            <p id="saveStatus" style="color: #38bdf8; font-size: 14px; margin-bottom: 10px;"></p>
+            
+            <!-- لوحة أعلى النقاط -->
+            <div class="leaderboard-box">
+                <h3>🏆 لوحة الشرف (أعلى النقاط)</h3>
+                <div id="leaderboardList">جاري تحميل الأبطال...</div>
+            </div>
+
             <div style="display: flex; gap: 15px;">
                 <button class="btn" onclick="restartGame()">إعادة اللعب 🔄</button>
                 <button class="btn" style="background: #059669;" onclick="goToMain()">الرئيسية 🏠</button>
@@ -81,7 +92,6 @@
     </div>
 
     <script>
-        // دالة توليد المؤثرات الصوتية (بدون ملفات خارجية)
         function playSound(type) {
             try {
                 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -91,7 +101,6 @@
                 gainNode.connect(audioCtx.destination);
 
                 if (type === 'correct') {
-                    // صوت نجاح / إجابة صحيحة (صوت صاعد متفائل)
                     osc.type = 'sine';
                     osc.frequency.setValueAtTime(400, audioCtx.currentTime);
                     osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.15);
@@ -100,7 +109,6 @@
                     osc.start();
                     osc.stop(audioCtx.currentTime + 0.2);
                 } else if (type === 'wrong') {
-                    // صوت خطأ (صوت منخفض حاد)
                     osc.type = 'sawtooth';
                     osc.frequency.setValueAtTime(180, audioCtx.currentTime);
                     osc.frequency.linearRampToValueAtTime(100, audioCtx.currentTime + 0.2);
@@ -109,7 +117,6 @@
                     osc.start();
                     osc.stop(audioCtx.currentTime + 0.25);
                 } else if (type === 'laser') {
-                    // صوت إطلاق ليزر قصير
                     osc.type = 'triangle';
                     osc.frequency.setValueAtTime(600, audioCtx.currentTime);
                     osc.frequency.exponentialRampToValueAtTime(150, audioCtx.currentTime + 0.1);
@@ -119,7 +126,7 @@
                     osc.stop(audioCtx.currentTime + 0.1);
                 }
             } catch (e) {
-                console.log("Audio not supported or blocked", e);
+                console.log("Audio error", e);
             }
         }
 
@@ -219,14 +226,15 @@
 
             const arena = document.getElementById('arenaBox');
             const arenaWidth = arena.clientWidth || 500;
+            const arenaHeight = arena.clientHeight || 500;
 
             options.forEach((opt, index) => {
                 let astEl = document.createElement('div');
                 astEl.className = 'falling-asteroid';
                 astEl.textContent = toArabicNum(opt);
                 
-                let startX = 60 + (index * (arenaWidth / 3.3));
-                let startY = 70 + (Math.random() * 40);
+                let startX = 50 + (index * (arenaWidth / 3.3));
+                let startY = 80 + (Math.random() * 100);
                 
                 astEl.style.left = startX + 'px';
                 astEl.style.top = startY + 'px';
@@ -236,19 +244,41 @@
                     element: astEl,
                     x: startX,
                     y: startY,
-                    speed: 1.0 + Math.random() * 0.7,
+                    vx: (Math.random() - 0.5) * 2.5, // سرعة أفقية عشوائية
+                    vy: 0.8 + Math.random() * 0.8,    // سرعة رأسية
                     value: opt
                 });
-
-                astEl.onclick = (e) => {
-                    e.stopPropagation();
-                    checkAnswer(opt);
-                };
             });
         }
 
-        // إطلاق شعاع الليزر عند النقر في الساحة نحو مكان النقر
-        function fireLaser(e) {
+        // تحديث الحركة العشوائية (أفقياً وعمودياً) بدون دوران
+        function updatePhysics() {
+            const arena = document.getElementById('arenaBox');
+            const arenaWidth = arena.clientWidth || 500;
+            const arenaHeight = arena.clientHeight || 600;
+
+            asteroids.forEach(ast => {
+                ast.x += ast.vx;
+                ast.y += ast.vy;
+
+                // الارتداد أفقياً عن حواف الشاشة
+                if (ast.x < 10 || ast.x > arenaWidth - 85) {
+                    ast.vx *= -1;
+                }
+
+                // إذا وصل الجرم لأسفل الشاشة يعود للأعلى
+                if (ast.y > arenaHeight - 120) {
+                    ast.y = 70;
+                    ast.x = Math.random() * (arenaWidth - 100);
+                }
+
+                ast.element.style.left = ast.x + 'px';
+                ast.element.style.top = ast.y + 'px';
+            });
+        }
+
+        // التعامل مع النقر في أي مكان لإطلاق الليزر واصابت الجرم الصحيح تلقائياً
+        function handleArenaClick(e) {
             playSound('laser');
             const arena = document.getElementById('arenaBox');
             const rect = arena.getBoundingClientRect();
@@ -260,9 +290,26 @@
             const startX = (rocketRect.left + rocketRect.right) / 2 - rect.left;
             const startY = arena.clientHeight - 40;
 
-            // حساب المسافة والزاوية لشعاع الليزر
-            const length = Math.hypot(clickX - startX, clickY - startY);
-            const angle = Math.atan2(clickX - startX, startY - clickY) * (180 / Math.PI);
+            // العثور على الجرم الأقرب لمكان النقر أو النقر المباشر عليه
+            let targetAst = null;
+            let minDistance = 9999;
+
+            asteroids.forEach(ast => {
+                let astCenterX = ast.x + 37;
+                let astCenterY = ast.y + 37;
+                let dist = Math.hypot(clickX - astCenterX, clickY - astCenterY);
+                if (dist < minDistance) {
+                    minDistance = dist;
+                    targetAst = ast;
+                }
+            });
+
+            // رسم شعاع الليزر نحو مكان النقر أو الجرم المستهدف
+            let endX = targetAst ? (targetAst.x + 37) : clickX;
+            let endY = targetAst ? (targetAst.y + 37) : clickY;
+
+            const length = Math.hypot(endX - startX, endY - startY);
+            const angle = Math.atan2(endX - startX, startY - endY) * (180 / Math.PI);
 
             const laser = document.createElement('div');
             laser.className = 'laser-beam';
@@ -273,19 +320,10 @@
             
             arena.appendChild(laser);
             setTimeout(() => laser.remove(), 150);
-        }
 
-        function updatePhysics() {
-            const arenaHeight = document.getElementById('arenaBox').clientHeight || 600;
-            
-            asteroids.forEach(ast => {
-                ast.y += ast.speed;
-                ast.element.style.top = ast.y + 'px';
-
-                if (ast.y > arenaHeight - 100) {
-                    generateNewWave();
-                }
-            });
+            if (targetAst) {
+                checkAnswer(targetAst.value);
+            }
         }
 
         function checkAnswer(selectedOpt) {
@@ -323,9 +361,42 @@
 
                 if (error) throw error;
                 document.getElementById('saveStatus').textContent = '✅ تم حفظ النتيجة بنجاح في السحابة!';
+                loadLeaderboardInModal();
             } catch (err) {
                 console.error("Save Score Error:", err);
                 document.getElementById('saveStatus').textContent = '⚠️ حدث خطأ أثناء الحفظ بالسحابة.';
+            }
+        }
+
+        // جلب وعرض أعلى النتائج داخل لوحة نهاية اللعبة
+        async function loadLeaderboardInModal() {
+            const lbList = document.getElementById('leaderboardList');
+            lbList.innerHTML = 'جاري التحميل...';
+            try {
+                const { data, error } = await supabaseClient
+                    .from('scores')
+                    .select('student_name, score')
+                    .order('score', { ascending: false })
+                    .limit(5);
+
+                if (error) throw error;
+                if (!data || data.length === 0) {
+                    lbList.innerHTML = 'لا توجد نتائج مسجلة.';
+                    return;
+                }
+
+                lbList.innerHTML = '';
+                data.forEach((row, index) => {
+                    let medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '⭐';
+                    lbList.innerHTML += `
+                        <div class="lb-row">
+                            <span>${medal} ${row.student_name}</span>
+                            <span><b>${toArabicNum(row.score)}</b> نقطة</span>
+                        </div>
+                    `;
+                });
+            } catch (err) {
+                lbList.innerHTML = 'تعذر تحميل لوحة الصدارة.';
             }
         }
 
