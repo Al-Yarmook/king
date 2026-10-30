@@ -26,6 +26,7 @@
         .filters-bar select { padding: 10px 15px; border-radius: 8px; border: 1px solid #cbd5e1; font-family: 'Segoe UI'; font-size: 14px; background: #fff; color: var(--text); cursor: pointer; }
 
         h2 { color: var(--accent); margin-bottom: 15px; text-align: center; font-size: 22px; }
+        h3 { color: var(--primary); margin: 20px 0 10px 0; font-size: 18px; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; }
         table { width: 100%; border-collapse: collapse; margin-top: 10px; text-align: center; }
         th, td { padding: 12px; border-bottom: 1px solid #e2e8f0; font-size: 14px; }
         th { background: var(--accent); color: white; }
@@ -36,6 +37,7 @@
         
         .back-link { display: inline-block; margin-top: 10px; color: var(--primary); text-decoration: none; font-weight: bold; }
         .back-link:hover { text-decoration: underline; }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
@@ -45,7 +47,7 @@
     </header>
 
     <div class="container">
-        <!-- شريط التصفية والفلترة -->
+        <!-- شريط تصفية الألعاب فقط -->
         <div class="filters-bar">
             <div>
                 <label style="font-weight: bold; margin-left: 8px;">عرض حسب اللعبة:</label>
@@ -55,15 +57,9 @@
                     <option value="mine">لغز منجم الذهب ⛏️</option>
                 </select>
             </div>
-            <div>
-                <label style="font-weight: bold; margin-left: 8px;">تصفية الصف الدراسي:</label>
-                <select id="classFilter" onchange="fetchAndRenderLeaderboard()">
-                    <option value="all">جميع الصفوف النشطة 🏫</option>
-                </select>
-            </div>
         </div>
 
-        <!-- 1. لوحة صدارة النقاط (الملوك الكبرى) -->
+        <!-- 1. لوحة صدارة النقاط العامة -->
         <div class="card">
             <h2>👑 أبطال الصدارة والنتيجة الأكبر</h2>
             <table id="topScoresTable">
@@ -82,50 +78,37 @@
             </table>
         </div>
 
-        <!-- 2. لوحة الأكثر لعباً وإصراراً هذا الأسبوع -->
+        <!-- 2. لوحة الأكثر تفاعلاً منفصلة لكل صف دراسي ديناميكياً -->
         <div class="card">
-            <h2>🔥 لوحة الأكثر نشاطاً وإصراراً (الأكثر لعباً هذا الأسبوع)</h2>
-            <table id="mostActiveTable">
-                <thead>
-                    <tr>
-                        <th>المركز ⭐️</th>
-                        <th>اسم الطالب</th>
-                        <th>الصف</th>
-                        <th>عدد محاولات اللعب 🔄</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr><td colspan="4">جاري تحليل الأنشطة...</td></tr>
-                </tbody>
-            </table>
+            <h2>🔥 لوحة الأكثر تفاعلاً ونشاطاً هذا الأسبوع (حسب الصفوف)</h2>
+            
+            <div id="activeTablesContainer">
+                <p style="text-align: center; color: #666;">جاري تحميل لوحات التفاعل...</p>
+            </div>
 
-            <div style="text-align: center; margin-top: 20px;">
+            <div style="text-align: center; margin-top: 25px;">
                 <a href="index.html" class="back-link">← العودة للرئيسية</a>
             </div>
         </div>
     </div>
 
     <script>
-        let globalScoresData = [];
-
         document.addEventListener('DOMContentLoaded', () => {
             fetchAndRenderLeaderboard();
         });
 
         async function fetchAndRenderLeaderboard() {
             const topTableBody = document.querySelector('#topScoresTable tbody');
-            const activeTableBody = document.querySelector('#mostActiveTable tbody');
+            const container = document.getElementById('activeTablesContainer');
             const selectedGame = document.getElementById('gameFilter').value;
-            const selectedClass = document.getElementById('classFilter').value;
 
             topTableBody.innerHTML = '<tr><td colspan="5">جاري التحميل...</td></tr>';
-            activeTableBody.innerHTML = '<tr><td colspan="4">جاري التحميل...</td></tr>';
+            container.innerHTML = '<p style="text-align: center; color: #666;">جاري تحليل الأنشطة الصفية...</p>';
 
             try {
                 let rocketData = [];
                 let mineData = [];
 
-                // 1. جلب البيانات من جدول rocket_scores الجديد
                 if (selectedGame === 'all' || selectedGame === 'rocket') {
                     const { data: rData, error: rErr } = await supabaseClient.from('rocket_scores').select('*');
                     if (!rErr && rData) {
@@ -134,13 +117,11 @@
                             cls: item.cls || 'غير مصنف',
                             points: item.points || 0,
                             game_name: 'سباق صواريخ الفضاء',
-                            game_type: 'rocket',
-                            created_at: item.created_at || new Date().toISOString()
+                            game_type: 'rocket'
                         }));
                     }
                 }
 
-                // 2. جلب البيانات من جدول goldmine_scores الجديد
                 if (selectedGame === 'all' || selectedGame === 'mine') {
                     const { data: mData, error: mErr } = await supabaseClient.from('goldmine_scores').select('*');
                     if (!mErr && mData) {
@@ -149,32 +130,22 @@
                             cls: item.cls || 'غير مصنف',
                             points: item.points || 0,
                             game_name: 'لغز منجم الذهب',
-                            game_type: 'mine',
-                            created_at: item.created_at || new Date().toISOString()
+                            game_type: 'mine'
                         }));
                     }
                 }
 
-                globalScoresData = [...rocketData, ...mineData];
+                let allScoresData = [...rocketData, ...mineData];
 
-                // تعبئة قائمة الصفوف المتاحة ديناميكياً (بحيث تظهر فقط الصفوف التي لعب طلابها)
-                populateClassDropdown(globalScoresData, selectedClass);
-
-                // تصفية البيانات حسب الصف المختار
-                let filteredData = globalScoresData;
-                if (selectedClass !== 'all') {
-                    filteredData = globalScoresData.filter(s => s.cls.trim() === selectedClass);
-                }
-
-                if (filteredData.length === 0) {
-                    topTableBody.innerHTML = '<tr><td colspan="5">لا توجد نتائج مسجلة لهذا الصف حتى الآن.</td></tr>';
-                    activeTableBody.innerHTML = '<tr><td colspan="4">لا توجد سجلات نشاط لهذا الصف حتى الآن.</td></tr>';
+                if (allScoresData.length === 0) {
+                    topTableBody.innerHTML = '<tr><td colspan="5">لا توجد نتائج مسجلة حتى الآن.</td></tr>';
+                    container.innerHTML = '<p style="text-align: center; color: #666;">لا توجد سجلات نشاط لعرضها.</p>';
                     return;
                 }
 
-                // 3. معالجة جدول الصدارة (أعلى نقاط لكل طالب)
+                // 1. تعبئة جدول الصدارة العامة (أعلى نقاط لكل طالب)
                 let studentBestScores = {};
-                filteredData.forEach(item => {
+                allScoresData.forEach(item => {
                     let key = item.student_name + '_' + item.cls;
                     if (!studentBestScores[key] || item.points > studentBestScores[key].points) {
                         studentBestScores[key] = item;
@@ -185,11 +156,7 @@
 
                 topTableBody.innerHTML = '';
                 topPlayersArray.forEach((row, index) => {
-                    let medal = index + 1;
-                    if (index === 0) medal = '🥇 الأول';
-                    else if (index === 1) medal = '🥈 الثاني';
-                    else if (index === 2) medal = '🥉 الثالث';
-
+                    let medal = index === 0 ? '🥇 الأول' : index === 1 ? '🥈 الثاني' : index === 2 ? '🥉 الثالث' : (index + 1);
                     let badgeClass = row.game_type === 'mine' ? 'badge-mine' : 'badge-game';
 
                     const tr = document.createElement('tr');
@@ -203,53 +170,83 @@
                     topTableBody.appendChild(tr);
                 });
 
-                // 4. معالجة جدول الأكثر نشاطاً (حسب عدد محاولات اللعب بغض النظر عن النتيجة)
-                let studentPlayCounts = {};
-                filteredData.forEach(item => {
-                    let key = item.student_name + '_' + item.cls;
-                    if (!studentPlayCounts[key]) {
-                        studentPlayCounts[key] = {
+                // 2. تصنيف الطلاب حسب المرحلة الدراسية ديناميكياً استناداً إلى رقم الصف (مثل 3، 4، 5، 6...)
+                let gradeGroups = {
+                    '3': { title: '⭐️ الصف الثالث الأساسي', students: {} },
+                    '4': { title: '⭐️ الصف الرابع الأساسي', students: {} },
+                    '5': { title: '⭐️ الصف الخامس الأساسي', students: {} },
+                    '6': { title: '⭐️ الصف السادس الأساسي', students: {} },
+                    'other': { title: '⭐️ صفوف أخرى', students: {} }
+                };
+
+                allScoresData.forEach(item => {
+                    let clsStr = String(item.cls).trim();
+                    let firstChar = clsStr.charAt(0); // استخراج الرقم الأول (مثلاً 4 من 4ب1)
+                    
+                    let groupKey = gradeGroups[firstChar] ? firstChar : 'other';
+                    let studentKey = item.student_name + '_' + clsStr;
+
+                    if (!gradeGroups[groupKey].students[studentKey]) {
+                        gradeGroups[groupKey].students[studentKey] = {
                             student_name: item.student_name,
-                            cls: item.cls,
+                            cls: clsStr,
                             count: 0
                         };
                     }
-                    studentPlayCounts[key].count++;
+                    gradeGroups[groupKey].students[studentKey].count++;
                 });
 
-                let activePlayersArray = Object.values(studentPlayCounts).sort((a, b) => b.count - a.count).slice(0, 10);
+                // 3. بناء الجداول ديناميكياً للصفوف التي تحتوي على نشاط فقط
+                container.innerHTML = '';
+                let activeGradesFound = false;
 
-                activeTableBody.innerHTML = '';
-                activePlayersArray.forEach((row, index) => {
-                    let starRank = index === 0 ? '⭐️ نجم الأسبوع' : (index + 1);
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td><b>${starRank}</b></td>
-                        <td><b>${row.student_name}</b></td>
-                        <td>${row.cls}</td>
-                        <td><b style="color: var(--primary); font-size: 15px;">${row.count} مرات</b></td>
+                ['3', '4', '5', '6', 'other'].forEach(key => {
+                    let group = gradeGroups[key];
+                    let studentsArr = Object.values(group.students).sort((a, b) => b.count - a.count);
+
+                    // إذا لم يلعب أحد من هذه المرحلة، يتم تخطي إنشاء الجدول تماماً
+                    if (studentsArr.length === 0) return;
+
+                    activeGradesFound = true;
+
+                    let tableHTML = `
+                        <h3>${group.title}</h3>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>المركز ⭐️</th>
+                                    <th>اسم الطالب</th>
+                                    <th>الصف</th>
+                                    <th>عدد محاولات اللعب 🔄</th>
+                                </tr>
+                            </thead>
+                            <tbody>
                     `;
-                    activeTableBody.appendChild(tr);
+
+                    studentsArr.slice(0, 10).forEach((st, idx) => {
+                        let rank = idx === 0 ? '👑 الأكثر تفاعلاً' : (idx + 1);
+                        tableHTML += `
+                            <tr>
+                                <td><b>${rank}</b></td>
+                                <td><b>${st.student_name}</b></td>
+                                <td>${st.cls}</td>
+                                <td><b style="color: var(--primary); font-size: 15px;">${st.count} مرات</b></td>
+                            </tr>
+                        `;
+                    });
+
+                    tableHTML += `</tbody></table><br>`;
+                    container.innerHTML += tableHTML;
                 });
+
+                if (!activeGradesFound) {
+                    container.innerHTML = '<p style="text-align: center; color: #666;">لا توجد سجلات تفاعل مسجلة حتى الآن.</p>';
+                }
 
             } catch (err) {
                 console.error("Leaderboard Error:", err);
-                topTableBody.innerHTML = '<tr><td colspan="5">حدث خطأ أثناء جلب البيانات من السحابة.</td></tr>';
-                activeTableBody.innerHTML = '<tr><td colspan="4">حدث خطأ أثناء جلب بيانات النشاط.</td></tr>';
+                container.innerHTML = '<p style="text-align: center; color: red;">حدث خطأ أثناء تحليل بيانات النشاط.</p>';
             }
-        }
-
-        // دالة لملء قائمة الصفوف ديناميكياً بناءً على الصفوف التي شارك طلابها فقط
-        function populateClassDropdown(data, currentSelected) {
-            const classSelect = document.getElementById('classFilter');
-            let uniqueClasses = [...new Set(data.map(item => item.cls))].filter(Boolean);
-            uniqueClasses.sort();
-
-            classSelect.innerHTML = '<option value="all">جميع الصفوف النشطة 🏫</option>';
-            uniqueClasses.forEach(cls => {
-                let selectedAttr = (cls === currentSelected) ? 'selected' : '';
-                classSelect.innerHTML += `<option value="${cls}" ${selectedAttr}>الصف ${cls}</option>`;
-            });
         }
     </script>
 
