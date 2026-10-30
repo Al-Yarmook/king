@@ -43,7 +43,7 @@
 <body>
 
     <div class="game-container" id="gameContainer">
-        <!-- لوحة التعليمات والقواعد ديناميكية المزودة ببيانات المدير -->
+        <!-- لوحة التعليمات والقواعد متزامنة تماماً مع إعدادات المدير -->
         <div class="modal" id="instructionsModal">
             <h1>🚀 تعليمات وقواعد سباق الصواريخ</h1>
             <div class="instructions-box">
@@ -60,7 +60,7 @@
         <!-- شاشة المعلومات العلوية HUD -->
         <div class="hud">
             <div>اللاعب: <span id="playerName">بطل</span></div>
-            <div>⏱️ الوقت: <span id="timeLeft">٩٠</span>ث</div>
+            <div>⏱️ الوقت: <span id="timeLeft">--</span>ث</div>
             <div>🔥 السلسلة: <span id="streakCount">٠</span></div>
             <div>⭐ النقاط: <span id="scoreVal">٠</span></div>
             <div class="bonus-float-msg" id="bonusMsg">+١٠ ثوانٍ! ⏱️</div>
@@ -137,16 +137,16 @@
         let studentData = JSON.parse(localStorage.getItem('current_student')) || { name: "أحمد (تجريبي)", cls: "٥ب٤" };
         document.getElementById('playerName').textContent = studentData.name;
 
-        // جلب الإعدادات المحفوظة من لوحة المدير ومزامنتها
+        // جلب الإعدادات المحدثة من لوحة المدير ومزامنتها تماماً
         let customSettings = JSON.parse(localStorage.getItem('rocket_game_settings')) || {
-            gameTime: 90,
+            gameTime: 60,
             correctPoints: 100,
             wrongPenalty: 30,
             streakCount: 5,
             bonusTime: 10
         };
 
-        // تحديث نصوص لوحة التعليمات بناءً على إعدادات المدير
+        // تحديث النصوص في لوحة التعليمات وقيم البداية ديناميكياً
         document.getElementById('ruleTime').textContent = toArabicNum(customSettings.gameTime);
         document.getElementById('rulePoints').textContent = toArabicNum(customSettings.correctPoints);
         document.getElementById('ruleStreak').textContent = toArabicNum(customSettings.streakCount);
@@ -359,7 +359,6 @@
             document.getElementById('saveStatus').textContent = 'جاري حفظ النتيجة في سحابة مدرسة اليرموك...';
 
             try {
-                // إدخال النتيجة بالتوافق المباشر مع Supabase وإلغاء القيود
                 const { error } = await supabaseClient.from('scores').insert([{
                     student_name: studentData.name,
                     cls: studentData.cls,
@@ -416,6 +415,11 @@
         function goToMain() {
             window.location.href = 'student.html';
         }
+
+        // تهيئة عرض الوقت قبل بدء اللعبة بناءً على الإعدادات
+        window.onload = function() {
+            document.getElementById('timeLeft').textContent = toArabicNum(customSettings.gameTime);
+        };
     </script>
 </body>
 </html>
