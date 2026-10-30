@@ -25,13 +25,14 @@
         .btn-secondary { background: #ef4444; color: white; border: none; padding: 8px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; font-family: 'Cairo'; font-size: 13px; transition: 0.2s; }
         .btn-secondary:hover { background: #dc2626; }
         
-        .selection-section { display: none; }
+        .selection-section { display: block; }
+        .hidden { display: none !important; }
+        
         label { display: block; margin-bottom: 8px; font-weight: 600; text-align: right; color: #cbd5e1; }
         select, .btn-primary { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #4f46e5; border-radius: 8px; font-family: 'Cairo'; box-sizing: border-box; }
         select { background: #0f172a; color: white; }
         .btn-primary { background: #4f46e5; color: white; border: none; font-weight: bold; cursor: pointer; font-size: 18px; transition: 0.3s; }
         .btn-primary:hover { background: #4338ca; }
-        .hidden { display: none !important; }
     </style>
 </head>
 <body>
@@ -43,12 +44,12 @@
             
             <label>اختر الصف الدراسي:</label>
             <select id="classSelect" onchange="loadStudentsByClass()">
-                <option value="">-- اختر الصف --</option>
+                <option value="">-- جاري تحميل الصفوف... --</option>
             </select>
 
             <label>اختر اسم الطالب:</label>
             <select id="studentSelect">
-                <option value="">-- اختر اسمك --</option>
+                <option value="">-- اختر الصف أولاً --</option>
             </select>
 
             <button class="btn-primary" onclick="saveStudentAndEnter()">ابدأ التحدي 🚀</button>
@@ -100,34 +101,44 @@
                 studentData = null;
             }
 
+            const loginSec = document.getElementById('loginSection');
+            const hubSec = document.getElementById('hubSection');
+
             if (studentData && studentData.name && studentData.cls) {
                 document.getElementById('displayStudentName').textContent = studentData.name;
                 document.getElementById('displayStudentClass').textContent = studentData.cls;
-                document.getElementById('hubSection').classList.remove('hidden');
-                document.getElementById('loginSection').classList.add('hidden');
+                hubSec.classList.remove('hidden');
+                loginSec.classList.add('hidden');
             } else {
-                document.getElementById('loginSection').classList.remove('hidden');
-                document.getElementById('hubSection').classList.add('hidden');
+                loginSec.classList.remove('hidden');
+                hubSec.classList.add('hidden');
             }
         }
 
         async function fetchStudents() {
-            const { data, error } = await supabaseClient.from('students').select('*');
-            if(error) {
-                console.error("Error fetching students:", error);
-                alert('حدث خطأ أثناء تحميل بيانات الطلاب.');
-                return;
-            }
+            try {
+                const { data, error } = await supabaseClient.from('students').select('*');
+                if(error) {
+                    console.error("Error fetching students:", error);
+                    alert('حدث خطأ أثناء تحميل بيانات الطلاب من قاعدة البيانات.');
+                    return;
+                }
 
-            if(data && data.length > 0) {
-                allStudents = data;
-                let classes = [...new Set(data.map(s => s.cls))].filter(Boolean);
                 const classSelect = document.getElementById('classSelect');
-                classSelect.innerHTML = '<option value="">-- اختر الصف --</option>';
-                
-                classes.forEach(cls => {
-                    classSelect.innerHTML += `<option value="${cls}">${cls}</option>`;
-                });
+                if(data && data.length > 0) {
+                    allStudents = data;
+                    let classes = [...new Set(data.map(s => s.cls))].filter(Boolean);
+                    
+                    classSelect.innerHTML = '<option value="">-- اختر الصف --</option>';
+                    classes.forEach(cls => {
+                        classSelect.innerHTML += `<option value="${cls}">${cls}</option>`;
+                    });
+                } else {
+                    classSelect.innerHTML = '<option value="">لا توجد صفوف مسجلة حالياً</option>';
+                }
+            } catch(err) {
+                console.error("Connection exception:", err);
+                document.getElementById('classSelect').innerHTML = '<option value="">خطأ في الاتصال بالسحابة</option>';
             }
         }
 
