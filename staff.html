@@ -3,226 +3,89 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تسجيل دخول المعلمين والإدارة - ملك جدول الضرب</title>
+    <title>بوابة المعلمين والإدارة - منصة ملك جدول الضرب</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="config.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Cairo', sans-serif; background: linear-gradient(135deg, #f3e7e9 0%, #e3eeff 99%, #e3eeff 100%); margin: 0; min-height: 100vh; display: flex; justify-content: center; align-items: center; }
-        .card { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 450px; text-align: center; }
-        h2 { color: #d81b60; margin-bottom: 25px; }
+        body { font-family: 'Cairo', sans-serif; background: #f0fdf4; margin: 0; padding: 0; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .login-card { background: white; padding: 35px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.08); width: 100%; max-width: 400px; text-align: center; border-top: 5px solid #16a34a; }
+        h1 { color: #16a34a; font-size: 24px; margin-bottom: 25px; }
         .form-group { margin-bottom: 20px; text-align: right; }
-        label { display: block; margin-bottom: 8px; color: #d81b60; font-weight: 600; }
-        .input-container { position: relative; }
-        input { width: 100%; padding: 12px 45px 12px 15px; border: 2px solid #ffccd5; border-radius: 10px; font-size: 16px; font-family: 'Cairo', sans-serif; box-sizing: border-box; outline: none; transition: 0.3s; }
-        input:focus { border-color: #d81b60; }
-        .toggle-password { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 18px; user-select: none; }
-        .btn { background: #d81b60; color: white; border: none; width: 100%; padding: 12px; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 10px; }
-        .btn:hover { background: #ad1457; }
-        .back-link { display: block; margin-top: 20px; color: #3f51b5; text-decoration: none; font-weight: 600; cursor: pointer; }
-        .back-link:hover { text-decoration: underline; }
-        .hidden { display: none !important; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; color: #334155; font-size: 14px; }
+        input { width: 100%; padding: 12px; border: 2px solid #cbd5e1; border-radius: 10px; box-sizing: border-box; font-family: 'Cairo'; font-size: 15px; transition: 0.3s; }
+        input:focus { border-color: #16a34a; outline: none; box-shadow: 0 0 8px rgba(22, 163, 74, 0.2); }
+        .btn { background: #16a34a; color: white; border: none; padding: 12px; width: 100%; font-size: 16px; font-weight: bold; border-radius: 10px; cursor: pointer; transition: 0.3s; font-family: 'Cairo'; margin-top: 10px; }
+        .btn:hover { background: #15803d; }
+        .back-link { display: inline-block; margin-top: 20px; color: #475569; text-decoration: none; font-size: 14px; font-weight: bold; }
+        .back-link:hover { color: #16a34a; }
+        
+        footer.author-footer {
+            position: absolute;
+            bottom: 10px;
+            text-align: center;
+            width: 100%;
+            font-size: 13px;
+            color: #64748b;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
 
-    <!-- نموذج تسجيل الدخول -->
-    <div class="card" id="loginCard">
-        <h2>تسجيل دخول المعلمين والإدارة</h2>
+    <div class="login-card">
+        <h1>👨‍🏫 بوابة المعلمين والإدارة</h1>
         <div class="form-group">
-            <label>اسم المستخدم أو الرقم الشخصي أو البريد:</label>
-            <input type="text" id="staffEmail" placeholder="أدخل اسم المستخدم أو الرقم">
+            <label>الرقم الشخصي أو البريد الإلكتروني:</label>
+            <input type="text" id="staffIdentifier" placeholder="أدخل رقمك الشخصي">
         </div>
         <div class="form-group">
             <label>كلمة المرور:</label>
-            <div class="input-container">
-                <input type="password" id="staffPass" placeholder="أدخل كلمة المرور">
-                <span class="toggle-password" id="toggleStaffPass">👁️</span>
-            </div>
+            <input type="password" id="staffPassword" placeholder="أدخل كلمة المرور">
         </div>
-        <button class="btn" id="loginBtn">دخول للنظام 🔐</button>
-        <a class="back-link" onclick="showForgotCard()">نسيت كلمة المرور؟ 🤔</a>
+        <button class="btn" onclick="loginStaff()">تسجيل الدخول 🚀</button>
+        <br>
         <a href="index.html" class="back-link">← العودة للرئيسية</a>
     </div>
 
-    <!-- نموذج تغيير كلمة المرور عند الدخول لأول مرة (0) -->
-    <div class="card hidden" id="resetCard">
-        <h2>🔒 تعيين كلمة مرور جديدة</h2>
-        <p style="color: #666; margin-bottom: 20px; font-size: 14px;">هذه هي مرتك الأولى للنظام، يرجى تعيين كلمة مرور جديدة ومؤمنة.</p>
-        <div class="form-group">
-            <label>كلمة المرور الجديدة:</label>
-            <div class="input-container">
-                <input type="password" id="newPass" placeholder="أدخل كلمة المرور الجديدة">
-                <span class="toggle-password" id="toggleNewPass">👁️</span>
-            </div>
-        </div>
-        <div class="form-group">
-            <label>تأكيد كلمة المرور:</label>
-            <div class="input-container">
-                <input type="password" id="confirmPass" placeholder="أعد إدخال كلمة المرور">
-                <span class="toggle-password" id="toggleConfirmPass">👁️</span>
-            </div>
-        </div>
-        <button class="btn" id="updatePassBtn">حفظ ودخول 🚀</button>
-    </div>
-
-    <!-- نموذج استعادة كلمة المرور (نسيت كلمة المرور) -->
-    <div class="card hidden" id="forgotCard">
-        <h2>🔑 استعادة كلمة المرور</h2>
-        <p style="color: #666; margin-bottom: 20px; font-size: 14px;">أدخل الرقم الشخصي والبريد الإلكتروني المسجل للتحقق.</p>
-        <div class="form-group">
-            <label>الرقم الشخصي:</label>
-            <input type="text" id="forgotCpr" placeholder="أدخل الرقم الشخصي">
-        </div>
-        <div class="form-group">
-            <label>البريد الإلكتروني المسجل:</label>
-            <input type="email" id="forgotEmail" placeholder="أدخل بريدك الإلكتروني">
-        </div>
-        <div class="form-group">
-            <label>كلمة المرور الجديدة:</label>
-            <input type="password" id="forgotNewPass" placeholder="كلمة المرور الجديدة">
-        </div>
-        <button class="btn" id="verifyForgotBtn">تحديث كلمة المرور 🔄</button>
-        <a class="back-link" onclick="showLoginCard()">← العودة لتسجيل الدخول</a>
-    </div>
+    <footer class="author-footer">
+        إعداد أ. صادق القلعاوي | مدرسة اليرموك الابتدائية للبنين 🏫✨
+    </footer>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            function setupToggle(toggleId, inputId) {
-                const toggle = document.getElementById(toggleId);
-                const input = document.getElementById(inputId);
-                if (toggle && input) {
-                    toggle.addEventListener('click', () => {
-                        if (input.type === "password") { input.type = "text"; toggle.textContent = "🙈"; }
-                        else { input.type = "password"; toggle.textContent = "👁️"; }
-                    });
-                }
+        async function loginStaff() {
+            const identifier = document.getElementById('staffIdentifier').value.trim();
+            const password = document.getElementById('staffPassword').value.trim();
+
+            if (!identifier || !password) {
+                alert('الرجاء إدخال بيانات الدخول كاملةً!');
+                return;
             }
-            setupToggle('toggleStaffPass', 'staffPass');
-            setupToggle('toggleNewPass', 'newPass');
-            setupToggle('toggleConfirmPass', 'confirmPass');
 
-            let tempStaffData = null;
-
-            document.getElementById('loginBtn').addEventListener('click', async () => {
-                const inputVal = document.getElementById('staffEmail').value.trim();
-                const pass = document.getElementById('staffPass').value.trim();
-                
-                if(!inputVal || !pass) { 
-                    alert('الرجاء إدخال اسم المستخدم وكلمة المرور!'); 
-                    return; 
-                }
-
-                try {
-                    // البحث الدقيق في جدول staff بالاسم أو الرقم أو البريد
-                    const { data, error } = await supabaseClient
-                        .from('staff')
-                        .select('*')
-                        .or(`username.eq.${inputVal},cpr.eq.${inputVal},email.eq.${inputVal}`)
-                        .maybeSingle();
-
-                    if (error) {
-                        console.error("Supabase Error:", error);
-                        alert('حدث خطأ في الاتصال بقاعدة البيانات.');
-                        return;
-                    }
-
-                    if (!data) {
-                        alert('خطأ: اسم المستخدم أو الرقم غير موجود في النظام.');
-                        return;
-                    }
-
-                    if (String(data.password) !== String(pass)) {
-                        alert('كلمة المرور غير صحيحة!');
-                        return;
-                    }
-
-                    // إذا كانت كلمة المرور المؤقتة 0
-                    if (String(data.password) === '0') {
-                        tempStaffData = data;
-                        document.getElementById('loginCard').classList.add('hidden');
-                        document.getElementById('resetCard').classList.remove('hidden');
-                        return;
-                    }
-
-                    // تسجيل الدخول بنجاح والانتقال للوحة التحكم
-                    localStorage.setItem('current_staff_user', JSON.stringify(data));
-                    window.location.href = 'dashboard.html';
-
-                } catch (err) {
-                    console.error("Login Exception:", err);
-                    alert('حدث خطأ غير متوقع أثناء تسجيل الدخول.');
-                }
-            });
-
-            document.getElementById('updatePassBtn').addEventListener('click', async () => {
-                const newPass = document.getElementById('newPass').value.trim();
-                const confirmPass = document.getElementById('confirmPass').value.trim();
-                
-                if(!newPass || !confirmPass) { alert('الرجاء تعبئة خانات كلمة المرور!'); return; }
-                if(newPass !== confirmPass) { alert('كلمتا المرور غير متطابقتين!'); return; }
-                if(newPass === '0') { alert('لا يمكن تعيين كلمة المرور لتكون 0.'); return; }
-
-                const targetId = tempStaffData ? tempStaffData.id : null;
-                if(!targetId) { alert('حدث خطأ في تحديد المستخدم، يرجى إعادة تسجيل الدخول.'); showLoginCard(); return; }
-
-                const { error } = await supabaseClient
-                    .from('staff')
-                    .update({ password: newPass })
-                    .eq('id', targetId);
-
-                if(error) {
-                    alert('حدث خطأ أثناء تحديث كلمة المرور.');
-                    return;
-                }
-
-                alert('تم تحديث كلمة المرور بنجاح! جاري تحويلك للوحة التحكم...');
-                const { data: updatedData } = await supabaseClient.from('staff').select('*').eq('id', targetId).single();
-                if(updatedData) {
-                    localStorage.setItem('current_staff_user', JSON.stringify(updatedData));
-                }
-                window.location.href = 'dashboard.html';
-            });
-
-            document.getElementById('verifyForgotBtn').addEventListener('click', async () => {
-                const cpr = document.getElementById('forgotCpr').value.trim();
-                const email = document.getElementById('forgotEmail').value.trim();
-                const newPass = document.getElementById('forgotNewPass').value.trim();
-                
-                if(!cpr || !email || !newPass) { alert('الرجاء تعبئة جميع الحقول!'); return; }
-
+            try {
+                // البحث في جدول المعلمين staff حسب الرقم الشخصي أو البريد
                 const { data, error } = await supabaseClient
                     .from('staff')
                     .select('*')
-                    .eq('cpr', cpr)
-                    .eq('email', email)
-                    .maybeSingle();
+                    .or(`cpr.eq.${identifier},email.eq.${identifier}`)
+                    .single();
 
-                if(error || !data) { alert('الرقم الشخصي أو البريد الإلكتروني غير مطابق!'); return; }
-
-                const { error: updateErr } = await supabaseClient
-                    .from('staff')
-                    .update({ password: newPass })
-                    .eq('id', data.id);
-
-                if(updateErr) {
-                    alert('حدث خطأ أثناء تحديث كلمة المرور.');
+                if (error || !data) {
+                    alert('⚠️ اسم المستخدم غير موجود أو خطأ في البيانات.');
                     return;
                 }
 
-                alert('تم تغيير كلمة المرور بنجاح! يمكنك تسجيل الدخول الآن.');
-                showLoginCard();
-            });
-        });
-
-        function showForgotCard() {
-            document.getElementById('loginCard').classList.add('hidden');
-            document.getElementById('forgotCard').classList.remove('hidden');
-        }
-        function showLoginCard() {
-            document.getElementById('forgotCard').classList.add('hidden');
-            document.getElementById('resetCard').classList.add('hidden');
-            document.getElementById('loginCard').classList.remove('hidden');
+                if (data.password === password) {
+                    localStorage.setItem('current_staff_user', JSON.stringify(data));
+                    alert(`أهلاً بك يا ${data.name || 'أستاذ'}! جاري تحويلك للوحة التحكم...`);
+                    window.location.href = 'dashboard.html';
+                } else {
+                    alert('❌ كلمة المرور غير صحيحة!');
+                }
+            } catch (err) {
+                console.error("Login Error:", err);
+                alert('حدث خطأ أثناء الاتصال بالسحابة.');
+            }
         }
     </script>
 </body>
