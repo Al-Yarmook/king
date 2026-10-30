@@ -137,7 +137,7 @@
                     <div class="form-group"><label>عدد الإجابات المتتالية للمكافأة (Streak):</label><input type="number" id="settingStreakCount" value="5"></div>
                     <div class="form-group"><label>الوقت الإضافي للمكافأة (بالثواني):</label><input type="number" id="settingBonusTime" value="10"></div>
                 </div>
-                <button class="btn" onclick="saveRocketSettings()">حفظ إعدادات لعبة الصواريخ 💾</button>
+                <button class="btn" onclick="saveRocketSettings()">حفظ ومزامنة إعدادات الصواريخ سحابياً 💾</button>
             </div>
         </div>
 
@@ -200,7 +200,7 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             loadStudents();
-            loadRocketSettingsUI();
+            loadRocketSettingsFromCloud();
         });
 
         function switchTab(tabId, evt) {
@@ -223,21 +223,31 @@
             if(tabId === 'staff') loadStaff();
             if(tabId === 'scores') loadScores();
             if(tabId === 'profile') loadProfile();
-            if(tabId === 'games') loadRocketSettingsUI();
+            if(tabId === 'games') loadRocketSettingsFromCloud();
         }
 
-        function loadRocketSettingsUI() {
-            const savedSettings = JSON.parse(localStorage.getItem('rocket_game_settings'));
-            if(savedSettings) {
-                document.getElementById('settingGameTime').value = savedSettings.gameTime || 60;
-                document.getElementById('settingCorrectPoints').value = savedSettings.correctPoints || 100;
-                document.getElementById('settingWrongPenalty').value = savedSettings.wrongPenalty || 30;
-                document.getElementById('settingStreakCount').value = savedSettings.streakCount || 5;
-                document.getElementById('settingBonusTime').value = savedSettings.bonusTime || 10;
+        async function loadRocketSettingsFromCloud() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('game_settings')
+                    .select('value')
+                    .eq('key', 'rocket_settings')
+                    .single();
+
+                if(data && data.value) {
+                    const settings = data.value;
+                    document.getElementById('settingGameTime').value = settings.gameTime || 60;
+                    document.getElementById('settingCorrectPoints').value = settings.correctPoints || 100;
+                    document.getElementById('settingWrongPenalty').value = settings.wrongPenalty || 30;
+                    document.getElementById('settingStreakCount').value = settings.streakCount || 5;
+                    document.getElementById('settingBonusTime').value = settings.bonusTime || 10;
+                }
+            } catch (e) {
+                console.log("No cloud settings found yet, using defaults.");
             }
         }
 
-        function saveRocketSettings() {
+        async function saveRocketSettings() {
             const settings = {
                 gameTime: parseInt(document.getElementById('settingGameTime').value) || 60,
                 correctPoints: parseInt(document.getElementById('settingCorrectPoints').value) || 100,
@@ -245,8 +255,16 @@
                 streakCount: parseInt(document.getElementById('settingStreakCount').value) || 5,
                 bonusTime: parseInt(document.getElementById('settingBonusTime').value) || 10
             };
-            localStorage.setItem('rocket_game_settings', JSON.stringify(settings));
-            alert('✅ تم حفظ إعدادات لعبة الصواريخ ومزامنتها بنجاح!');
+
+            const { error } = await supabaseClient
+                .from('game_settings')
+                .upsert([{ key: 'rocket_settings', value: settings }]);
+
+            if(error) {
+                alert('خطأ أثناء حفظ الإعدادات بالسحابة: ' + error.message);
+            } else {
+                alert('✅ تم حفظ إعدادات لعبة الصواريخ ومزامنتها سحابياً بنجاح لجميع الأجهزة!');
+            }
         }
 
         async function loadStudents() {
