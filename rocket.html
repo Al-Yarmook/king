@@ -43,7 +43,7 @@
 <body>
 
     <div class="game-container" id="gameContainer">
-        <!-- لوحة التعليمات والقواعد -->
+        <!-- لوحة التعليمات والقواعد متزامنة تماماً مع إعدادات المدير -->
         <div class="modal" id="instructionsModal">
             <h1>🚀 تعليمات وقواعد سباق الصواريخ</h1>
             <div class="instructions-box">
@@ -91,7 +91,7 @@
     </div>
 
     <script>
-        // التحقق الإجباري من اختيار الطالب أولاً قبل الدخول للعبة
+        // التحقق من اختيار الطالب
         let studentData = null;
         try {
             studentData = JSON.parse(localStorage.getItem('current_student'));
@@ -99,8 +99,7 @@
             studentData = null;
         }
 
-        // إذا لم يتم اختيار طالب أو لم يكن مخزناً، يتم توجيهه لصفحة اختيار الاسم مباشرة
-        if (!studentData || !studentData.name || studentData.name.includes('تجريبي')) {
+        if (!studentData || !studentData.name) {
             alert('الرجاء اختيار اسمك والصف الدراسي أولاً للبدء!');
             window.location.href = 'student.html';
         } else {
@@ -150,18 +149,26 @@
             return String(num).replace(/\d/g, (d) => arabicNumbers[d]);
         }
 
-        let customSettings = JSON.parse(localStorage.getItem('rocket_game_settings')) || {
-            gameTime: 60,
-            correctPoints: 100,
-            wrongPenalty: 30,
-            streakCount: 5,
-            bonusTime: 10
-        };
+        // دالة سحب أحدث الإعدادات المسجلة من لوحة المدير فوراً
+        let customSettings = {};
+        function loadLatestSettings() {
+            customSettings = JSON.parse(localStorage.getItem('rocket_game_settings')) || {
+                gameTime: 60,
+                correctPoints: 100,
+                wrongPenalty: 30,
+                streakCount: 5,
+                bonusTime: 10
+            };
 
-        document.getElementById('ruleTime').textContent = toArabicNum(customSettings.gameTime);
-        document.getElementById('rulePoints').textContent = toArabicNum(customSettings.correctPoints);
-        document.getElementById('ruleStreak').textContent = toArabicNum(customSettings.streakCount);
-        document.getElementById('ruleBonus').textContent = toArabicNum(customSettings.bonusTime);
+            // تحديث لوحة التعليمات وقيم الوقت مباشرة
+            document.getElementById('ruleTime').textContent = toArabicNum(customSettings.gameTime);
+            document.getElementById('rulePoints').textContent = toArabicNum(customSettings.correctPoints);
+            document.getElementById('ruleStreak').textContent = toArabicNum(customSettings.streakCount);
+            document.getElementById('ruleBonus').textContent = toArabicNum(customSettings.bonusTime);
+            document.getElementById('timeLeft').textContent = toArabicNum(customSettings.gameTime);
+        }
+
+        loadLatestSettings();
 
         let score = 0;
         let timeLeft = customSettings.gameTime;
@@ -173,6 +180,8 @@
         let asteroids = [];
 
         function startTheGameSession() {
+            loadLatestSettings(); // جلب أحدث تعديلات المدير عند بدء الجلسة
+            timeLeft = customSettings.gameTime;
             document.getElementById('instructionsModal').classList.add('hidden');
             initGameSettings();
         }
@@ -426,10 +435,6 @@
         function goToMain() {
             window.location.href = 'student.html';
         }
-
-        window.onload = function() {
-            document.getElementById('timeLeft').textContent = toArabicNum(customSettings.gameTime);
-        };
     </script>
 </body>
 </html>
