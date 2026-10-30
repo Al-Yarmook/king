@@ -43,7 +43,7 @@
 <body>
 
     <div class="game-container" id="gameContainer">
-        <!-- لوحة التعليمات والقواعد متزامنة تماماً مع إعدادات المدير -->
+        <!-- لوحة التعليمات والقواعد متزامنة سحابياً -->
         <div class="modal" id="instructionsModal">
             <h1>🚀 تعليمات وقواعد سباق الصواريخ</h1>
             <div class="instructions-box">
@@ -149,18 +149,30 @@
             return String(num).replace(/\d/g, (d) => arabicNumbers[d]);
         }
 
-        // دالة سحب أحدث الإعدادات المسجلة من لوحة المدير فوراً
-        let customSettings = {};
-        function loadLatestSettings() {
-            customSettings = JSON.parse(localStorage.getItem('rocket_game_settings')) || {
-                gameTime: 60,
-                correctPoints: 100,
-                wrongPenalty: 30,
-                streakCount: 5,
-                bonusTime: 10
-            };
+        // جلب الإعدادات المحدثة من سحابة Supabase فوراً عبر الإنترنت
+        let customSettings = {
+            gameTime: 60,
+            correctPoints: 100,
+            wrongPenalty: 30,
+            streakCount: 5,
+            bonusTime: 10
+        };
 
-            // تحديث لوحة التعليمات وقيم الوقت مباشرة
+        async function loadCloudSettings() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('game_settings')
+                    .select('value')
+                    .eq('key', 'rocket_settings')
+                    .single();
+
+                if (data && data.value) {
+                    customSettings = data.value;
+                }
+            } catch (e) {
+                console.log("Using default settings fallback");
+            }
+
             document.getElementById('ruleTime').textContent = toArabicNum(customSettings.gameTime);
             document.getElementById('rulePoints').textContent = toArabicNum(customSettings.correctPoints);
             document.getElementById('ruleStreak').textContent = toArabicNum(customSettings.streakCount);
@@ -168,7 +180,7 @@
             document.getElementById('timeLeft').textContent = toArabicNum(customSettings.gameTime);
         }
 
-        loadLatestSettings();
+        loadCloudSettings();
 
         let score = 0;
         let timeLeft = customSettings.gameTime;
@@ -179,8 +191,8 @@
         let maxTable = 10;
         let asteroids = [];
 
-        function startTheGameSession() {
-            loadLatestSettings(); // جلب أحدث تعديلات المدير عند بدء الجلسة
+        async function startTheGameSession() {
+            await loadCloudSettings(); // سحب أحدث الإعدادات السحابية عند بدء التحدي
             timeLeft = customSettings.gameTime;
             document.getElementById('instructionsModal').classList.add('hidden');
             initGameSettings();
