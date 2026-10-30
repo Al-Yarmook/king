@@ -19,16 +19,13 @@
 
         .mine-arena { flex: 1; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 20px 15px; box-sizing: border-box; }
         
-        /* شريط تقدم المنجم */
         .progress-track { display: flex; gap: 6px; align-items: center; justify-content: center; width: 100%; background: rgba(0,0,0,0.6); padding: 8px; border-radius: 12px; border: 1px solid #78350f; }
         .step-node { width: 28px; height: 28px; border-radius: 50%; background: #451a03; border: 2px solid #92400e; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; color: #d97706; transition: 0.3s; }
         .step-node.active { background: #f59e0b; color: #1e140c; border-color: #fef08a; box-shadow: 0 0 10px #f59e0b; transform: scale(1.15); }
         .step-node.done { background: #10b981; color: white; border-color: #a7f3d0; }
         
-        /* منطقة الصخرة والفأس التفاعلي */
         .rock-stage { position: relative; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 10px 0; min-height: 220px; }
         
-        /* الفأس المتحرك */
         .pickaxe { position: absolute; top: -40px; right: 15%; font-size: 70px; z-index: 15; pointer-events: none; opacity: 0; transform-origin: bottom left; }
         .pickaxe.swing { animation: axeSwing 0.4s ease-in-out; }
 
@@ -39,7 +36,6 @@
             100% { opacity: 0; transform: rotate(0deg); }
         }
 
-        /* الصخرة الجدارية بتصميم واقعي ومتغير الحجم والشكل */
         .rock-card { 
             background: radial-gradient(circle at 30% 30%, #68645f 0%, #38322e 60%, #1c1917 100%); 
             border: 5px solid #8c827a; 
@@ -65,7 +61,6 @@
         .door-title { color: #fef08a; font-size: 15px; margin-bottom: 8px; font-weight: bold; text-shadow: 1px 1px 3px black; }
         .question-box { background: rgba(0,0,0,0.65); border: 2px dashed #f59e0b; padding: 12px 15px; border-radius: 12px; font-size: 26px; font-weight: 900; color: #ffffff; letter-spacing: 1px; margin: 10px 0; }
         
-        /* أزرار الخيارات */
         .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; max-width: 450px; }
         .opt-btn { background: linear-gradient(135deg, #78350f, #451a03); border: 2px solid #d97706; color: #fef08a; padding: 14px; border-radius: 12px; font-size: 22px; font-weight: bold; cursor: pointer; transition: 0.2s; font-family: 'Cairo'; box-shadow: 0 4px 10px rgba(0,0,0,0.4); }
         .opt-btn:hover { background: #b45309; color: white; transform: translateY(-2px); }
@@ -90,7 +85,6 @@
 <body>
 
     <div class="game-container" id="gameContainer">
-        <!-- شاشة التعليمات -->
         <div class="modal" id="instructionsModal">
             <h1>⛏️ تعليمات لغز منجم الذهب</h1>
             <div class="instructions-box">
@@ -104,7 +98,6 @@
             <button class="btn" onclick="startTheGameSession()">ابدأ التكسير والتنقيب 🪙</button>
         </div>
 
-        <!-- الشريط العلوي HUD -->
         <div class="hud">
             <div>المستكشف: <span id="playerName">بطل</span> <button onclick="changePlayerQuick()" style="background:#ef4444; color:white; border:none; padding:2px 8px; border-radius:4px; font-size:11px; cursor:pointer; margin-right:8px; font-family:'Cairo';">تبديل 🔄</button></div>
             <div>⛏️ الفأس: <span id="livesCount">--</span></div>
@@ -113,7 +106,6 @@
             <div class="bonus-float-msg" id="bonusMsg">+٥٠ ذهب! 💰</div>
         </div>
 
-        <!-- ساحة اللعب -->
         <div class="mine-arena" id="arenaBox">
             <div class="progress-track" id="progressTrack"></div>
 
@@ -129,7 +121,6 @@
             <div class="options-grid" id="optionsGrid"></div>
         </div>
 
-        <!-- شاشة النتيجة -->
         <div class="modal hidden" id="gameOverModal">
             <h1 id="gameOverTitle">انتهت الرحلة! 🏆</h1>
             <p id="finalScoreText">لقد جمعت ٠ قطعة ذهبية</p>
@@ -149,9 +140,7 @@
 
     <script>
         let studentData = null;
-        try {
-            studentData = JSON.parse(localStorage.getItem('current_student'));
-        } catch (e) { studentData = null; }
+        try { studentData = JSON.parse(localStorage.getItem('current_student')); } catch (e) { studentData = null; }
 
         if (!studentData || !studentData.name) {
             alert('الرجاء اختيار اسمك والصف الدراسي أولاً للبدء!');
@@ -172,31 +161,27 @@
                 const gainNode = audioCtx.createGain();
                 osc.connect(gainNode);
                 gainNode.connect(audioCtx.destination);
-
                 if (type === 'correct') {
                     osc.type = 'sine';
                     osc.frequency.setValueAtTime(300, audioCtx.currentTime);
                     osc.frequency.exponentialRampToValueAtTime(700, audioCtx.currentTime + 0.2);
                     gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
                     gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
-                    osc.start();
-                    osc.stop(audioCtx.currentTime + 0.25);
+                    osc.start(); osc.stop(audioCtx.currentTime + 0.25);
                 } else if (type === 'wrong') {
                     osc.type = 'sawtooth';
                     osc.frequency.setValueAtTime(150, audioCtx.currentTime);
                     osc.frequency.linearRampToValueAtTime(80, audioCtx.currentTime + 0.25);
                     gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
                     gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-                    osc.start();
-                    osc.stop(audioCtx.currentTime + 0.3);
+                    osc.start(); osc.stop(audioCtx.currentTime + 0.3);
                 } else if (type === 'break') {
                     osc.type = 'square';
                     osc.frequency.setValueAtTime(120, audioCtx.currentTime);
                     osc.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 0.2);
                     gainNode.gain.setValueAtTime(0.4, audioCtx.currentTime);
                     gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
-                    osc.start();
-                    osc.stop(audioCtx.currentTime + 0.25);
+                    osc.start(); osc.stop(audioCtx.currentTime + 0.25);
                 }
             } catch (e) { console.log("Audio error", e); }
         }
@@ -218,16 +203,9 @@
 
         async function loadCloudSettings() {
             try {
-                const { data } = await supabaseClient
-                    .from('game_settings')
-                    .select('value')
-                    .eq('key', 'gold_mine_settings')
-                    .single();
-
-                if (data && data.value) {
-                    customSettings = { ...customSettings, ...data.value };
-                }
-            } catch (e) { console.log("Gold Mine cloud settings fallback"); }
+                const { data } = await supabaseClient.from('game_settings').select('value').eq('key', 'gold_mine_settings').single();
+                if (data && data.value) customSettings = { ...customSettings, ...data.value };
+            } catch (e) { console.log("Settings fallback"); }
 
             document.getElementById('ruleLives').textContent = toArabicNum(customSettings.maxLives);
             document.getElementById('rulePoints').textContent = toArabicNum(customSettings.goldPerDoor);
@@ -237,13 +215,7 @@
 
         loadCloudSettings();
 
-        let score = 0;
-        let lives = customSettings.maxLives;
-        let currentRoom = 0;
-        let streak = 0;
-        let currentCorrectAnswer = 0;
-        let currentHint = '';
-        let maxTable = 10;
+        let score = 0, lives = customSettings.maxLives, currentRoom = 0, streak = 0, currentCorrectAnswer = 0, currentHint = '', maxTable = 10;
 
         async function startTheGameSession() {
             await loadCloudSettings();
@@ -271,10 +243,7 @@
         }
 
         function startGameEngine() {
-            score = 0;
-            lives = customSettings.maxLives;
-            currentRoom = 0;
-            streak = 0;
+            score = 0; lives = customSettings.maxLives; currentRoom = 0; streak = 0;
             updateHUD();
             document.getElementById('gameOverModal').classList.add('hidden');
             generateNewPuzzle();
@@ -302,24 +271,14 @@
             setTimeout(() => msg.classList.remove('show'), 2000);
         }
 
-        // توليد شكل وحجم عشوائي واقعي للصخرة مع كل سؤال جديد
         function applyRandomRockShape() {
             const rock = document.getElementById('rockCard');
-            // زوايا عشوائية غير منتظمة لتشبه الصخور الطبيعية
-            const r1 = Math.floor(Math.random() * 25) + 15;
-            const r2 = Math.floor(Math.random() * 25) + 15;
-            const r3 = Math.floor(Math.random() * 25) + 15;
-            const r4 = Math.floor(Math.random() * 25) + 15;
-            const r5 = Math.floor(Math.random() * 25) + 65;
-            const r6 = Math.floor(Math.random() * 25) + 65;
-            const r7 = Math.floor(Math.random() * 25) + 65;
-            const r8 = Math.floor(Math.random() * 25) + 65;
-            
+            const r1 = Math.floor(Math.random() * 25) + 15, r2 = Math.floor(Math.random() * 25) + 15;
+            const r3 = Math.floor(Math.random() * 25) + 15, r4 = Math.floor(Math.random() * 25) + 15;
+            const r5 = Math.floor(Math.random() * 25) + 65, r6 = Math.floor(Math.random() * 25) + 65;
+            const r7 = Math.floor(Math.random() * 25) + 65, r8 = Math.floor(Math.random() * 25) + 65;
             rock.style.borderRadius = `${r1}% ${r5}% ${r3}% ${r7}% / ${r8}% ${r2}% ${r6}% ${r4}%`;
-            
-            // تباين طفيف في الحجم والعرض
-            const randomWidth = Math.floor(Math.random() * 12) + 80; // بين 80% و 92%
-            rock.style.width = `${randomWidth}%`;
+            rock.style.width = `${Math.floor(Math.random() * 12) + 80}%`;
         }
 
         function generateNewPuzzle() {
@@ -350,9 +309,7 @@
 
             while (options.length < 4) {
                 let wrong = correctOptionVal + (Math.floor(Math.random() * 9) - 4);
-                if (wrong > 0 && !options.includes(wrong)) {
-                    options.push(wrong);
-                }
+                if (wrong > 0 && !options.includes(wrong)) options.push(wrong);
             }
             options.sort(() => Math.random() - 0.5);
 
@@ -369,83 +326,50 @@
 
         function checkAnswer(selectedOpt, correctVal) {
             if (selectedOpt === correctVal) {
-                playSound('break');
-                playSound('correct');
-
+                playSound('break'); playSound('correct');
                 const axe = document.getElementById('pickAxeIcon');
                 const rock = document.getElementById('rockCard');
-                
-                // تشغيل تأثير الفأس وتكسير الصخرة الحالية بتهشم واقعي
-                axe.classList.add('swing');
-                rock.classList.add('break');
+                axe.classList.add('swing'); rock.classList.add('break');
 
                 setTimeout(() => {
-                    axe.classList.remove('swing');
-                    rock.classList.remove('break');
-
+                    axe.classList.remove('swing'); rock.classList.remove('break');
                     score += customSettings.goldPerDoor;
                     streak++;
-
                     if (streak > 0 && streak % 3 === 0) {
                         let bonus = customSettings.streakBonusGold;
-                        score += bonus;
-                        showBonusMessage(bonus);
+                        score += bonus; showBonusMessage(bonus);
                     }
-
                     currentRoom++;
                     updateHUD();
-
-                    if (currentRoom >= customSettings.totalRooms) {
-                        endGame(true);
-                    } else {
-                        generateNewPuzzle();
-                    }
+                    if (currentRoom >= customSettings.totalRooms) endGame(true);
+                    else generateNewPuzzle();
                 }, 450);
-
             } else {
                 playSound('wrong');
                 lives -= customSettings.wrongPenaltyLives;
                 streak = 0;
-                
                 const hintEl = document.getElementById('hintBox');
-                hintEl.textContent = currentHint;
-                hintEl.style.display = 'block';
-
+                hintEl.textContent = currentHint; hintEl.style.display = 'block';
                 updateHUD();
-
-                if (lives <= 0) {
-                    setTimeout(() => endGame(false), 400);
-                }
+                if (lives <= 0) setTimeout(() => endGame(false), 400);
             }
         }
 
         async function endGame(isWin) {
             const modal = document.getElementById('gameOverModal');
             modal.classList.remove('hidden');
-
-            const title = document.getElementById('gameOverTitle');
-            if (isWin) {
-                title.textContent = '🎉 مبروك! فتحت صندوق الذهب الأكبر! 👑';
-            } else {
-                title.textContent = 'انتهت محاولات التنقيب! ⛏️';
-            }
-
+            document.getElementById('gameOverTitle').textContent = isWin ? '🎉 مبروك! فتحت صندوق الذهب الأكبر! 👑' : 'انتهت محاولات التنقيب! ⛏️';
             document.getElementById('finalScoreText').textContent = `أحسنت يا ${studentData.name}! لقد جمعت ${toArabicNum(score)} قطعة ذهب.`;
             document.getElementById('saveStatus').textContent = 'جاري حفظ رصيد الذهب بالسحابة...';
 
             try {
                 const { error } = await supabaseClient.from('goldmine_scores').insert([{
-                    student_name: studentData.name,
-                    cls: studentData.cls,
-                    points: score,
-                    weekly_points: score
+                    student_name: studentData.name, cls: studentData.cls, points: score, weekly_points: score
                 }]);
-
                 if (error) throw error;
                 document.getElementById('saveStatus').textContent = '✅ تم إيداع الذهب بنجاح في السحابة!';
                 loadLeaderboardInModal();
             } catch (err) {
-                console.error("Save Gold Score Error:", err);
                 document.getElementById('saveStatus').textContent = '⚠️ تعذر حفظ النتيجة بالسحابة.';
             }
         }
@@ -454,40 +378,18 @@
             const lbList = document.getElementById('leaderboardList');
             lbList.innerHTML = 'جاري تحضير الأبطال...';
             try {
-                const { data } = await supabaseClient
-                    .from('goldmine_scores')
-                    .select('student_name, points')
-                    .order('points', { ascending: false })
-                    .limit(5);
-
-                if (!data || data.length === 0) {
-                    lbList.innerHTML = 'لا توجد نتائج مسجلة بعد.';
-                    return;
-                }
-
+                const { data } = await supabaseClient.from('goldmine_scores').select('student_name, points').order('points', { ascending: false }).limit(5);
+                if (!data || data.length === 0) { lbList.innerHTML = 'لا توجد نتائج مسجلة بعد.'; return; }
                 lbList.innerHTML = '';
                 data.forEach((row, index) => {
                     let medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '⭐';
-                    lbList.innerHTML += `
-                        <div class="lb-row">
-                            <span>${medal} ${row.student_name}</span>
-                            <span><b>${toArabicNum(row.points || 0)}</b> 🪙</span>
-                        </div>
-                    `;
+                    lbList.innerHTML += `<div class="lb-row"><span>${medal} ${row.student_name}</span><span><b>${toArabicNum(row.points || 0)}</b> 🪙</span></div>`;
                 });
-            } catch (err) {
-                lbList.innerHTML = 'تعذر تحميل قائمة المتصدرين.';
-            }
+            } catch (err) { lbList.innerHTML = 'تعذر تحميل قائمة المتصدرين.'; }
         }
 
-        function restartGame() {
-            document.getElementById('instructionsModal').classList.add('hidden');
-            startGameEngine();
-        }
-
-        function goToMain() {
-            window.location.href = 'student.html';
-        }
+        function restartGame() { document.getElementById('instructionsModal').classList.add('hidden'); startGameEngine(); }
+        function goToMain() { window.location.href = 'student.html'; }
     </script>
 </body>
 </html>
