@@ -576,15 +576,15 @@
             XLSX.writeFile(wb, "all_staff.xlsx");
         }
 
-        // تحميل وعرض درجات الطلبة مع زر الحذف الفردي
+        // تحميل وعرض درجات الطلبة بشكل آمن ومستقر
         async function loadScores() {
-            let query = supabaseClient.from('scores').select('*').order('created_at', { ascending: false });
+            let query = supabaseClient.from('scores').select('*');
             const { data, error } = await query;
             const tbody = document.querySelector('#scoresTable tbody');
             tbody.innerHTML = '';
             
             if(error) {
-                tbody.innerHTML = `<tr><td colspan="6" style="color:red;">خطأ أثناء جلب الدرجات.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="6" style="color:red;">خطأ أثناء جلب الدرجات: ${error.message}</td></tr>`;
                 return;
             }
 
@@ -613,7 +613,14 @@
         async function deleteSingleScore(scoreId) {
             if(!confirm('هل أنت متأكد من حذف هذه النتيجة نهائياً؟')) return;
 
-            const { error } = await supabaseClient.from('scores').delete().eq('id', scoreId);
+            let query = supabaseClient.from('scores').delete();
+            if(!isNaN(scoreId)) {
+                query = query.eq('id', parseInt(scoreId));
+            } else {
+                query = query.eq('id', scoreId);
+            }
+
+            const { error } = await query;
             if(error) {
                 alert('خطأ أثناء الحذف: ' + error.message);
             } else {
