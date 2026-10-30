@@ -39,11 +39,8 @@
         .danger-zone { border: 2px dashed #d32f2f; padding: 20px; border-radius: 10px; background: #ffebee; margin-top: 20px; }
         .game-sub-section { border: 1px solid #e2e8f0; background: #f8fafc; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
         .game-sub-section h3 { margin-top: 0; color: #1e293b; border-bottom: 2px solid #cbd5e1; padding-bottom: 8px; }
-        
-        /* زر المفتاح المزدوج للتشغيل والإغلاق Toggle Switch */
         .toggle-container { display: flex; align-items: center; gap: 10px; background: #e2e8f0; padding: 8px 15px; border-radius: 8px; }
         .toggle-container input[type="checkbox"] { width: 20px; height: 20px; cursor: pointer; }
-
         .hidden { display: none !important; }
     </style>
 </head>
@@ -64,7 +61,6 @@
             <button class="tab-btn" onclick="switchTab('profile', event)">👤 بياناتي الشخصية</button>
         </div>
 
-        <!-- 1. قسم بيانات الطلبة -->
         <div id="students" class="section-card active">
             <h2>إدارة بيانات الطلبة</h2>
             <div style="margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
@@ -87,15 +83,8 @@
             </table>
         </div>
 
-        <!-- 2. قسم إدارة المعلمين -->
         <div id="staff" class="section-card">
             <h2>إدارة المعلمين والإدارة</h2>
-            <div style="margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
-                <button class="btn btn-blue" onclick="downloadStaffTemplate()">📥 تحميل قالب إكسل المعلمين</button>
-                <input type="file" id="staffExcelFile" accept=".xlsx, .xls" style="display:none" onchange="uploadStaffExcel(event)">
-                <button class="btn btn-green" onclick="document.getElementById('staffExcelFile').click()">📤 رفع ملف إكسل المعلمين</button>
-                <button class="btn" onclick="exportStaffExcel()">📊 تصدير بيانات المعلمين إكسل</button>
-            </div>
             <h3>إضافة معلم جديد</h3>
             <div class="form-row">
                 <div class="form-group"><label>اسم المعلم:</label><input type="text" id="stfName"></div>
@@ -115,7 +104,6 @@
             </table>
         </div>
 
-        <!-- 3. قسم إعداد الألعاب والمستويات -->
         <div id="games" class="section-card">
             <h2>إعداد الألعاب والمستويات الدراسية 🎮</h2>
 
@@ -129,7 +117,6 @@
                 <button class="btn" onclick="saveRocketSettings()">حفظ ومزامنة إعدادات الصواريخ 💾</button>
             </div>
 
-            <!-- إعدادات لعبة منجم الذهب الجديدة والمطورة -->
             <div class="game-sub-section" style="border-color: #b45309; background: #fffbebf5;">
                 <h3 style="color: #b45309;">⛏️ إعدادات لعبة "لغز منجم الذهب"</h3>
                 <div class="form-row">
@@ -153,12 +140,10 @@
                         </div>
                     </div>
                 </div>
-
                 <button class="btn btn-orange" onclick="saveGoldMineSettings()">حفظ ومزامنة إعدادات منجم الذهب سحابياً 💾</button>
             </div>
         </div>
 
-        <!-- 4. قسم درجات الطلبة الفردية والمفصولة -->
         <div id="scores" class="section-card">
             <h2>مشاهدة وتحميل درجات الطلبة</h2>
             <div class="form-row" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
@@ -172,7 +157,7 @@
                 </div>
                 <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                     <button class="btn btn-green" onclick="exportScoresExcel()">📊 تحميل إكسل للدرجات</button>
-                    <button class="btn btn-red" onclick="clearAllScores()">🗑️ مسح جميع درجات اللعبة المحددة</button>
+                    <button class="btn btn-red" onclick="clearAllScores()">🗑️ مسح درجات اللعبة المحددة</button>
                 </div>
             </div>
             <table id="scoresTable">
@@ -181,7 +166,6 @@
             </table>
         </div>
 
-        <!-- 5. قسم تصفير النتائج العام -->
         <div id="settings" class="section-card">
             <h2>الإعدادات العامة وتصفير النتائج</h2>
             <div class="danger-zone">
@@ -193,7 +177,6 @@
             </div>
         </div>
 
-        <!-- 6. الملف الشخصي -->
         <div id="profile" class="section-card">
             <h2>البيانات الشخصية وتغيير كلمة المرور</h2>
             <div class="form-row">
@@ -210,13 +193,10 @@
 
     <script>
         let currentUser = JSON.parse(localStorage.getItem('current_staff_user'));
-        if(!currentUser) { 
-            window.location.href = 'staff.html'; 
-        } else {
+        if(!currentUser) { window.location.href = 'staff.html'; } else {
             const roleVal = String(currentUser.role || 'Teacher').trim().toLowerCase();
             const roleName = (roleVal === 'admin' || roleVal === 'مدير') ? 'مدير النظام' : (roleVal === 'supervisor' || roleVal === 'مشرف') ? 'مشرف' : 'معلم';
             document.getElementById('welcomeTitle').textContent = `أهلاً بك يا ${currentUser.name || 'مستخدم'} (${roleName})`;
-
             if(roleVal === 'teacher' || roleVal === 'معلم') {
                 document.querySelectorAll('.admin-only').forEach(el => el.classList.add('hidden'));
                 document.querySelectorAll('.supervisor-allowed').forEach(el => el.classList.add('hidden'));
@@ -233,46 +213,27 @@
 
         function switchTab(tabId, evt) {
             const roleVal = String(currentUser.role || '').trim().toLowerCase();
-            if((tabId === 'staff' || tabId === 'settings') && roleVal !== 'admin' && roleVal !== 'مدير') {
-                alert('عذراً، هذه الصلاحية خاصة بمدير النظام فقط.');
-                return;
-            }
-            if(tabId === 'games' && roleVal === 'teacher') {
-                alert('عذراً، إعدادات الألعاب خاصة بالمشرف والمدير فقط.');
-                return;
-            }
+            if((tabId === 'staff' || tabId === 'settings') && roleVal !== 'admin' && roleVal !== 'مدير') { alert('عذراً، هذه الصلاحية خاصة بمدير النظام فقط.'); return; }
+            if(tabId === 'games' && roleVal === 'teacher') { alert('عذراً، إعدادات الألعاب خاصة بالمشرف والمدير فقط.'); return; }
             document.querySelectorAll('.section-card').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
-            if(evt && evt.currentTarget) {
-                evt.currentTarget.classList.add('active');
-            }
+            if(evt && evt.currentTarget) evt.currentTarget.classList.add('active');
             if(tabId === 'students') loadStudents();
             if(tabId === 'staff') loadStaff();
             if(tabId === 'scores') loadScores();
             if(tabId === 'profile') loadProfile();
-            if(tabId === 'games') {
-                loadRocketSettingsFromCloud();
-                loadGoldMineSettingsFromCloud();
-            }
         }
 
-        /* ------------------ إعدادات الألعاب ------------------ */
         async function loadRocketSettingsFromCloud() {
             try {
-                const { data } = await supabaseClient
-                    .from('game_settings')
-                    .select('value')
-                    .eq('key', 'rocket_settings')
-                    .single();
-
+                const { data } = await supabaseClient.from('game_settings').select('value').eq('key', 'rocket_settings').single();
                 if(data && data.value) {
-                    const settings = data.value;
-                    document.getElementById('settingGameTime').value = settings.gameTime || 60;
-                    document.getElementById('settingCorrectPoints').value = settings.correctPoints || 100;
-                    document.getElementById('settingWrongPenalty').value = settings.wrongPenalty || 30;
+                    document.getElementById('settingGameTime').value = data.value.gameTime || 60;
+                    document.getElementById('settingCorrectPoints').value = data.value.correctPoints || 100;
+                    document.getElementById('settingWrongPenalty').value = data.value.wrongPenalty || 30;
                 }
-            } catch (e) { console.log("Rocket settings fallback"); }
+            } catch (e) {}
         }
 
         async function saveRocketSettings() {
@@ -281,203 +242,180 @@
                 correctPoints: parseInt(document.getElementById('settingCorrectPoints').value) || 100,
                 wrongPenalty: parseInt(document.getElementById('settingWrongPenalty').value) || 30
             };
-
-            const { error } = await supabaseClient
-                .from('game_settings')
-                .upsert([{ key: 'rocket_settings', value: settings }]);
-
-            if(error) alert('خطأ أثناء حفظ الإعدادات: ' + error.message);
-            else alert('✅ تم حفظ إعدادات لعبة الصواريخ ومزامنتها بنجاح!');
+            const { error } = await supabaseClient.from('game_settings').upsert([{ key: 'rocket_settings', value: settings }]);
+            if(error) alert('خطأ: ' + error.message); else alert('✅ تم حفظ إعدادات الصواريخ بنجاح!');
         }
 
         async function loadGoldMineSettingsFromCloud() {
             try {
-                const { data } = await supabaseClient
-                    .from('game_settings')
-                    .select('value')
-                    .eq('key', 'gold_mine_settings')
-                    .single();
-
+                const { data } = await supabaseClient.from('game_settings').select('value').eq('key', 'gold_mine_settings').single();
                 if(data && data.value) {
-                    const settings = data.value;
-                    document.getElementById('gmTotalRooms').value = settings.totalRooms || 5;
-                    document.getElementById('gmMaxLives').value = settings.maxLives || 3;
-                    document.getElementById('gmGoldPerDoor').value = settings.goldPerDoor || 100;
-                    document.getElementById('gmToggleMissing').checked = settings.enableMissingFactor !== false;
-                    document.getElementById('gmToggleProduct').checked = settings.enableProduct !== false;
+                    document.getElementById('gmTotalRooms').value = data.value.totalRooms || 5;
+                    document.getElementById('gmMaxLives').value = data.value.maxLives || 3;
+                    document.getElementById('gmGoldPerDoor').value = data.value.goldPerDoor || 100;
+                    document.getElementById('gmToggleMissing').checked = data.value.enableMissingFactor !== false;
+                    document.getElementById('gmToggleProduct').checked = data.value.enableProduct !== false;
                 }
-            } catch (e) { console.log("Gold mine settings fallback"); }
+            } catch (e) {}
         }
 
         async function saveGoldMineSettings() {
             const enableMissing = document.getElementById('gmToggleMissing').checked;
             const enableProduct = document.getElementById('gmToggleProduct').checked;
-
-            if (!enableMissing && !enableProduct) {
-                alert('عذراً، يجب تفعيل نوع واحد على الأقل من الأسئلة!');
-                return;
-            }
+            if (!enableMissing && !enableProduct) { alert('يجب تفعيل نوع واحد على الأقل من الأسئلة!'); return; }
 
             const settings = {
                 totalRooms: parseInt(document.getElementById('gmTotalRooms').value) || 5,
                 maxLives: parseInt(document.getElementById('gmMaxLives').value) || 3,
                 goldPerDoor: parseInt(document.getElementById('gmGoldPerDoor').value) || 100,
-                wrongPenaltyLives: 1,
-                streakBonusGold: 50,
-                enableMissingFactor: enableMissing,
-                enableProduct: enableProduct
+                wrongPenaltyLives: 1, streakBonusGold: 50,
+                enableMissingFactor: enableMissing, enableProduct: enableProduct
             };
-
-            const { error } = await supabaseClient
-                .from('game_settings')
-                .upsert([{ key: 'gold_mine_settings', value: settings }]);
-
-            if(error) alert('خطأ أثناء حفظ الإعدادات: ' + error.message);
-            else alert('✅ تم حفظ إعدادات منجم الذهب بنجاح ومزامنتها مع أجهزة الطلاب!');
+            const { error } = await supabaseClient.from('game_settings').upsert([{ key: 'gold_mine_settings', value: settings }]);
+            if(error) alert('خطأ: ' + error.message); else alert('✅ تم حفظ إعدادات منجم الذهب ومزامنتها بنجاح!');
         }
 
-        /* ------------------ إدارة الطلاب والمعلمين ------------------ */
         async function loadStudents() {
             let query = supabaseClient.from('students').select('*');
             const roleVal = String(currentUser.role || '').trim().toLowerCase();
-            if(roleVal === 'teacher' && currentUser.classes) {
-                let clsList = currentUser.classes.split(',').map(c => c.trim());
-                query = query.in('cls', clsList);
-            }
+            if(roleVal === 'teacher' && currentUser.classes) query = query.in('cls', currentUser.classes.split(',').map(c => c.trim()));
             const { data } = await query;
             const tbody = document.querySelector('#studentsTable tbody');
             tbody.innerHTML = '';
             if(data && data.length > 0) {
                 data.forEach(s => {
                     let rowId = s.id || s.cpr;
-                    tbody.innerHTML += `
-                        <tr>
-                            <td><input type="text" class="table-input" id="std_name_${rowId}" value="${s.name || ''}"></td>
-                            <td><input type="text" class="table-input" id="std_cls_${rowId}" value="${s.cls || ''}"></td>
-                            <td><input type="text" class="table-input" id="std_cpr_${rowId}" value="${s.cpr || ''}"></td>
-                            <td>
-                                <button class="btn btn-orange" onclick="updateStudentManual('${rowId}')">حفظ 💾</button>
-                                <button class="btn btn-red" onclick="deleteStudent('${rowId}')">حذف 🗑️</button>
-                            </td>
-                        </tr>`;
+                    tbody.innerHTML += `<tr><td><input type="text" class="table-input" id="std_name_${rowId}" value="${s.name || ''}"></td><td><input type="text" class="table-input" id="std_cls_${rowId}" value="${s.cls || ''}"></td><td><input type="text" class="table-input" id="std_cpr_${rowId}" value="${s.cpr || ''}"></td><td><button class="btn btn-orange" onclick="updateStudentManual('${rowId}')">حفظ 💾</button> <button class="btn btn-red" onclick="deleteStudent('${rowId}')">حذف 🗑️</button></td></tr>`;
                 });
-            } else {
-                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#666;">لا توجد بيانات طلاب مسجلة حالياً.</td></tr>`;
-            }
+            } else { tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#666;">لا توجد بيانات طلاب.</td></tr>`; }
         }
 
         async function updateStudentManual(rowId) {
             const name = document.getElementById(`std_name_${rowId}`).value.trim();
             const cls = document.getElementById(`std_cls_${rowId}`).value.trim();
             const cpr = document.getElementById(`std_cpr_${rowId}`).value.trim();
-
             let query = supabaseClient.from('students').update({ name, cls, cpr });
-            if(!isNaN(rowId)) query = query.eq('id', rowId);
-            else query = query.eq('cpr', rowId);
-
-            const { error } = await query;
-            if(error) alert('خطأ: ' + error.message);
-            else { alert('تم التحديث بنجاح!'); loadStudents(); }
+            if(!isNaN(rowId)) query = query.eq('id', rowId); else query = query.eq('cpr', rowId);
+            await query; alert('تم التحديث بنجاح!'); loadStudents();
         }
 
         async function addStudentManual() {
             const name = document.getElementById('stdName').value.trim();
             const cls = document.getElementById('stdClass').value.trim();
             const cpr = document.getElementById('stdCpr').value.trim();
-            if(!name || !cls) { alert('الرجاء إدخال الاسم والصف!'); return; }
-            const { error } = await supabaseClient.from('students').insert([{ name, cls, cpr }]);
-            if(error) alert('خطأ: ' + error.message);
-            else { alert('تمت الإضافة بنجاح'); loadStudents(); }
+            if(!name || !cls) { alert('الاسم والصف مطلوبان!'); return; }
+            await supabaseClient.from('students').insert([{ name, cls, cpr }]);
+            alert('تمت الإضافة بنجاح'); loadStudents();
         }
 
         async function deleteStudent(rowId) {
             if(confirm('هل أنت متأكد من الحذف؟')) {
                 let query = supabaseClient.from('students').delete();
-                if(!isNaN(rowId)) query = query.eq('id', rowId);
-                else query = query.eq('cpr', rowId);
-                await query;
-                loadStudents();
+                if(!isNaN(rowId)) query = query.eq('id', rowId); else query = query.eq('cpr', rowId);
+                await query; loadStudents();
             }
         }
 
-        /* ------------------ إدارة درجات الطلاب المفصولة ------------------ */
+        // جلب الدرجات المحدثة من الجدولين rocket_scores و goldmine_scores
         async function loadScores() {
             const filter = document.getElementById('gameFilter').value;
-            let query = supabaseClient.from('scores').select('*').order('created_at', { ascending: false });
+            let allScores = [];
 
-            if(filter !== 'all') {
-                query = query.eq('game_name', filter);
-            }
+            try {
+                if (filter === 'all' || filter === 'سباق صواريخ الفضاء') {
+                    const { data: rocketData } = await supabaseClient.from('rocket_scores').select('*');
+                    if (rocketData) {
+                        rocketData.forEach(item => {
+                            allScores.push({
+                                id: item.id, student_name: item.student_name, cls: item.cls,
+                                game_name: 'سباق صواريخ الفضاء', points: item.points, created_at: item.created_at, table_source: 'rocket_scores'
+                            });
+                        });
+                    }
+                }
 
-            const { data } = await query;
-            const tbody = document.querySelector('#scoresTable tbody');
-            tbody.innerHTML = '';
+                if (filter === 'all' || filter === 'لغز منجم الذهب') {
+                    const { data: mineData } = await supabaseClient.from('goldmine_scores').select('*');
+                    if (mineData) {
+                        mineData.forEach(item => {
+                            allScores.push({
+                                id: item.id, student_name: item.student_name, cls: item.cls,
+                                game_name: 'لغز منجم الذهب', points: item.points, created_at: item.created_at, table_source: 'goldmine_scores'
+                            });
+                        });
+                    }
+                }
 
-            if(data && data.length > 0) {
-                data.forEach(sc => {
-                    let dateStr = sc.created_at ? new Date(sc.created_at).toLocaleString('ar-BH') : 'غير محدد';
-                    let gameName = sc.game_name || 'سباق صواريخ الفضاء';
-                    let badgeColor = gameName.includes('منجم') ? 'background:#fef3c7; color:#92400e;' : 'background:#e0e7ff; color:#3730a3;';
+                allScores.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+                const tbody = document.querySelector('#scoresTable tbody');
+                tbody.innerHTML = '';
 
-                    tbody.innerHTML += `
-                        <tr>
-                            <td><b>${sc.student_name || 'غير معروف'}</b></td>
-                            <td>${sc.cls || '-'}</td>
-                            <td><span style="${badgeColor} padding:3px 8px; border-radius:6px; font-weight:bold;">${gameName}</span></td>
-                            <td><b style="color:#2e7d32; font-size:15px;">${sc.points || 0}</b></td>
-                            <td>${dateStr}</td>
-                            <td>
-                                <button class="btn btn-red" onclick="deleteSingleScore('${sc.id}')">حذف 🗑️</button>
-                            </td>
-                        </tr>`;
-                });
-            } else {
-                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#666;">لا توجد درجات مسجلة حالياً.</td></tr>`;
-            }
+                if (allScores.length > 0) {
+                    allScores.forEach(sc => {
+                        let dateStr = sc.created_at ? new Date(sc.created_at).toLocaleString('ar-BH') : 'غير محدد';
+                        let badgeColor = sc.game_name.includes('منجم') ? 'background:#fef3c7; color:#92400e;' : 'background:#e0e7ff; color:#3730a3;';
+                        tbody.innerHTML += `<tr><td><b>${sc.student_name}</b></td><td>${sc.cls || '-'}</td><td><span style="${badgeColor} padding:3px 8px; border-radius:6px; font-weight:bold;">${sc.game_name}</span></td><td><b style="color:#2e7d32; font-size:15px;">${sc.points}</b></td><td>${dateStr}</td><td><button class="btn btn-red" onclick="deleteSingleScore('${sc.id}', '${sc.table_source}')">حذف 🗑️</button></td></tr>`;
+                    });
+                } else {
+                    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#666;">لا توجد درجات مسجلة حالياً.</td></tr>`;
+                }
+            } catch (err) { console.error("Error loading scores", err); }
         }
 
-        async function deleteSingleScore(scoreId) {
-            if(confirm('هل أنت متأكد من حذف هذه النتيجة؟')) {
-                await supabaseClient.from('scores').delete().eq('id', scoreId);
+        async function deleteSingleScore(scoreId, tableName) {
+            if (confirm('هل أنت متأكد من حذف هذه النتيجة؟')) {
+                await supabaseClient.from(tableName).delete().eq('id', scoreId);
+                alert('✅ تم حذف النتيجة بنجاح!');
                 loadScores();
             }
         }
 
         async function clearAllScores() {
             const filter = document.getElementById('gameFilter').value;
-            let msg = filter === 'all' ? 'جميع الألعاب' : `لعبة (${filter})`;
-            if(confirm(`⚠️ هل أنت متأكد من مسح كافة درجات ${msg}؟`)) {
-                let query = supabaseClient.from('scores').delete();
-                if(filter !== 'all') query = query.eq('game_name', filter);
-                else query = query.neq('id', '00000000-0000-0000-0000-000000000000');
-
-                await query;
-                alert('✅ تم مسح الدرجات بنجاح!');
-                loadScores();
+            if (confirm(`⚠️ هل أنت متأكد من مسح كافة درجات التصفية الحالية؟`)) {
+                if (filter === 'all' || filter === 'سباق صواريخ الفضاء') await supabaseClient.from('rocket_scores').delete().neq('id', 0);
+                if (filter === 'all' || filter === 'لغز منجم الذهب') await supabaseClient.from('goldmine_scores').delete().neq('id', 0);
+                alert('✅ تم مسح الدرجات بنجاح!'); loadScores();
             }
         }
 
         async function exportScoresExcel() {
-            const { data } = await supabaseClient.from('scores').select('*');
-            const ws = XLSX.utils.json_to_sheet(data || []);
+            const { data: rData } = await supabaseClient.from('rocket_scores').select('*');
+            const { data: mData } = await supabaseClient.from('goldmine_scores').select('*');
+            const combined = [...(rData || []), ...(mData || [])];
+            const ws = XLSX.utils.json_to_sheet(combined);
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "الدرجات");
-            XLSX.writeFile(wb, "student_scores.xlsx");
+            XLSX.utils.book_append_sheet(wb, ws, "جميع الدرجات");
+            XLSX.writeFile(wb, "student_scores_all.xlsx");
         }
 
         async function resetScoresData() {
             const pass = document.getElementById('confirmResetPass').value;
             if(pass !== currentUser.password) { alert('كلمة المرور غير صحيحة!'); return; }
-            if(confirm('⚠️ تأكيد نهائي: مسح كل درجات المنصة؟')) {
-                await supabaseClient.from('scores').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-                alert('✅ تم التصفير بنجاح!');
+            if(confirm('⚠️ تأكيد نهائي: مسح كل درجات المنصة بالكامل؟')) {
+                await supabaseClient.from('rocket_scores').delete().neq('id', 0);
+                await supabaseClient.from('goldmine_scores').delete().neq('id', 0);
+                alert('✅ تم تصفير كافة النتائج بنجاح!');
             }
         }
 
-        function logout() {
-            localStorage.removeItem('current_staff_user');
-            window.location.href = 'staff.html';
+        function loadProfile() {
+            document.getElementById('profName').value = currentUser.name || '';
+            document.getElementById('profCpr').value = currentUser.cpr || '';
+            document.getElementById('profEmail').value = currentUser.email || '';
         }
+
+        async function updateProfile() {
+            const name = document.getElementById('profName').value.trim();
+            const email = document.getElementById('profEmail').value.trim();
+            const newPass = document.getElementById('profNewPass').value.trim();
+            let updateObj = { name, email };
+            if(newPass) updateObj.password = newPass;
+            await supabaseClient.from('staff').update(updateObj).eq('cpr', currentUser.cpr);
+            alert('✅ تم تحديث بياناتك بنجاح!');
+        }
+
+        function logout() { localStorage.removeItem('current_staff_user'); window.location.href = 'staff.html'; }
     </script>
 </body>
 </html>
