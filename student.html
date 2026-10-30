@@ -25,7 +25,6 @@
         .btn-secondary { background: #ef4444; color: white; border: none; padding: 8px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; font-family: 'Cairo'; font-size: 13px; transition: 0.2s; }
         .btn-secondary:hover { background: #dc2626; }
         
-        /* قسم تسجيل النطاق لو لم يتم اختيار اسم بعد */
         .selection-section { display: none; }
         label { display: block; margin-bottom: 8px; font-weight: 600; text-align: right; color: #cbd5e1; }
         select, .btn-primary { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #4f46e5; border-radius: 8px; font-family: 'Cairo'; box-sizing: border-box; }
@@ -38,7 +37,7 @@
 <body>
 
     <div class="main-card">
-        <!-- قسم اختيار الاسم والصف (يظهر إذا لم يتم تسجيل الطالب) -->
+        <!-- قسم تسجيل الطالب -->
         <div id="loginSection" class="selection-section">
             <h2>اختر صفك واسمك للبدء 🎮</h2>
             
@@ -55,7 +54,7 @@
             <button class="btn-primary" onclick="saveStudentAndEnter()">ابدأ التحدي 🚀</button>
         </div>
 
-        <!-- قسم اختيار اللعبة (يظهر عندما يكون الطالب مسجلاً ومغيوثاً) -->
+        <!-- قسم اختيار الألعاب -->
         <div id="hubSection" class="selection-section hidden">
             <h2>مرحباً بك يا بطل! 🌟</h2>
             <div class="welcome-user">
