@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لغز منجم الذهب - ملك جدول الضرب</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Cairo', sans-serif; background: radial-gradient(circle, #2d1b0e 0%, #120a05 100%); color: white; margin: 0; padding: 0; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; }
+        .game-container { width: 100%; max-width: 600px; height: 100vh; background: rgba(30, 20, 12, 0.96); position: relative; box-shadow: 0 0 35px rgba(245, 158, 11, 0.3); display: flex; flex-direction: column; justify-content: space-between; border-left: 2px solid #78350f; border-right: 2px solid #78350f; box-sizing: border-box; overflow: hidden; }
+        
+        .hud { display: flex; justify-content: space-between; padding: 12px 18px; background: rgba(45, 27, 14, 0.95); font-size: 15px; font-weight: bold; border-bottom: 2px solid #f59e0b; z-index: 10; position: relative; }
+        .hud span { color: #fbbf24; }
+        
+        .bonus-float-msg { position: absolute; top: 60px; left: 50%; transform: translateX(-50%); background: #10b981; color: white; padding: 4px 15px; border-radius: 20px; font-size: 14px; font-weight: bold; box-shadow: 0 0 15px #10b981; pointer-events: none; opacity: 0; transition: 0.3s; z-index: 20; }
+        .bonus-float-msg.show { opacity: 1; transform: translateX(-50%) translateY(-5px); }
+
+        .mine-arena { flex: 1; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 20px 15px; box-sizing: border-box; background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40"><rect width="40" height="40" fill="%231e140c"/><path d="0 0L40 40M40 0L0 40" stroke="%232a1b10" stroke-width="1"/></svg>'); }
+        
+        /* خريطة تقدم المنجم */
+        .progress-track { display: flex; gap: 8px; align-items: center; justify-content: center; width: 100%; background: rgba(0,0,0,0.4); padding: 8px; border-radius: 12px; border: 1px solid #78350f; }
+        .step-node { width: 32px; height: 32px; border-radius: 50%; background: #451a03; border: 2px solid #92400e; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; color: #d97706; transition: 0.3s; }
+        .step-node.active { background: #f59e0b; color: #1e140c; border-color: #fef08a; box-shadow: 0 0 10px #f59e0b; transform: scale(1.15); }
+        .step-node.done { background: #10b981; color: white; border-color: #a7f3d0; }
+        
+        /* كرت الباب واللغز */
+        .door-card { background: linear-gradient(145deg, #451a03, #2d1b0e); border: 3px solid #b45309; border-radius: 16px; padding: 20px; width: 90%; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.6); position: relative; z-index: 5; margin: 10px 0; }
+        .door-title { color: #fef08a; font-size: 16px; margin-bottom: 8px; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .question-box { background: rgba(0,0,0,0.5); border: 2px dashed #f59e0b; padding: 12px 20px; border-radius: 12px; font-size: 28px; font-weight: 900; color: #ffffff; letter-spacing: 1px; margin: 10px 0; }
+        
+        /* خيارات العثور على الكنز */
+        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; max-width: 450px; }
+        .opt-btn { background: linear-gradient(135deg, #78350f, #451a03); border: 2px solid #d97706; color: #fef08a; padding: 14px; border-radius: 12px; font-size: 22px; font-weight: bold; cursor: pointer; transition: 0.2s; font-family: 'Cairo'; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .opt-btn:hover { background: #b45309; color: white; transform: translateY(-2px); }
+        .opt-btn:active { transform: translateY(1px); }
+
+        /* التلميحات */
+        .hint-box { background: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444; color: #fca5a5; padding: 8px 15px; border-radius: 8px; font-size: 13px; margin-top: 8px; display: none; }
+
+        .modal { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(18, 10, 5, 0.97); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; text-align: center; padding: 25px; box-sizing: border-box; }
+        .modal h1 { color: #f59e0b; font-size: 28px; margin-bottom: 15px; }
+        .modal p { font-size: 16px; margin-bottom: 12px; color: #e2e8f0; line-height: 1.6; }
+        
+        .instructions-box { background: rgba(45, 27, 14, 0.95); padding: 18px; border-radius: 12px; border: 1px solid #b45309; text-align: right; margin-bottom: 20px; width: 100%; max-width: 480px; box-sizing: border-box; }
+        .instructions-box ul { padding-right: 20px; margin: 0; }
+        .instructions-box li { margin-bottom: 10px; font-size: 14px; color: #fef08a; line-height: 1.5; }
+
+        .leaderboard-box { background: rgba(30, 20, 12, 0.95); border: 2px solid #f59e0b; border-radius: 10px; padding: 15px; width: 100%; max-width: 400px; margin-bottom: 20px; text-align: right; }
+        .leaderboard-box h3 { color: #f59e0b; margin-top: 0; margin-bottom: 10px; text-align: center; font-size: 18px; }
+        .lb-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #78350f; font-size: 14px; }
+
+        .btn { background: #d97706; color: white; border: none; padding: 12px 35px; font-size: 18px; font-weight: bold; border-radius: 10px; cursor: pointer; transition: 0.3s; font-family: 'Cairo'; }
+        .btn:hover { background: #b45309; transform: translateY(-2px); }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <div class="game-container" id="gameContainer">
+        <!-- شاشة التعليمات والقواعد -->
+        <div class="modal" id="instructionsModal">
+            <h1>⛏️ تعليمات لغز منجم الذهب</h1>
+            <div class="instructions-box">
+                <ul>
+                    <li>🚪 <b>المهمة:</b> افتح الأبواب الحجرية للمنجم للوصول إلى صندوق الذهب النهائي!</li>
+                    <li>⛏️ <b>المحاولات:</b> لديك <span id="ruleLives" style="color:#ef4444; font-weight:bold;">--</span> محاولات تنقيب قبل انهيار المغارة.</li>
+                    <li>💰 <b>القطع الذهبية:</b> كل باب تفتحه بذكاء يمنحك <span id="rulePoints" style="color:#f59e0b; font-weight:bold;">--</span> قطعة ذهب.</li>
+                    <li>💡 <b>التلميحات:</b> عند الوقوع في الخطأ يظهر لك تلميح رياضي يساعدك في فتح الباب.</li>
+                </ul>
+            </div>
+            <button class="btn" onclick="startTheGameSession()">ابدأ التنقيب الآن 🪙</button>
+        </div>
+
+        <!-- شاشة المعلومات العلوية HUD -->
+        <div class="hud">
+            <div>المستكشف: <span id="playerName">بطل</span></div>
+            <div>⛏️ الفأس: <span id="livesCount">--</span></div>
+            <div>🔥 السلسلة: <span id="streakCount">٠</span></div>
+            <div>🪙 الذهب: <span id="scoreVal">٠</span></div>
+            <div class="bonus-float-msg" id="bonusMsg">+١٠٠ ذهب إضافي! 💰</div>
+        </div>
+
+        <!-- ساحة المنجم والمغارة -->
+        <div class="mine-arena" id="arenaBox">
+            <!-- مسار التقدم في غرف المنجم -->
+            <div class="progress-track" id="progressTrack">
+                <div class="step-node active" id="node-0">١</div>
+                <div class="step-node" id="node-1">٢</div>
+                <div class="step-node" id="node-2">٣</div>
+                <div class="step-node" id="node-3">٤</div>
+                <div class="step-node" id="node-4">٥</div>
+                <div class="step-node" id="node-5">🎁</div>
+            </div>
+
+            <!-- كرت الباب المغلق -->
+            <div class="door-card">
+                <div class="door-title">🔒 الباب الحجري للمغارة <span id="currentRoomNum">١</span></div>
+                <div class="question-box" id="questionDisplay">؟ × ؟ = ؟</div>
+                <div class="hint-box" id="hintBox">💡 تلميح: فكر في مضاعفات العدد المطلوب</div>
+            </div>
+
+            <!-- خيارات الحل لفتح الباب -->
+            <div class="options-grid" id="optionsGrid">
+                <!-- أزرار الخيارات تظهر هنا -->
+            </div>
+        </div>
+
+        <!-- شاشة نهاية اللعبة والنتائج -->
+        <div class="modal hidden" id="gameOverModal">
+            <h1 id="gameOverTitle">انتهت الرحلة! 🏆</h1>
+            <p id="finalScoreText">لقد جمعت ٠ قطعة ذهبية</p>
+            <p id="saveStatus" style="color: #38bdf8; font-size: 14px; margin-bottom: 10px;"></p>
+            
+            <div class="leaderboard-box">
+                <h3>🏆 أبطال تنقيب الذهب (الأعلى نقاطاً)</h3>
+                <div id="leaderboardList">جاري تحميل الأبطال...</div>
+            </div>
+
+            <div style="display: flex; gap: 15px;">
+                <button class="btn" onclick="restartGame()">محاولة جديدة 🔄</button>
+                <button class="btn" style="background: #059669;" onclick="goToMain()">الرئيسية 🏠</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 1. التحقق من بيان الطالب
+        let studentData = null;
+        try {
+            studentData = JSON.parse(localStorage.getItem('current_student'));
+        } catch (e) {
+            studentData = null;
+        }
+
+        if (!studentData || !studentData.name) {
+            alert('الرجاء اختيار اسمك والصف الدراسي أولاً للبدء!');
+            window.location.href = 'student.html';
+        } else {
+            document.getElementById('playerName').textContent = studentData.name;
+        }
+
+        // المؤثرات الصوتية
+        function playSound(type) {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+                osc.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+
+                if (type === 'correct') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(700, audioCtx.currentTime + 0.2);
+                    gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.25);
+                } else if (type === 'wrong') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+                    osc.frequency.linearRampToValueAtTime(80, audioCtx.currentTime + 0.25);
+                    gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.3);
+                } else if (type === 'chest') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(900, audioCtx.currentTime + 0.4);
+                    gainNode.gain.setValueAtTime(0.4, audioCtx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.45);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.45);
+                }
+            } catch (e) {
+                console.log("Audio error", e);
+            }
+        }
+
+        function toArabicNum(num) {
+            const arabicNumbers = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+            return String(num).replace(/\d/g, (d) => arabicNumbers[d]);
+        }
+
+        // الإعدادات السحابية الافتراضية
+        let customSettings = {
+            maxLives: 3,
+            goldPerDoor: 100,
+            wrongPenaltyLives: 1,
+            streakBonusGold: 50,
+            totalRooms: 5
+        };
+
+        // 2. تحميل إعدادات اللعبة من Supabase
+        async function loadCloudSettings() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('game_settings')
+                    .select('value')
+                    .eq('key', 'gold_mine_settings')
+                    .single();
+
+                if (data && data.value) {
+                    customSettings = { ...customSettings, ...data.value };
+                }
+            } catch (e) {
+                console.log("Using default gold mine settings fallback");
+            }
+
+            document.getElementById('ruleLives').textContent = toArabicNum(customSettings.maxLives);
+            document.getElementById('rulePoints').textContent = toArabicNum(customSettings.goldPerDoor);
+            document.getElementById('livesCount').textContent = toArabicNum(customSettings.maxLives);
+        }
+
+        loadCloudSettings();
+
+        // متغيرات الحالة
+        let score = 0;
+        let lives = customSettings.maxLives;
+        let currentRoom = 0;
+        let streak = 0;
+        let currentCorrectAnswer = 0;
+        let currentHint = '';
+        let maxTable = 10;
+
+        async function startTheGameSession() {
+            await loadCloudSettings();
+            document.getElementById('instructionsModal').classList.add('hidden');
+            initGameSettings();
+        }
+
+        function initGameSettings() {
+            const cls = String(studentData.cls || '').trim();
+            if (cls.includes('٤') || cls.includes('4') || cls.startsWith('4')) {
+                maxTable = 6;
+            } else if (cls.includes('٥') || cls.includes('5') || cls.includes('٦') || cls.includes('6')) {
+                maxTable = 12;
+            } else {
+                maxTable = 10;
+            }
+            startGameEngine();
+        }
+
+        function startGameEngine() {
+            score = 0;
+            lives = customSettings.maxLives;
+            currentRoom = 0;
+            streak = 0;
+            updateHUD();
+            document.getElementById('gameOverModal').classList.add('hidden');
+            generateNewPuzzle();
+        }
+
+        function updateHUD() {
+            document.getElementById('scoreVal').textContent = toArabicNum(score);
+            document.getElementById('livesCount').textContent = toArabicNum(lives);
+            document.getElementById('streakCount').textContent = toArabicNum(streak);
+            document.getElementById('currentRoomNum').textContent = toArabicNum(currentRoom + 1);
+            
+            // تحديث شريط التقدم
+            for (let i = 0; i < 6; i++) {
+                const node = document.getElementById(`node-${i}`);
+                if (!node) continue;
+                node.className = 'step-node';
+                if (i < currentRoom) node.classList.add('done');
+                else if (i === currentRoom) node.classList.add('active');
+            }
+        }
+
+        function showBonusMessage(gold) {
+            const msg = document.getElementById('bonusMsg');
+            msg.textContent = `+${toArabicNum(gold)} ذهب إضافي! 💰`;
+            msg.classList.add('show');
+            setTimeout(() => msg.classList.remove('show'), 2000);
+        }
+
+        // توليد لغز المغارة
+        function generateNewPuzzle() {
+            document.getElementById('hintBox').style.display = 'none';
+
+            let num1 = Math.floor(Math.random() * (maxTable - 1)) + 2;
+            let num2 = Math.floor(Math.random() * 10) + 1;
+            currentCorrectAnswer = num1 * num2;
+
+            // تنوع أنماط الألغاز
+            let puzzleType = Math.random() > 0.5 ? 'missing' : 'product';
+
+            if (puzzleType === 'missing') {
+                document.getElementById('questionDisplay').textContent = `${toArabicNum(num1)} × ؟ = ${toArabicNum(currentCorrectAnswer)}`;
+                currentHint = `💡 تلميح: ما هو العدد الذي إذا ضربته في ${toArabicNum(num1)} يعطيك ${toArabicNum(currentCorrectAnswer)}؟`;
+            } else {
+                document.getElementById('questionDisplay').textContent = `جد حاصل ضرب: ${toArabicNum(num1)} × ${toArabicNum(num2)}`;
+                currentHint = `💡 تلميح: اجمع العدد ${toArabicNum(num1)} مع نفسه ${toArabicNum(num2)} مرات.`;
+            }
+
+            // خيارات الإجابة
+            let correctOptionVal = (puzzleType === 'missing') ? num2 : currentCorrectAnswer;
+            let options = [correctOptionVal];
+
+            while (options.length < 4) {
+                let wrong = correctOptionVal + (Math.floor(Math.random() * 9) - 4);
+                if (wrong > 0 && !options.includes(wrong)) {
+                    options.push(wrong);
+                }
+            }
+            options.sort(() => Math.random() - 0.5);
+
+            const grid = document.getElementById('optionsGrid');
+            grid.innerHTML = '';
+            options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'opt-btn';
+                btn.textContent = toArabicNum(opt);
+                btn.onclick = () => checkAnswer(opt, correctOptionVal);
+                grid.appendChild(btn);
+            });
+        }
+
+        function checkAnswer(selectedOpt, correctVal) {
+            if (selectedOpt === correctVal) {
+                playSound('correct');
+                score += customSettings.goldPerDoor;
+                streak++;
+
+                if (streak > 0 && streak % 3 === 0) {
+                    let bonus = customSettings.streakBonusGold;
+                    score += bonus;
+                    showBonusMessage(bonus);
+                }
+
+                currentRoom++;
+                updateHUD();
+
+                if (currentRoom >= customSettings.totalRooms) {
+                    playSound('chest');
+                    endGame(true);
+                } else {
+                    generateNewPuzzle();
+                }
+            } else {
+                playSound('wrong');
+                lives -= customSettings.wrongPenaltyLives;
+                streak = 0;
+                
+                // إظهار التلميح
+                const hintEl = document.getElementById('hintBox');
+                hintEl.textContent = currentHint;
+                hintEl.style.display = 'block';
+
+                updateHUD();
+
+                if (lives <= 0) {
+                    endGame(false);
+                }
+            }
+        }
+
+        async function endGame(isWin) {
+            const modal = document.getElementById('gameOverModal');
+            modal.classList.remove('hidden');
+
+            const title = document.getElementById('gameOverTitle');
+            if (isWin) {
+                title.textContent = '🎉 مبروك! فتحت صندوق الذهب الأكبر! 👑';
+            } else {
+                title.textContent = 'انتهت محاولات التنقيب! ⛏️';
+            }
+
+            document.getElementById('finalScoreText').textContent = `أحسنت يا ${studentData.name}! لقد جمعت ${toArabicNum(score)} قطعة ذهب.`;
+            document.getElementById('saveStatus').textContent = 'جاري حفظ رصيد الذهب بالسحابة...';
+
+            try {
+                const { error } = await supabaseClient.from('scores').insert([{
+                    student_name: studentData.name,
+                    cls: studentData.cls,
+                    points: score,
+                    weekly_points: score,
+                    is_guest: false
+                }]);
+
+                if (error) throw error;
+                document.getElementById('saveStatus').textContent = '✅ تم إيداع الذهب بنجاح في السحابة!';
+                loadLeaderboardInModal();
+            } catch (err) {
+                console.error("Save Gold Score Error:", err);
+                document.getElementById('saveStatus').textContent = '⚠️ تعذر حفظ النتيجة بالسحابة.';
+            }
+        }
+
+        async function loadLeaderboardInModal() {
+            const lbList = document.getElementById('leaderboardList');
+            lbList.innerHTML = 'جاري تحضير الأبطال...';
+            try {
+                const { data, error } = await supabaseClient
+                    .from('scores')
+                    .select('student_name, points')
+                    .order('points', { ascending: false })
+                    .limit(5);
+
+                if (error) throw error;
+                if (!data || data.length === 0) {
+                    lbList.innerHTML = 'لا توجد نتائج مسجلة بعد.';
+                    return;
+                }
+
+                lbList.innerHTML = '';
+                data.forEach((row, index) => {
+                    let medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '⭐';
+                    lbList.innerHTML += `
+                        <div class="lb-row">
+                            <span>${medal} ${row.student_name}</span>
+                            <span><b>${toArabicNum(row.points || 0)}</b> 🪙</span>
+                        </div>
+                    `;
+                });
+            } catch (err) {
+                lbList.innerHTML = 'تعذر تحميل قائمة المتصدرين.';
+            }
+        }
+
+        function restartGame() {
+            document.getElementById('instructionsModal').classList.add('hidden');
+            startGameEngine();
+        }
+
+        function goToMain() {
+            window.location.href = 'student.html';
+        }
+    </script>
+</body>
+</html>
