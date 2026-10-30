@@ -23,12 +23,13 @@
         .rocket-ship { position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); font-size: 55px; user-select: none; z-index: 5; }
         .laser-beam { position: absolute; bottom: 70px; width: 4px; background: linear-gradient(to top, #ef4444, #f87171, #fef08a); transform-origin: bottom center; z-index: 4; box-shadow: 0 0 10px #ef4444; border-radius: 2px; pointer-events: none; }
 
-        .modal { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(13, 14, 21, 0.96); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; text-align: center; padding: 30px; box-sizing: border-box; }
-        .modal h1 { color: #ec4899; font-size: 32px; margin-bottom: 15px; }
-        .modal p { font-size: 18px; margin-bottom: 15px; color: #cbd5e1; line-height: 1.6; }
+        .modal { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(13, 14, 21, 0.96); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; text-align: center; padding: 25px; box-sizing: border-box; }
+        .modal h1 { color: #ec4899; font-size: 30px; margin-bottom: 15px; }
+        .modal p { font-size: 18px; margin-bottom: 12px; color: #cbd5e1; line-height: 1.6; }
         
-        .instructions-box { background: rgba(30, 41, 59, 0.9); padding: 15px; border-radius: 12px; border: 1px solid #4f46e5; text-align: right; margin-bottom: 20px; width: 100%; max-width: 450px; }
-        .instructions-box li { margin-bottom: 8px; font-size: 14px; color: #e2e8f0; }
+        .instructions-box { background: rgba(30, 41, 59, 0.95); padding: 18px; border-radius: 12px; border: 1px solid #4f46e5; text-align: right; margin-bottom: 20px; width: 100%; max-width: 480px; box-sizing: border-box; }
+        .instructions-box ul { padding-right: 20px; margin: 0; }
+        .instructions-box li { margin-bottom: 10px; font-size: 14px; color: #e2e8f0; line-height: 1.5; }
 
         .leaderboard-box { background: rgba(15, 23, 42, 0.95); border: 2px solid #f59e0b; border-radius: 10px; padding: 15px; width: 100%; max-width: 400px; margin-bottom: 20px; text-align: right; }
         .leaderboard-box h3 { color: #f59e0b; margin-top: 0; margin-bottom: 10px; text-align: center; font-size: 18px; }
@@ -42,14 +43,15 @@
 <body>
 
     <div class="game-container" id="gameContainer">
-        <!-- لوحة التعليمات والقواعد قبل البدء -->
+        <!-- لوحة التعليمات والقواعد -->
         <div class="modal" id="instructionsModal">
             <h1>🚀 تعليمات وقواعد سباق الصواريخ</h1>
             <div class="instructions-box">
                 <ul>
-                    <li>🎯 <b>طريقة التصويب:</b> انقر في أي مكان بالساحة، وسيطلق صاروخك شعاع ليزر مستقيم نحو الناتج الصحيح للجرم الفضائي!</li>
-                    <li>🪐 <b>حركة الأجرام:</b> تتحرك الأجرام الصخرية يميناً ويساراً وأعلى وأسفل بعشوائية دون دوران.</li>
-                    <li>⏱️ <b>الوقت والمكافآت:</b> كل ٥ إجابات صحيحة متتالية تمنحك +٣٠ ثانية إضافية تظهر مباشرة في الأعلى.</li>
+                    <li>⏱️ <b>زمن الجولة:</b> لديك <span id="ruleTime" style="color:#f59e0b; font-weight:bold;">--</span> ثانية للإجابة على أكبر عدد من الأسئلة.</li>
+                    <li>🎯 <b>طريقة التصويب:</b> انقر في أي مكان بالساحة، وسيطلق صاروخك شعاع ليزر مستقيم نحو الناتج الصحيح للجرم الفضائي.</li>
+                    <li>⭐ <b>النقاط:</b> كل إجابة صحيحة تمنحك <span id="rulePoints" style="color:#10b981; font-weight:bold;">--</span> نقطة.</li>
+                    <li>🔥 <b>مكافأة السلسلة:</b> الإجابة على <span id="ruleStreak" style="color:#ec4899; font-weight:bold;">--</span> أسئلة متتالية بشكل صحيح تمنحك وقتاً إضافياً قدره <span id="ruleBonus" style="color:#38bdf8; font-weight:bold;">--</span> ثوانٍ!</li>
                 </ul>
             </div>
             <button class="btn" onclick="startTheGameSession()">ابدأ التحدي الآن 🎮</button>
@@ -58,10 +60,10 @@
         <!-- شاشة المعلومات العلوية HUD -->
         <div class="hud">
             <div>اللاعب: <span id="playerName">بطل</span></div>
-            <div>⏱️ الوقت: <span id="timeLeft">٩٠</span>ث</div>
+            <div>⏱️ الوقت: <span id="timeLeft">--</span>ث</div>
             <div>🔥 السلسلة: <span id="streakCount">٠</span></div>
             <div>⭐ النقاط: <span id="scoreVal">٠</span></div>
-            <div class="bonus-float-msg" id="bonusMsg">+٣٠ ثانية! ⏱️</div>
+            <div class="bonus-float-msg" id="bonusMsg">+١٠ ثوانٍ! ⏱️</div>
         </div>
 
         <!-- ساحة اللعب الحركية -->
@@ -89,6 +91,22 @@
     </div>
 
     <script>
+        // التحقق الإجباري من اختيار الطالب أولاً قبل الدخول للعبة
+        let studentData = null;
+        try {
+            studentData = JSON.parse(localStorage.getItem('current_student'));
+        } catch (e) {
+            studentData = null;
+        }
+
+        // إذا لم يتم اختيار طالب أو لم يكن مخزناً، يتم توجيهه لصفحة اختيار الاسم مباشرة
+        if (!studentData || !studentData.name || studentData.name.includes('تجريبي')) {
+            alert('الرجاء اختيار اسمك والصف الدراسي أولاً للبدء!');
+            window.location.href = 'student.html';
+        } else {
+            document.getElementById('playerName').textContent = studentData.name;
+        }
+
         function playSound(type) {
             try {
                 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -132,16 +150,18 @@
             return String(num).replace(/\d/g, (d) => arabicNumbers[d]);
         }
 
-        let studentData = JSON.parse(localStorage.getItem('current_student')) || { name: "أحمد (تجريبي)", cls: "٥ب٤" };
-        document.getElementById('playerName').textContent = studentData.name;
-
         let customSettings = JSON.parse(localStorage.getItem('rocket_game_settings')) || {
-            gameTime: 90,
+            gameTime: 60,
             correctPoints: 100,
             wrongPenalty: 30,
             streakCount: 5,
-            bonusTime: 30
+            bonusTime: 10
         };
+
+        document.getElementById('ruleTime').textContent = toArabicNum(customSettings.gameTime);
+        document.getElementById('rulePoints').textContent = toArabicNum(customSettings.correctPoints);
+        document.getElementById('ruleStreak').textContent = toArabicNum(customSettings.streakCount);
+        document.getElementById('ruleBonus').textContent = toArabicNum(customSettings.bonusTime);
 
         let score = 0;
         let timeLeft = customSettings.gameTime;
@@ -204,6 +224,7 @@
 
         function showBonusMessage() {
             const msg = document.getElementById('bonusMsg');
+            msg.textContent = `+${toArabicNum(customSettings.bonusTime)} ثوانٍ! ⏱️`;
             msg.classList.add('show');
             setTimeout(() => {
                 msg.classList.remove('show');
@@ -353,7 +374,8 @@
                     student_name: studentData.name,
                     cls: studentData.cls,
                     points: score,
-                    weekly_points: score
+                    weekly_points: score,
+                    is_guest: false
                 }]);
 
                 if (error) throw error;
@@ -387,7 +409,7 @@
                     lbList.innerHTML += `
                         <div class="lb-row">
                             <span>${medal} ${row.student_name}</span>
-                            <span><b>${toArabicNum(row.points)}</b> نقطة</span>
+                            <span><b>${toArabicNum(row.points || 0)}</b> نقطة</span>
                         </div>
                     `;
                 });
@@ -404,6 +426,10 @@
         function goToMain() {
             window.location.href = 'student.html';
         }
+
+        window.onload = function() {
+            document.getElementById('timeLeft').textContent = toArabicNum(customSettings.gameTime);
+        };
     </script>
 </body>
 </html>
