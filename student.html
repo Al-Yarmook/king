@@ -3,423 +3,91 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>سباق صواريخ الفضاء - ملك جدول الضرب</title>
+    <title>اختر اسمك - ملك جدول الضرب</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="config.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Cairo', sans-serif; background: radial-gradient(circle, #1a1c29 0%, #0d0e15 100%); color: white; margin: 0; padding: 0; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; }
-        .game-container { width: 100%; max-width: 600px; height: 100vh; background: rgba(15, 23, 42, 0.95); position: relative; box-shadow: 0 0 30px rgba(79, 70, 229, 0.4); display: flex; flex-direction: column; justify-content: space-between; border-left: 2px solid #334155; border-right: 2px solid #334155; box-sizing: border-box; overflow: hidden; }
-        .hud { display: flex; justify-content: space-between; padding: 15px 20px; background: rgba(30, 41, 59, 0.95); font-size: 16px; font-weight: bold; border-bottom: 2px solid #4f46e5; z-index: 10; position: relative; }
-        .hud span { color: #f59e0b; }
-        
-        .bonus-float-msg { position: absolute; top: 65px; left: 50%; transform: translateX(-50%); background: #10b981; color: white; padding: 4px 15px; border-radius: 20px; font-size: 14px; font-weight: bold; box-shadow: 0 0 15px #10b981; pointer-events: none; opacity: 0; transition: 0.3s; z-index: 20; }
-        .bonus-float-msg.show { opacity: 1; transform: translateX(-50%) translateY(-5px); }
-
-        .arena { flex: 1; position: relative; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; cursor: crosshair; }
-        .question-box { background: rgba(79, 70, 229, 0.9); padding: 10px 30px; border-radius: 12px; font-size: 32px; font-weight: 900; margin-top: 15px; box-shadow: 0 0 20px rgba(79, 70, 229, 0.8); letter-spacing: 2px; z-index: 5; }
-        
-        .falling-asteroid { position: absolute; background: linear-gradient(135deg, #64748b, #334155, #1e293b); border: 2px solid #94a3b8; color: white; border-radius: 35% 65% 50% 50% / 40% 45% 55% 60%; width: 75px; height: 75px; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: bold; cursor: pointer; box-shadow: inset -5px -5px 15px rgba(0,0,0,0.7), 0 4px 15px rgba(0,0,0,0.5); user-select: none; }
-        .rocket-ship { position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); font-size: 55px; user-select: none; z-index: 5; }
-        .laser-beam { position: absolute; bottom: 70px; width: 4px; background: linear-gradient(to top, #ef4444, #f87171, #fef08a); transform-origin: bottom center; z-index: 4; box-shadow: 0 0 10px #ef4444; border-radius: 2px; pointer-events: none; }
-
-        .modal { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(13, 14, 21, 0.96); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; text-align: center; padding: 25px; box-sizing: border-box; }
-        .modal h1 { color: #ec4899; font-size: 30px; margin-bottom: 15px; }
-        .modal p { font-size: 18px; margin-bottom: 12px; color: #cbd5e1; line-height: 1.6; }
-        
-        .instructions-box { background: rgba(30, 41, 59, 0.95); padding: 18px; border-radius: 12px; border: 1px solid #4f46e5; text-align: right; margin-bottom: 20px; width: 100%; max-width: 480px; box-sizing: border-box; }
-        .instructions-box ul { padding-right: 20px; margin: 0; }
-        .instructions-box li { margin-bottom: 10px; font-size: 14px; color: #e2e8f0; line-height: 1.5; }
-
-        .leaderboard-box { background: rgba(15, 23, 42, 0.95); border: 2px solid #f59e0b; border-radius: 10px; padding: 15px; width: 100%; max-width: 400px; margin-bottom: 20px; text-align: right; }
-        .leaderboard-box h3 { color: #f59e0b; margin-top: 0; margin-bottom: 10px; text-align: center; font-size: 18px; }
-        .lb-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px dashed #334155; font-size: 14px; }
-
-        .btn { background: #4f46e5; color: white; border: none; padding: 12px 35px; font-size: 18px; font-weight: bold; border-radius: 10px; cursor: pointer; transition: 0.3s; font-family: 'Cairo'; }
-        .btn:hover { background: #4338ca; transform: translateY(-2px); }
-        .hidden { display: none !important; }
+        body { font-family: 'Cairo', sans-serif; background: #f4f7f6; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        .card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
+        h2 { color: #d81b60; margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: 600; text-align: right; color: #333; }
+        select, button { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 8px; font-family: 'Cairo'; box-sizing: border-box; }
+        select { background: white; }
+        .btn { background: #d81b60; color: white; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .btn:hover { background: #ad1457; }
     </style>
 </head>
 <body>
 
-    <div class="game-container" id="gameContainer">
-        <!-- لوحة التعليمات والقواعد متزامنة تماماً مع إعدادات المدير -->
-        <div class="modal" id="instructionsModal">
-            <h1>🚀 تعليمات وقواعد سباق الصواريخ</h1>
-            <div class="instructions-box">
-                <ul>
-                    <li>⏱️ <b>زمن الجولة:</b> لديك <span id="ruleTime" style="color:#f59e0b; font-weight:bold;">--</span> ثانية للإجابة على أكبر عدد من الأسئلة.</li>
-                    <li>🎯 <b>طريقة التصويب:</b> انقر في أي مكان بالساحة، وسيطلق صاروخك شعاع ليزر مستقيم نحو الناتج الصحيح للجرم الفضائي.</li>
-                    <li>⭐ <b>النقاط:</b> كل إجابة صحيحة تمنحك <span id="rulePoints" style="color:#10b981; font-weight:bold;">--</span> نقطة.</li>
-                    <li>🔥 <b>مكافأة السلسلة:</b> الإجابة على <span id="ruleStreak" style="color:#ec4899; font-weight:bold;">--</span> أسئلة متتالية بشكل صحيح تمنحك وقتاً إضافياً قدره <span id="ruleBonus" style="color:#38bdf8; font-weight:bold;">--</span> ثوانٍ!</li>
-                </ul>
-            </div>
-            <button class="btn" onclick="startTheGameSession()">ابدأ التحدي الآن 🎮</button>
-        </div>
+    <div class="card">
+        <h2>اختر صفك واسمك للبدء 🎮</h2>
+        
+        <label>اختر الصف الدراسي:</label>
+        <select id="classSelect" onchange="loadStudentsByClass()">
+            <option value="">-- اختر الصف --</option>
+        </select>
 
-        <!-- شاشة المعلومات العلوية HUD -->
-        <div class="hud">
-            <div>اللاعب: <span id="playerName">بطل</span></div>
-            <div>⏱️ الوقت: <span id="timeLeft">--</span>ث</div>
-            <div>🔥 السلسلة: <span id="streakCount">٠</span></div>
-            <div>⭐ النقاط: <span id="scoreVal">٠</span></div>
-            <div class="bonus-float-msg" id="bonusMsg">+١٠ ثوانٍ! ⏱️</div>
-        </div>
+        <label>اختر اسم الطالب:</label>
+        <select id="studentSelect">
+            <option value="">-- اختر اسمك --</option>
+        </select>
 
-        <!-- ساحة اللعب الحركية -->
-        <div class="arena" id="arenaBox" onclick="handleArenaClick(event)">
-            <div class="question-box" id="questionDisplay">؟ × ؟</div>
-            <div class="rocket-ship" id="rocketShip">🚀</div>
-        </div>
-
-        <!-- شاشة النهاية والنتيجة مع لوحة الصدارة -->
-        <div class="modal hidden" id="gameOverModal">
-            <h1>انتهى السباق! 🏆</h1>
-            <p id="finalScoreText">لقد جمعت ٠ نقطة</p>
-            <p id="saveStatus" style="color: #38bdf8; font-size: 14px; margin-bottom: 10px;"></p>
-            
-            <div class="leaderboard-box">
-                <h3>🏆 لوحة الشرف (أعلى النقاط)</h3>
-                <div id="leaderboardList">جاري تحميل الأبطال...</div>
-            </div>
-
-            <div style="display: flex; gap: 15px;">
-                <button class="btn" onclick="restartGame()">إعادة اللعب 🔄</button>
-                <button class="btn" style="background: #059669;" onclick="goToMain()">الرئيسية 🏠</button>
-            </div>
-        </div>
+        <button class="btn" onclick="startGame()">ابدأ التحدي 🚀</button>
     </div>
 
     <script>
-        function playSound(type) {
-            try {
-                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                const osc = audioCtx.createOscillator();
-                const gainNode = audioCtx.createGain();
-                osc.connect(gainNode);
-                gainNode.connect(audioCtx.destination);
+        let allStudents = [];
 
-                if (type === 'correct') {
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(400, audioCtx.currentTime);
-                    osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.15);
-                    gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
-                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
-                    osc.start();
-                    osc.stop(audioCtx.currentTime + 0.2);
-                } else if (type === 'wrong') {
-                    osc.type = 'sawtooth';
-                    osc.frequency.setValueAtTime(180, audioCtx.currentTime);
-                    osc.frequency.linearRampToValueAtTime(100, audioCtx.currentTime + 0.2);
-                    gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
-                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
-                    osc.start();
-                    osc.stop(audioCtx.currentTime + 0.25);
-                } else if (type === 'laser') {
-                    osc.type = 'triangle';
-                    osc.frequency.setValueAtTime(600, audioCtx.currentTime);
-                    osc.frequency.exponentialRampToValueAtTime(150, audioCtx.currentTime + 0.1);
-                    gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
-                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
-                    osc.start();
-                    osc.stop(audioCtx.currentTime + 0.1);
-                }
-            } catch (e) {
-                console.log("Audio error", e);
+        document.addEventListener('DOMContentLoaded', async () => {
+            await fetchStudents();
+        });
+
+        async function fetchStudents() {
+            const { data, error } = await supabaseClient.from('students').select('*');
+            if(error) {
+                console.error("Error fetching students:", error);
+                alert('حدث خطأ أثناء تحميل بيانات الطلاب.');
+                return;
             }
-        }
 
-        function toArabicNum(num) {
-            const arabicNumbers = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
-            return String(num).replace(/\d/g, (d) => arabicNumbers[d]);
-        }
-
-        let studentData = JSON.parse(localStorage.getItem('current_student')) || { name: "أحمد (تجريبي)", cls: "٥ب٤" };
-        document.getElementById('playerName').textContent = studentData.name;
-
-        // جلب الإعدادات المحدثة من لوحة المدير ومزامنتها تماماً
-        let customSettings = JSON.parse(localStorage.getItem('rocket_game_settings')) || {
-            gameTime: 60,
-            correctPoints: 100,
-            wrongPenalty: 30,
-            streakCount: 5,
-            bonusTime: 10
-        };
-
-        // تحديث النصوص في لوحة التعليمات وقيم البداية ديناميكياً
-        document.getElementById('ruleTime').textContent = toArabicNum(customSettings.gameTime);
-        document.getElementById('rulePoints').textContent = toArabicNum(customSettings.correctPoints);
-        document.getElementById('ruleStreak').textContent = toArabicNum(customSettings.streakCount);
-        document.getElementById('ruleBonus').textContent = toArabicNum(customSettings.bonusTime);
-
-        let score = 0;
-        let timeLeft = customSettings.gameTime;
-        let streak = 0;
-        let timerInterval = null;
-        let gameLoopInterval = null;
-        let currentCorrectAnswer = 0;
-        let maxTable = 10;
-        let asteroids = [];
-
-        function startTheGameSession() {
-            document.getElementById('instructionsModal').classList.add('hidden');
-            initGameSettings();
-        }
-
-        function initGameSettings() {
-            const cls = String(studentData.cls || '').trim();
-            if (cls.includes('٤') || cls.includes('4') || cls.startsWith('4')) {
-                maxTable = 6;
-            } else if (cls.includes('٥') || cls.includes('5') || cls.includes('٦') || cls.includes('6')) {
-                maxTable = 12;
-            } else {
-                maxTable = 10;
-            }
-            startGameEngine();
-        }
-
-        function startGameEngine() {
-            score = 0;
-            timeLeft = customSettings.gameTime;
-            streak = 0;
-            updateHUD();
-            document.getElementById('gameOverModal').classList.add('hidden');
-            
-            asteroids.forEach(ast => ast.element.remove());
-            asteroids = [];
-
-            generateNewWave();
-
-            if (timerInterval) clearInterval(timerInterval);
-            timerInterval = setInterval(() => {
-                timeLeft--;
-                updateHUD();
-                if (timeLeft <= 0) {
-                    clearInterval(timerInterval);
-                    clearInterval(gameLoopInterval);
-                    endGame();
-                }
-            }, 1000);
-
-            if (gameLoopInterval) clearInterval(gameLoopInterval);
-            gameLoopInterval = setInterval(updatePhysics, 30);
-        }
-
-        function updateHUD() {
-            document.getElementById('scoreVal').textContent = toArabicNum(score);
-            document.getElementById('timeLeft').textContent = toArabicNum(timeLeft);
-            document.getElementById('streakCount').textContent = toArabicNum(streak);
-        }
-
-        function showBonusMessage() {
-            const msg = document.getElementById('bonusMsg');
-            msg.textContent = `+${toArabicNum(customSettings.bonusTime)} ثوانٍ! ⏱️`;
-            msg.classList.add('show');
-            setTimeout(() => {
-                msg.classList.remove('show');
-            }, 2000);
-        }
-
-        function generateNewWave() {
-            asteroids.forEach(ast => ast.element.remove());
-            asteroids = [];
-
-            let num1 = Math.floor(Math.random() * (maxTable - 1)) + 2;
-            let num2 = Math.floor(Math.random() * 10) + 1;
-            currentCorrectAnswer = num1 * num2;
-
-            document.getElementById('questionDisplay').textContent = `${toArabicNum(num1)} × ${toArabicNum(num2)}`;
-
-            let options = [currentCorrectAnswer];
-            while (options.length < 3) {
-                let wrong = currentCorrectAnswer + (Math.floor(Math.random() * 11) - 5);
-                if (wrong > 0 && !options.includes(wrong)) {
-                    options.push(wrong);
-                }
-            }
-            options.sort(() => Math.random() - 0.5);
-
-            const arena = document.getElementById('arenaBox');
-            const arenaWidth = arena.clientWidth || 500;
-
-            options.forEach((opt, index) => {
-                let astEl = document.createElement('div');
-                astEl.className = 'falling-asteroid';
-                astEl.textContent = toArabicNum(opt);
+            if(data && data.length > 0) {
+                allStudents = data;
+                let classes = [...new Set(data.map(s => s.cls))].filter(Boolean);
+                const classSelect = document.getElementById('classSelect');
+                classSelect.innerHTML = '<option value="">-- اختر الصف --</option>';
                 
-                let startX = 50 + (index * (arenaWidth / 3.3));
-                let startY = 80 + (Math.random() * 100);
-                
-                astEl.style.left = startX + 'px';
-                astEl.style.top = startY + 'px';
-                arena.appendChild(astEl);
-
-                asteroids.push({
-                    element: astEl,
-                    x: startX,
-                    y: startY,
-                    vx: (Math.random() - 0.5) * 2.5,
-                    vy: 0.8 + Math.random() * 0.8,
-                    value: opt
+                classes.forEach(cls => {
+                    classSelect.innerHTML += `<option value="${cls}">${cls}</option>`;
                 });
+            }
+        }
+
+        function loadStudentsByClass() {
+            const selectedClass = document.getElementById('classSelect').value;
+            const studentSelect = document.getElementById('studentSelect');
+            studentSelect.innerHTML = '<option value="">-- اختر اسمك --</option>';
+
+            if(!selectedClass) return;
+
+            const filtered = allStudents.filter(s => s.cls === selectedClass);
+            filtered.forEach(s => {
+                studentSelect.innerHTML += `<option value="${s.name}">${s.name}</option>`;
             });
         }
 
-        function updatePhysics() {
-            const arena = document.getElementById('arenaBox');
-            const arenaWidth = arena.clientWidth || 500;
-            const arenaHeight = arena.clientHeight || 600;
+        function startGame() {
+            const cls = document.getElementById('classSelect').value;
+            const name = document.getElementById('studentSelect').value;
 
-            asteroids.forEach(ast => {
-                ast.x += ast.vx;
-                ast.y += ast.vy;
-
-                if (ast.x < 10 || ast.x > arenaWidth - 85) {
-                    ast.vx *= -1;
-                }
-
-                if (ast.y > arenaHeight - 120) {
-                    ast.y = 70;
-                    ast.x = Math.random() * (arenaWidth - 100);
-                }
-
-                ast.element.style.left = ast.x + 'px';
-                ast.element.style.top = ast.y + 'px';
-            });
-        }
-
-        function handleArenaClick(e) {
-            playSound('laser');
-            const arena = document.getElementById('arenaBox');
-            const rect = arena.getBoundingClientRect();
-            const clickX = e.clientX - rect.left;
-            const clickY = e.clientY - rect.top;
-
-            const rocketShip = document.getElementById('rocketShip');
-            const rocketRect = rocketShip.getBoundingClientRect();
-            const startX = (rocketRect.left + rocketRect.right) / 2 - rect.left;
-            const startY = arena.clientHeight - 40;
-
-            let targetAst = null;
-            let minDistance = 9999;
-
-            asteroids.forEach(ast => {
-                let astCenterX = ast.x + 37;
-                let astCenterY = ast.y + 37;
-                let dist = Math.hypot(clickX - astCenterX, clickY - astCenterY);
-                if (dist < minDistance) {
-                    minDistance = dist;
-                    targetAst = ast;
-                }
-            });
-
-            let endX = targetAst ? (targetAst.x + 37) : clickX;
-            let endY = targetAst ? (targetAst.y + 37) : clickY;
-
-            const length = Math.hypot(endX - startX, endY - startY);
-            const angle = Math.atan2(endX - startX, startY - endY) * (180 / Math.PI);
-
-            const laser = document.createElement('div');
-            laser.className = 'laser-beam';
-            laser.style.height = length + 'px';
-            laser.style.left = startX + 'px';
-            laser.style.bottom = '40px';
-            laser.style.transform = `rotate(${angle}deg)`;
-            
-            arena.appendChild(laser);
-            setTimeout(() => laser.remove(), 150);
-
-            if (targetAst) {
-                checkAnswer(targetAst.value);
+            if(!cls || !name) {
+                alert('الرجاء اختيار الصف واسم الطالب أولاً!');
+                return;
             }
+
+            localStorage.setItem('current_student', JSON.stringify({ name, cls }));
+            window.location.href = 'rocket.html';
         }
-
-        function checkAnswer(selectedOpt) {
-            if (selectedOpt === currentCorrectAnswer) {
-                playSound('correct');
-                score += customSettings.correctPoints + (streak * 10);
-                streak++;
-
-                if (streak > 0 && streak % customSettings.streakCount === 0) {
-                    timeLeft += customSettings.bonusTime;
-                    showBonusMessage();
-                }
-                generateNewWave();
-            } else {
-                playSound('wrong');
-                score = Math.max(0, score - customSettings.wrongPenalty);
-                streak = 0;
-            }
-            updateHUD();
-        }
-
-        async function endGame() {
-            document.getElementById('gameOverModal').classList.remove('hidden');
-            document.getElementById('finalScoreText').textContent = `أحسنت يا ${studentData.name}! لقد جمعت ${toArabicNum(score)} نقطة.`;
-            document.getElementById('saveStatus').textContent = 'جاري حفظ النتيجة في سحابة مدرسة اليرموك...';
-
-            try {
-                const { error } = await supabaseClient.from('scores').insert([{
-                    student_name: studentData.name,
-                    cls: studentData.cls,
-                    points: score,
-                    weekly_points: score,
-                    is_guest: false
-                }]);
-
-                if (error) throw error;
-                document.getElementById('saveStatus').textContent = '✅ تم حفظ النتيجة بنجاح في السحابة!';
-                loadLeaderboardInModal();
-            } catch (err) {
-                console.error("Save Score Error:", err);
-                document.getElementById('saveStatus').textContent = '⚠️ حدث خطأ أثناء الحفظ بالسحابة.';
-            }
-        }
-
-        async function loadLeaderboardInModal() {
-            const lbList = document.getElementById('leaderboardList');
-            lbList.innerHTML = 'جاري التحميل...';
-            try {
-                const { data, error } = await supabaseClient
-                    .from('scores')
-                    .select('student_name, points')
-                    .order('points', { ascending: false })
-                    .limit(5);
-
-                if (error) throw error;
-                if (!data || data.length === 0) {
-                    lbList.innerHTML = 'لا توجد نتائج مسجلة.';
-                    return;
-                }
-
-                lbList.innerHTML = '';
-                data.forEach((row, index) => {
-                    let medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '⭐';
-                    lbList.innerHTML += `
-                        <div class="lb-row">
-                            <span>${medal} ${row.student_name}</span>
-                            <span><b>${toArabicNum(row.points || 0)}</b> نقطة</span>
-                        </div>
-                    `;
-                });
-            } catch (err) {
-                lbList.innerHTML = 'تعذر تحميل لوحة الصدارة.';
-            }
-        }
-
-        function restartGame() {
-            document.getElementById('instructionsModal').classList.add('hidden');
-            startGameEngine();
-        }
-
-        function goToMain() {
-            window.location.href = 'student.html';
-        }
-
-        // تهيئة عرض الوقت قبل بدء اللعبة بناءً على الإعدادات
-        window.onload = function() {
-            document.getElementById('timeLeft').textContent = toArabicNum(customSettings.gameTime);
-        };
     </script>
 </body>
 </html>
