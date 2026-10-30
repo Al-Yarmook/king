@@ -141,6 +141,19 @@
                 </div>
                 <button class="btn" onclick="saveRocketSettings()">حفظ ومزامنة إعدادات الصواريخ سحابياً 💾</button>
             </div>
+
+            <div class="game-sub-section" style="border-color: #b45309; background: #fffbebf5;">
+                <h3 style="color: #b45309;">⛏️ إعدادات لعبة "لغز منجم الذهب"</h3>
+                <div class="form-row">
+                    <div class="form-group"><label>عدد محاولات الفأس (القلوب):</label><input type="number" id="gmMaxLives" value="3"></div>
+                    <div class="form-group"><label>نقاط الذهب لكل باب صحيح:</label><input type="number" id="gmGoldPerDoor" value="100"></div>
+                    <div class="form-group"><label>خصم المحاولات عند الخطأ:</label><input type="number" id="gmWrongPenalty" value="1"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>مكافأة السلسلة (ذهب إضافي):</label><input type="number" id="gmStreakBonus" value="50"></div>
+                </div>
+                <button class="btn btn-orange" onclick="saveGoldMineSettings()">حفظ ومزامنة إعدادات منجم الذهب سحابياً 💾</button>
+            </div>
         </div>
 
         <!-- 4. قسم درجات الطلبة -->
@@ -149,9 +162,10 @@
             <div class="form-row" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
                 <div style="display: flex; gap: 10px; align-items: center; flex: 1;">
                     <label style="margin:0;">اختر اللعبة:</label>
-                    <select id="gameFilter" style="max-width: 250px;">
+                    <select id="gameFilter" style="max-width: 250px;" onchange="loadScores()">
                         <option value="all">جميع الألعاب</option>
                         <option value="سباق صواريخ الفضاء">سباق صواريخ الفضاء</option>
+                        <option value="لغز منجم الذهب">لغز منجم الذهب</option>
                     </select>
                 </div>
                 <div style="display: flex; gap: 10px; flex-wrap: wrap;">
@@ -212,6 +226,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             loadStudents();
             loadRocketSettingsFromCloud();
+            loadGoldMineSettingsFromCloud();
         });
 
         function switchTab(tabId, evt) {
@@ -234,12 +249,16 @@
             if(tabId === 'staff') loadStaff();
             if(tabId === 'scores') loadScores();
             if(tabId === 'profile') loadProfile();
-            if(tabId === 'games') loadRocketSettingsFromCloud();
+            if(tabId === 'games') {
+                loadRocketSettingsFromCloud();
+                loadGoldMineSettingsFromCloud();
+            }
         }
 
+        /* ------------------ إعدادات الألعاب ------------------ */
         async function loadRocketSettingsFromCloud() {
             try {
-                const { data, error } = await supabaseClient
+                const { data } = await supabaseClient
                     .from('game_settings')
                     .select('value')
                     .eq('key', 'rocket_settings')
@@ -253,9 +272,7 @@
                     document.getElementById('settingStreakCount').value = settings.streakCount || 5;
                     document.getElementById('settingBonusTime').value = settings.bonusTime || 10;
                 }
-            } catch (e) {
-                console.log("No cloud settings found yet, using defaults.");
-            }
+            } catch (e) { console.log("Rocket settings fallback"); }
         }
 
         async function saveRocketSettings() {
@@ -271,13 +288,46 @@
                 .from('game_settings')
                 .upsert([{ key: 'rocket_settings', value: settings }]);
 
-            if(error) {
-                alert('خطأ أثناء حفظ الإعدادات بالسحابة: ' + error.message);
-            } else {
-                alert('✅ تم حفظ إعدادات لعبة الصواريخ ومزامنتها سحابياً بنجاح لجميع الأجهزة!');
-            }
+            if(error) alert('خطأ أثناء حفظ الإعدادات: ' + error.message);
+            else alert('✅ تم حفظ إعدادات لعبة الصواريخ ومزامنتها بنجاح!');
         }
 
+        async function loadGoldMineSettingsFromCloud() {
+            try {
+                const { data } = await supabaseClient
+                    .from('game_settings')
+                    .select('value')
+                    .eq('key', 'gold_mine_settings')
+                    .single();
+
+                if(data && data.value) {
+                    const settings = data.value;
+                    document.getElementById('gmMaxLives').value = settings.maxLives || 3;
+                    document.getElementById('gmGoldPerDoor').value = settings.goldPerDoor || 100;
+                    document.getElementById('gmWrongPenalty').value = settings.wrongPenaltyLives || 1;
+                    document.getElementById('gmStreakBonus').value = settings.streakBonusGold || 50;
+                }
+            } catch (e) { console.log("Gold mine settings fallback"); }
+        }
+
+        async function saveGoldMineSettings() {
+            const settings = {
+                maxLives: parseInt(document.getElementById('gmMaxLives').value) || 3,
+                goldPerDoor: parseInt(document.getElementById('gmGoldPerDoor').value) || 100,
+                wrongPenaltyLives: parseInt(document.getElementById('gmWrongPenalty').value) || 1,
+                streakBonusGold: parseInt(document.getElementById('gmStreakBonus').value) || 50,
+                totalRooms: 5
+            };
+
+            const { error } = await supabaseClient
+                .from('game_settings')
+                .upsert([{ key: 'gold_mine_settings', value: settings }]);
+
+            if(error) alert('خطأ أثناء حفظ الإعدادات: ' + error.message);
+            else alert('✅ تم حفظ إعدادات منجم الذهب ومزامنتها بنجاح!');
+        }
+
+        /* ------------------ إدارة الطلاب ------------------ */
         async function loadStudents() {
             let query = supabaseClient.from('students').select('*');
             const roleVal = String(currentUser.role || '').trim().toLowerCase();
@@ -316,20 +366,12 @@
             if(!name || !cls) { alert('الاسم والصف حقول إجبارية!'); return; }
 
             let query = supabaseClient.from('students').update({ name, cls, cpr });
-            if(!isNaN(rowId)) {
-                query = query.eq('id', rowId);
-            } else {
-                query = query.eq('cpr', rowId);
-            }
+            if(!isNaN(rowId)) query = query.eq('id', rowId);
+            else query = query.eq('cpr', rowId);
 
             const { error } = await query;
-            if(error) { 
-                console.error("Student Update Error:", error);
-                alert('خطأ أثناء التحديث: ' + error.message); 
-            } else { 
-                alert('تم تحديث بيانات الطالب بنجاح!'); 
-                loadStudents(); 
-            }
+            if(error) alert('خطأ أثناء التحديث: ' + error.message);
+            else { alert('تم تحديث بيانات الطالب بنجاح!'); loadStudents(); }
         }
 
         async function addStudentManual() {
@@ -338,34 +380,25 @@
             const cpr = document.getElementById('stdCpr').value.trim();
             if(!name || !cls) { alert('الرجاء إدخال اسم الطالب والصف!'); return; }
             const { error } = await supabaseClient.from('students').insert([{ name, cls, cpr }]);
-            if(error) { 
-                console.error("Student Add Error:", error);
-                alert('خطأ في الإضافة: ' + error.message); 
-            } else { 
-                alert('تمت الإضافة بنجاح'); 
-                document.getElementById('stdName').value=''; 
-                document.getElementById('stdClass').value=''; 
-                document.getElementById('stdCpr').value=''; 
-                loadStudents(); 
+            if(error) alert('خطأ في الإضافة: ' + error.message);
+            else {
+                alert('تمت الإضافة بنجاح');
+                document.getElementById('stdName').value='';
+                document.getElementById('stdClass').value='';
+                document.getElementById('stdCpr').value='';
+                loadStudents();
             }
         }
 
         async function deleteStudent(rowId) {
             if(confirm('هل أنت متأكد من الحذف؟')) {
                 let query = supabaseClient.from('students').delete();
-                if(!isNaN(rowId)) {
-                    query = query.eq('id', rowId);
-                } else {
-                    query = query.eq('cpr', rowId);
-                }
+                if(!isNaN(rowId)) query = query.eq('id', rowId);
+                else query = query.eq('cpr', rowId);
+
                 const { error } = await query;
-                if(error) {
-                    console.error("Student Delete Error:", error);
-                    alert('خطأ أثناء الحذف: ' + error.message);
-                } else {
-                    alert('تم حذف الطالب بنجاح!');
-                    loadStudents();
-                }
+                if(error) alert('خطأ أثناء الحذف: ' + error.message);
+                else { alert('تم حذف الطالب بنجاح!'); loadStudents(); }
             }
         }
 
@@ -405,17 +438,12 @@
                                 cls: String(studentClass).trim(), 
                                 cpr: studentCpr ? String(studentCpr).trim() : null 
                             }]);
-                            if(!error) {
-                                successCount++;
-                            }
+                            if(!error) successCount++;
                         }
                     }
                     alert(`تم رفع واستيراد (${successCount}) طالباً بنجاح!`);
                     loadStudents();
-                } catch (err) {
-                    console.error("Excel Upload Error:", err);
-                    alert('حدث خطأ أثناء معالجة ملف الإكسل.');
-                }
+                } catch (err) { alert('حدث خطأ أثناء معالجة ملف الإكسل.'); }
             };
             reader.readAsArrayBuffer(file);
         }
@@ -428,10 +456,11 @@
             XLSX.writeFile(wb, "all_students.xlsx");
         }
 
+        /* ------------------ إدارة المعلمين ------------------ */
         async function loadStaff() {
             const roleVal = String(currentUser.role || '').trim().toLowerCase();
-            if(roleVal !== 'admin' && roleVal !== 'مدير') { return; }
-            const { data, error } = await supabaseClient.from('staff').select('*');
+            if(roleVal !== 'admin' && roleVal !== 'مدير') return;
+            const { data } = await supabaseClient.from('staff').select('*');
             const tbody = document.querySelector('#staffTable tbody');
             tbody.innerHTML = '';
             if(data && data.length > 0) {
@@ -467,25 +496,15 @@
             const classes = document.getElementById(`stf_classes_${staffKey}`).value.trim();
 
             const { error } = await supabaseClient.from('staff').update({ name, cpr, username, email, role, classes }).eq('cpr', staffKey);
-            if(error) { 
-                console.error("Staff Update Error:", error);
-                alert('خطأ أثناء التحديث: ' + error.message); 
-            } else { 
-                alert('تم تحديث بيانات المعلم بنجاح!'); 
-                loadStaff(); 
-            }
+            if(error) alert('خطأ أثناء التحديث: ' + error.message);
+            else { alert('تم تحديث بيانات المعلم بنجاح!'); loadStaff(); }
         }
 
         async function deleteStaffManual(staffKey) {
             if(confirm('هل أنت متأكد من حذف هذا المعلم نهائياً؟')) {
                 const { error } = await supabaseClient.from('staff').delete().eq('cpr', staffKey);
-                if(error) {
-                    console.error("Staff Delete Error:", error);
-                    alert('خطأ أثناء الحذف: ' + error.message);
-                } else {
-                    alert('تم حذف المعلم بنجاح!');
-                    loadStaff();
-                }
+                if(error) alert('خطأ أثناء الحذف: ' + error.message);
+                else { alert('تم حذف المعلم بنجاح!'); loadStaff(); }
             }
         }
 
@@ -493,17 +512,11 @@
             const p1 = prompt('أدخل كلمة المرور الجديدة للمعلم:');
             if(p1 === null || !p1.trim()) return;
             const p2 = prompt('أعد إدخال كلمة المرور الجديدة للتأكيد:');
-            if(p2 === null || p1 !== p2) {
-                alert('كلمتا المرور غير متطابقتين!');
-                return;
-            }
+            if(p2 === null || p1 !== p2) { alert('كلمتا المرور غير متطابقتين!'); return; }
 
             const { error } = await supabaseClient.from('staff').update({ password: p1.trim() }).eq('cpr', staffKey);
-            if(error) {
-                alert('خطأ أثناء تغيير كلمة المرور.');
-            } else {
-                alert('تم تغيير كلمة المرور بنجاح!');
-            }
+            if(error) alert('خطأ أثناء تغيير كلمة المرور.');
+            else alert('تم تغيير كلمة المرور بنجاح!');
         }
 
         async function addStaffManual() {
@@ -516,7 +529,8 @@
             const username = cpr || email;
 
             const { error } = await supabaseClient.from('staff').insert([{ name, cpr, username, email, password, classes, role }]);
-            if(error) { alert('خطأ في الإضافة: ' + error.message); } else { alert('تم إضافة المعلم بنجاح'); loadStaff(); }
+            if(error) alert('خطأ في الإضافة: ' + error.message);
+            else { alert('تم إضافة المعلم بنجاح'); loadStaff(); }
         }
 
         function downloadStaffTemplate() {
@@ -552,116 +566,119 @@
 
                     if(stName) {
                         await supabaseClient.from('staff').insert([{
-                            name: String(stName).trim(), 
-                            cpr: stCpr ? String(stCpr).trim() : null, 
-                            username: stUsername ? String(stUsername).trim() : (stCpr ? String(stCpr).trim() : stEmail),
-                            email: stEmail ? String(stEmail).trim() : null, 
-                            password: '0', 
-                            classes: String(stClasses).trim(), 
-                            role: String(stRole).trim()
+                            name: String(stName).trim(),
+                            cpr: stCpr ? String(stCpr).trim() : null,
+                            username: stUsername ? String(stUsername).trim() : (stCpr || stEmail),
+                            email: stEmail ? String(stEmail).trim() : null,
+                            role: stRole || 'Teacher',
+                            classes: stClasses || ''
                         }]);
                     }
                 }
-                alert('تم رفع المعلمين بنجاح!');
+                alert('تم استيراد قائمة المعلمين بنجاح!');
                 loadStaff();
             };
             reader.readAsArrayBuffer(file);
         }
 
         async function exportStaffExcel() {
-            const { data } = await supabaseClient.from('staff').select('name, cpr, username, email, role, classes');
+            const { data } = await supabaseClient.from('staff').select('*');
             const ws = XLSX.utils.json_to_sheet(data);
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "المعلمين");
             XLSX.writeFile(wb, "all_staff.xlsx");
         }
 
-        // تحميل وعرض درجات الطلبة بشكل آمن ومستقر
+        /* ------------------ درجات الطلاب ------------------ */
         async function loadScores() {
-            let query = supabaseClient.from('scores').select('*');
+            const filter = document.getElementById('gameFilter').value;
+            let query = supabaseClient.from('scores').select('*').order('created_at', { ascending: false });
+
+            if(filter !== 'all') {
+                query = query.eq('game_name', filter);
+            }
+
             const { data, error } = await query;
             const tbody = document.querySelector('#scoresTable tbody');
             tbody.innerHTML = '';
-            
-            if(error) {
-                tbody.innerHTML = `<tr><td colspan="6" style="color:red;">خطأ أثناء جلب الدرجات: ${error.message}</td></tr>`;
-                return;
-            }
 
             if(data && data.length > 0) {
                 data.forEach(sc => {
-                    let scoreId = sc.id;
-                    let dateStr = sc.created_at ? new Date(sc.created_at).toLocaleString() : '-';
+                    let dateStr = sc.created_at ? new Date(sc.created_at).toLocaleString('ar-BH') : 'غير محدد';
+                    let gameName = sc.game_name || 'سباق صواريخ الفضاء';
                     tbody.innerHTML += `
                         <tr>
-                            <td>${sc.student_name || 'طالب'}</td>
-                            <td>${sc.student_class || sc.cls || ''}</td>
-                            <td>${sc.game_name || 'سباق صواريخ الفضاء'}</td>
-                            <td><b>${sc.score || sc.points || 0}</b></td>
+                            <td><b>${sc.student_name || 'غير معروف'}</b></td>
+                            <td>${sc.cls || '-'}</td>
+                            <td><span style="background:#e0e7ff; color:#3730a3; padding:3px 8px; border-radius:6px; font-weight:bold;">${gameName}</span></td>
+                            <td><b style="color:#2e7d32; font-size:15px;">${sc.points || 0}</b></td>
                             <td>${dateStr}</td>
                             <td>
-                                <button class="btn btn-red" style="padding: 4px 8px; font-size: 12px;" onclick="deleteSingleScore('${scoreId}')">حذف 🗑️</button>
+                                <button class="btn btn-red" onclick="deleteSingleScore('${sc.id}')">حذف 🗑️</button>
                             </td>
                         </tr>`;
                 });
             } else {
-                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#666;">لا توجد درجات مسجلة حتى الآن.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#666;">لا توجد درجات مسجلة لهذه اللعبة حالياً.</td></tr>`;
             }
         }
 
-        // حذف نتيجة طالب بشكل فردي عبر الـ ID
         async function deleteSingleScore(scoreId) {
-            if(!confirm('هل أنت متأكد من حذف هذه النتيجة نهائياً؟')) return;
-
-            let query = supabaseClient.from('scores').delete();
-            if(!isNaN(scoreId)) {
-                query = query.eq('id', parseInt(scoreId));
-            } else {
-                query = query.eq('id', scoreId);
-            }
-
-            const { error } = await query;
-            if(error) {
-                alert('خطأ أثناء الحذف: ' + error.message);
-            } else {
-                alert('✅ تم حذف النتيجة بنجاح!');
-                loadScores();
+            if(confirm('هل أنت متأكد من حذف هذه النتيجة المحددة؟')) {
+                const { error } = await supabaseClient.from('scores').delete().eq('id', scoreId);
+                if(error) alert('حدث خطأ أثناء الحذف: ' + error.message);
+                else {
+                    alert('✅ تم حذف النتيجة بنجاح!');
+                    loadScores();
+                }
             }
         }
 
-        // مسح جميع درجات اللعبة بالكامل من تبويب درجات الطلبة
         async function clearAllScores() {
-            if(!confirm('⚠️ تحذير: هل أنت متأكد تماماً من مسح كافة درجات وسجلات اللعبة نهائياً؟')) return;
+            const filter = document.getElementById('gameFilter').value;
+            let msg = filter === 'all' ? 'كافة الألعاب' : `لعبة (${filter})`;
+            if(confirm(`⚠️ هل أنت متأكد من مسح جميع درجات ${msg}؟ لا يمكن التراجع عن هذا الإجراء.`)) {
+                let query = supabaseClient.from('scores').delete();
+                if(filter !== 'all') {
+                    query = query.eq('game_name', filter);
+                } else {
+                    query = query.neq('id', '00000000-0000-0000-0000-000000000000');
+                }
 
-            const { error } = await supabaseClient.from('scores').delete().neq('id', 0);
-            if(error) {
-                alert('خطأ أثناء مسح النتائج: ' + error.message);
-            } else {
-                alert('🗑️ تم مسح جميع درجات اللعبة بنجاح!');
-                loadScores();
+                const { error } = await query;
+                if(error) alert('خطأ أثناء مسح الدرجات: ' + error.message);
+                else {
+                    alert('✅ تم مسح الدرجات بنجاح!');
+                    loadScores();
+                }
             }
         }
 
-        function exportScoresExcel() {
-            const table = document.getElementById('scoresTable');
-            const wb = XLSX.utils.table_to_book(table, {sheet: "الدرجات"});
-            XLSX.writeFile(wb, "students_scores.xlsx");
+        async function exportScoresExcel() {
+            const { data } = await supabaseClient.from('scores').select('*');
+            const ws = XLSX.utils.json_to_sheet(data || []);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "الدرجات");
+            XLSX.writeFile(wb, "student_scores.xlsx");
         }
 
-        async function saveGameLevels() {
-            alert('تم حفظ إعدادات مستويات الصفوف بنجاح!');
-        }
-
+        /* ------------------ الملف الشخصي وتصفير النتائج ------------------ */
         async function resetScoresData() {
-            const pass = document.getElementById('confirmResetPass').value.trim();
+            const pass = document.getElementById('confirmResetPass').value;
+            if(!pass) { alert('الرجاء إدخال كلمة المرور للتأكيد'); return; }
             if(pass !== currentUser.password) { alert('كلمة المرور غير صحيحة!'); return; }
-            if(confirm('هل أنت متأكد تماماً من تصفير جميع النتائج؟')) {
-                const { error } = await supabaseClient.from('scores').delete().neq('id', 0);
-                if(!error) { alert('تم تصفير النتائج بنجاح'); loadScores(); }
+
+            if(confirm('⚠️ تأكيد نهائي: هل تريد تصفير وسحق جميع الدرجات بالكامل؟')) {
+                const { error } = await supabaseClient.from('scores').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+                if(error) alert('خطأ أثناء التصفير: ' + error.message);
+                else {
+                    alert('✅ تم تصفير كافة الدرجات بنجاح!');
+                    document.getElementById('confirmResetPass').value = '';
+                }
             }
         }
 
-        async function loadProfile() {
+        function loadProfile() {
             document.getElementById('profName').value = currentUser.name || '';
             document.getElementById('profCpr').value = currentUser.cpr || '';
             document.getElementById('profEmail').value = currentUser.email || '';
@@ -669,29 +686,20 @@
 
         async function updateProfile() {
             const name = document.getElementById('profName').value.trim();
-            const cpr = document.getElementById('profCpr').value.trim();
             const email = document.getElementById('profEmail').value.trim();
             const newPass = document.getElementById('profNewPass').value.trim();
 
-            let updateData = { name, cpr, email };
-            if(newPass) updateData.password = newPass;
+            let updateObj = { name, email };
+            if(newPass) updateObj.password = newPass;
 
-            let query = supabaseClient.from('staff').update(updateData);
-            if (currentUser.cpr) {
-                query = query.eq('cpr', currentUser.cpr);
-            } else if (currentUser.username) {
-                query = query.eq('username', currentUser.username);
-            }
-
-            const { data, error } = await query.select();
-            if(error) {
-                alert('حدث خطأ أثناء التحديث في السحابة.');
-            } else {
-                alert('تم تحديث ومزامنة بياناتك الشخصية بنجاح!');
-                if(data && data.length > 0) {
-                    currentUser = data[0];
-                    localStorage.setItem('current_staff_user', JSON.stringify(currentUser));
-                }
+            const { error } = await supabaseClient.from('staff').update(updateObj).eq('cpr', currentUser.cpr);
+            if(error) alert('خطأ أثناء التحديث: ' + error.message);
+            else {
+                alert('✅ تم تحديث بياناتك الشخصية بنجاح!');
+                currentUser.name = name;
+                currentUser.email = email;
+                if(newPass) currentUser.password = newPass;
+                localStorage.setItem('current_staff_user', JSON.stringify(currentUser));
             }
         }
 
