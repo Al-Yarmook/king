@@ -29,6 +29,8 @@
         .btn-blue:hover { background: #0d47a1; }
         .btn-orange { background: #f57c00; }
         .btn-orange:hover { background: #e65100; }
+        .btn-red { background: #d32f2f; }
+        .btn-red:hover { background: #b71c1c; }
         .form-row { display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap; }
         .form-group { flex: 1; min-width: 200px; text-align: right; }
         label { display: block; margin-bottom: 5px; font-weight: 600; color: #333; }
@@ -144,12 +146,21 @@
         <!-- 4. قسم درجات الطلبة -->
         <div id="scores" class="section-card">
             <h2>مشاهدة وتحميل درجات الطلبة</h2>
-            <div class="form-row">
-                <div class="form-group"><label>اختر اللعبة / المستوى:</label><select id="gameFilter"><option value="all">جميع الألعاب</option></select></div>
-                <div class="form-group" style="align-self: flex-end;"><button class="btn btn-green" onclick="exportScoresExcel()">📊 تحميل ملف إكسل للدرجات</button></div>
+            <div class="form-row" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <div style="display: flex; gap: 10px; align-items: center; flex: 1;">
+                    <label style="margin:0;">اختر اللعبة:</label>
+                    <select id="gameFilter" style="max-width: 250px;">
+                        <option value="all">جميع الألعاب</option>
+                        <option value="سباق صواريخ الفضاء">سباق صواريخ الفضاء</option>
+                    </select>
+                </div>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button class="btn btn-green" onclick="exportScoresExcel()">📊 تحميل إكسل للدرجات</button>
+                    <button class="btn btn-red" onclick="clearAllScores()">🗑️ مسح جميع درجات اللعبة</button>
+                </div>
             </div>
             <table id="scoresTable">
-                <thead><tr><th>اسم الطالب</th><th>الصف</th><th>اللعبة</th><th>النتيجة / النقاط</th><th>الوقت والتاريخ</th></tr></thead>
+                <thead><tr><th>اسم الطالب</th><th>الصف</th><th>اللعبة</th><th>النتيجة / النقاط</th><th>الوقت والتاريخ</th><th>الإجراء</th></tr></thead>
                 <tbody></tbody>
             </table>
         </div>
@@ -288,7 +299,7 @@
                             <td><input type="text" class="table-input" id="std_cpr_${rowId}" value="${s.cpr || ''}"></td>
                             <td>
                                 <button class="btn btn-orange" onclick="updateStudentManual('${rowId}')">حفظ 💾</button>
-                                <button class="btn" style="background:#d32f2f;" onclick="deleteStudent('${rowId}')">حذف 🗑️</button>
+                                <button class="btn btn-red" onclick="deleteStudent('${rowId}')">حذف 🗑️</button>
                             </td>
                         </tr>`;
                 });
@@ -565,15 +576,62 @@
             XLSX.writeFile(wb, "all_staff.xlsx");
         }
 
+        // تحميل وعرض درجات الطلبة مع زر الحذف الفردي
         async function loadScores() {
-            let query = supabaseClient.from('scores').select('*');
-            const { data } = await query;
+            let query = supabaseClient.from('scores').select('*').order('created_at', { ascending: false });
+            const { data, error } = await query;
             const tbody = document.querySelector('#scoresTable tbody');
             tbody.innerHTML = '';
-            if(data) {
+            
+            if(error) {
+                tbody.innerHTML = `<tr><td colspan="6" style="color:red;">خطأ أثناء جلب الدرجات.</td></tr>`;
+                return;
+            }
+
+            if(data && data.length > 0) {
                 data.forEach(sc => {
-                    tbody.innerHTML += `<tr><td>${sc.student_name || 'طالب'}</td><td>${sc.student_class || sc.cls || ''}</td><td>${sc.game_name || 'سباق صواريخ الفضاء'}</td><td>${sc.score || sc.points || 0}</td><td>${sc.created_at ? new Date(sc.created_at).toLocaleString() : '-'}</td></tr>`;
+                    let scoreId = sc.id;
+                    let dateStr = sc.created_at ? new Date(sc.created_at).toLocaleString() : '-';
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${sc.student_name || 'طالب'}</td>
+                            <td>${sc.student_class || sc.cls || ''}</td>
+                            <td>${sc.game_name || 'سباق صواريخ الفضاء'}</td>
+                            <td><b>${sc.score || sc.points || 0}</b></td>
+                            <td>${dateStr}</td>
+                            <td>
+                                <button class="btn btn-red" style="padding: 4px 8px; font-size: 12px;" onclick="deleteSingleScore('${scoreId}')">حذف 🗑️</button>
+                            </td>
+                        </tr>`;
                 });
+            } else {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#666;">لا توجد درجات مسجلة حتى الآن.</td></tr>`;
+            }
+        }
+
+        // حذف نتيجة طالب بشكل فردي عبر الـ ID
+        async function deleteSingleScore(scoreId) {
+            if(!confirm('هل أنت متأكد من حذف هذه النتيجة نهائياً؟')) return;
+
+            const { error } = await supabaseClient.from('scores').delete().eq('id', scoreId);
+            if(error) {
+                alert('خطأ أثناء الحذف: ' + error.message);
+            } else {
+                alert('✅ تم حذف النتيجة بنجاح!');
+                loadScores();
+            }
+        }
+
+        // مسح جميع درجات اللعبة بالكامل من تبويب درجات الطلبة
+        async function clearAllScores() {
+            if(!confirm('⚠️ تحذير: هل أنت متأكد تماماً من مسح كافة درجات وسجلات اللعبة نهائياً؟')) return;
+
+            const { error } = await supabaseClient.from('scores').delete().neq('id', 0);
+            if(error) {
+                alert('خطأ أثناء مسح النتائج: ' + error.message);
+            } else {
+                alert('🗑️ تم مسح جميع درجات اللعبة بنجاح!');
+                loadScores();
             }
         }
 
