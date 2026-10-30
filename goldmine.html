@@ -8,42 +8,66 @@
     <script src="config.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Cairo', sans-serif; background: radial-gradient(circle, #2d1b0e 0%, #120a05 100%); color: white; margin: 0; padding: 0; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; }
-        .game-container { width: 100%; max-width: 600px; height: 100vh; background: rgba(30, 20, 12, 0.96); position: relative; box-shadow: 0 0 35px rgba(245, 158, 11, 0.3); display: flex; flex-direction: column; justify-content: space-between; border-left: 2px solid #78350f; border-right: 2px solid #78350f; box-sizing: border-box; overflow: hidden; }
+        body { font-family: 'Cairo', sans-serif; background: #0f0905; color: white; margin: 0; padding: 0; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; }
+        .game-container { width: 100%; max-width: 600px; height: 100vh; background: linear-gradient(to bottom, rgba(20, 10, 5, 0.85), rgba(10, 5, 2, 0.95)), url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="%231a0f08"/><path d="0 0L50 50M100 0L50 50M0 100L50 50M100 100L50 50" stroke="%232d1a0e" stroke-width="2"/><circle cx="20" cy="30" r="3" fill="%233a2212"/><circle cx="80" cy="70" r="4" fill="%233a2212"/></svg>'); background-size: cover; position: relative; box-shadow: 0 0 40px rgba(245, 158, 11, 0.25); display: flex; flex-direction: column; justify-content: space-between; border-left: 3px solid #78350f; border-right: 3px solid #78350f; box-sizing: border-box; overflow: hidden; }
         
-        .hud { display: flex; justify-content: space-between; padding: 12px 18px; background: rgba(45, 27, 14, 0.95); font-size: 15px; font-weight: bold; border-bottom: 2px solid #f59e0b; z-index: 10; position: relative; }
+        .hud { display: flex; justify-content: space-between; padding: 12px 18px; background: rgba(35, 18, 8, 0.95); font-size: 15px; font-weight: bold; border-bottom: 2px solid #f59e0b; z-index: 10; position: relative; }
         .hud span { color: #fbbf24; }
         
         .bonus-float-msg { position: absolute; top: 60px; left: 50%; transform: translateX(-50%); background: #10b981; color: white; padding: 4px 15px; border-radius: 20px; font-size: 14px; font-weight: bold; box-shadow: 0 0 15px #10b981; pointer-events: none; opacity: 0; transition: 0.3s; z-index: 20; }
         .bonus-float-msg.show { opacity: 1; transform: translateX(-50%) translateY(-5px); }
 
-        .mine-arena { flex: 1; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 20px 15px; box-sizing: border-box; background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40"><rect width="40" height="40" fill="%231e140c"/><path d="0 0L40 40M40 0L0 40" stroke="%232a1b10" stroke-width="1"/></svg>'); }
+        .mine-arena { flex: 1; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 20px 15px; box-sizing: border-box; }
         
-        .progress-track { display: flex; gap: 8px; align-items: center; justify-content: center; width: 100%; background: rgba(0,0,0,0.4); padding: 8px; border-radius: 12px; border: 1px solid #78350f; }
-        .step-node { width: 32px; height: 32px; border-radius: 50%; background: #451a03; border: 2px solid #92400e; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; color: #d97706; transition: 0.3s; }
+        /* شريط تقدم المنجم */
+        .progress-track { display: flex; gap: 6px; align-items: center; justify-content: center; width: 100%; background: rgba(0,0,0,0.6); padding: 8px; border-radius: 12px; border: 1px solid #78350f; }
+        .step-node { width: 28px; height: 28px; border-radius: 50%; background: #451a03; border: 2px solid #92400e; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; color: #d97706; transition: 0.3s; }
         .step-node.active { background: #f59e0b; color: #1e140c; border-color: #fef08a; box-shadow: 0 0 10px #f59e0b; transform: scale(1.15); }
         .step-node.done { background: #10b981; color: white; border-color: #a7f3d0; }
         
-        .door-card { background: linear-gradient(145deg, #451a03, #2d1b0e); border: 3px solid #b45309; border-radius: 16px; padding: 20px; width: 90%; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.6); position: relative; z-index: 5; margin: 10px 0; }
-        .door-title { color: #fef08a; font-size: 16px; margin-bottom: 8px; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 8px; }
-        .question-box { background: rgba(0,0,0,0.5); border: 2px dashed #f59e0b; padding: 12px 20px; border-radius: 12px; font-size: 26px; font-weight: 900; color: #ffffff; letter-spacing: 1px; margin: 10px 0; }
+        /* منطقة الصخرة والفأس التفاعلي */
+        .rock-stage { position: relative; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 10px 0; }
         
+        /* الفأس المتحرك */
+        .pickaxe { position: absolute; top: -60px; right: 20%; font-size: 65px; z-index: 15; pointer-events: none; opacity: 0; transform-origin: bottom left; }
+        .pickaxe.swing { animation: axeSwing 0.5s ease-in-out; }
+
+        @keyframes axeSwing {
+            0% { opacity: 1; transform: rotate(0deg) translate(0, 0); }
+            50% { transform: rotate(-45deg) translate(-20px, -20px); }
+            80% { transform: rotate(30deg) translate(-30px, 40px); }
+            100% { opacity: 0; transform: rotate(0deg); }
+        }
+
+        /* الصخرة الجدارية التي تحمل السؤال */
+        .rock-card { background: radial-gradient(circle, #57534e 0%, #292524 100%); border: 4px solid #78716c; border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%; padding: 25px 20px; width: 85%; text-align: center; box-shadow: inset -8px -8px 20px rgba(0,0,0,0.8), 0 15px 30px rgba(0,0,0,0.7); position: relative; z-index: 5; transition: transform 0.2s; }
+        .rock-card.break { animation: rockShake 0.4s ease-in-out; }
+
+        @keyframes rockShake {
+            0% { transform: scale(1) rotate(0deg); }
+            20% { transform: scale(1.05) rotate(-3deg); }
+            40% { transform: scale(0.95) rotate(3deg); }
+            60% { transform: scale(1.02) rotate(-2deg); }
+            100% { transform: scale(1) rotate(0deg); }
+        }
+
+        .door-title { color: #fef08a; font-size: 15px; margin-bottom: 8px; font-weight: bold; text-shadow: 1px 1px 3px black; }
+        .question-box { background: rgba(0,0,0,0.6); border: 2px dashed #f59e0b; padding: 12px 15px; border-radius: 12px; font-size: 26px; font-weight: 900; color: #ffffff; letter-spacing: 1px; margin: 10px 0; }
+        
+        /* أزرار الخيارات */
         .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; max-width: 450px; }
-        .opt-btn { background: linear-gradient(135deg, #78350f, #451a03); border: 2px solid #d97706; color: #fef08a; padding: 14px; border-radius: 12px; font-size: 22px; font-weight: bold; cursor: pointer; transition: 0.2s; font-family: 'Cairo'; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .opt-btn { background: linear-gradient(135deg, #78350f, #451a03); border: 2px solid #d97706; color: #fef08a; padding: 14px; border-radius: 12px; font-size: 22px; font-weight: bold; cursor: pointer; transition: 0.2s; font-family: 'Cairo'; box-shadow: 0 4px 10px rgba(0,0,0,0.4); }
         .opt-btn:hover { background: #b45309; color: white; transform: translateY(-2px); }
-        .opt-btn:active { transform: translateY(1px); }
 
-        .hint-box { background: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444; color: #fca5a5; padding: 8px 15px; border-radius: 8px; font-size: 13px; margin-top: 8px; display: none; }
+        .hint-box { background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; color: #fca5a5; padding: 8px 12px; border-radius: 8px; font-size: 13px; margin-top: 8px; display: none; }
 
-        .modal { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(18, 10, 5, 0.97); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; text-align: center; padding: 25px; box-sizing: border-box; }
+        .modal { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 8, 3, 0.97); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; text-align: center; padding: 25px; box-sizing: border-box; }
         .modal h1 { color: #f59e0b; font-size: 28px; margin-bottom: 15px; }
-        .modal p { font-size: 16px; margin-bottom: 12px; color: #e2e8f0; line-height: 1.6; }
-        
-        .instructions-box { background: rgba(45, 27, 14, 0.95); padding: 18px; border-radius: 12px; border: 1px solid #b45309; text-align: right; margin-bottom: 20px; width: 100%; max-width: 480px; box-sizing: border-box; }
+        .instructions-box { background: rgba(35, 18, 8, 0.95); padding: 18px; border-radius: 12px; border: 1px solid #b45309; text-align: right; margin-bottom: 20px; width: 100%; max-width: 480px; box-sizing: border-box; }
         .instructions-box ul { padding-right: 20px; margin: 0; }
         .instructions-box li { margin-bottom: 10px; font-size: 14px; color: #fef08a; line-height: 1.5; }
 
-        .leaderboard-box { background: rgba(30, 20, 12, 0.95); border: 2px solid #f59e0b; border-radius: 10px; padding: 15px; width: 100%; max-width: 400px; margin-bottom: 20px; text-align: right; }
+        .leaderboard-box { background: rgba(25, 12, 5, 0.95); border: 2px solid #f59e0b; border-radius: 10px; padding: 15px; width: 100%; max-width: 400px; margin-bottom: 20px; text-align: right; }
         .leaderboard-box h3 { color: #f59e0b; margin-top: 0; margin-bottom: 10px; text-align: center; font-size: 18px; }
         .lb-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #78350f; font-size: 14px; }
 
@@ -55,57 +79,53 @@
 <body>
 
     <div class="game-container" id="gameContainer">
-        <!-- تعليمات اللعبة -->
+        <!-- شاشة التعليمات -->
         <div class="modal" id="instructionsModal">
             <h1>⛏️ تعليمات لغز منجم الذهب</h1>
             <div class="instructions-box">
                 <ul>
-                    <li>🚪 <b>المهمة:</b> افتح الأبواب الحجرية للمنجم للوصول إلى صندوق الذهب النهائي!</li>
-                    <li>⛏️ <b>المحاولات:</b> لديك <span id="ruleLives" style="color:#ef4444; font-weight:bold;">--</span> محاولات تنقيب قبل انهيار المغارة.</li>
-                    <li>💰 <b>القطع الذهبية:</b> كل باب تفتحه بذكاء يمنحك <span id="rulePoints" style="color:#f59e0b; font-weight:bold;">--</span> قطعة ذهب.</li>
-                    <li>💡 <b>التلميحات:</b> عند الوقوع في الخطأ يظهر لك تلميح رياضي يساعدك في فتح الباب.</li>
+                    <li>🪨 <b>المهمة:</b> اكسر الحجارة الحاملة للغاز وافتح طريقك لصندوق الذهب!</li>
+                    <li>⛏️ <b>المحاولات:</b> لديك <span id="ruleLives" style="color:#ef4444; font-weight:bold;">--</span> محاولات تنقيب.</li>
+                    <li>💰 <b>القطع الذهبية:</b> كل حجر تكسره بنجاح يمنحك <span id="rulePoints" style="color:#f59e0b; font-weight:bold;">--</span> قطعة ذهب.</li>
+                    <li>🎯 <b>الأسئلة:</b> تتكون هذه الجولة من <span id="ruleQuestions" style="color:#38bdf8; font-weight:bold;">--</span> حجرة.</li>
                 </ul>
             </div>
-            <button class="btn" onclick="startTheGameSession()">ابدأ التنقيب الآن 🪙</button>
+            <button class="btn" onclick="startTheGameSession()">ابدأ التكسير والتنقيب 🪙</button>
         </div>
 
-        <!-- الشريط العلوي HUD مع زر التبديل السريع -->
+        <!-- الشريط العلوي HUD -->
         <div class="hud">
             <div>المستكشف: <span id="playerName">بطل</span> <button onclick="changePlayerQuick()" style="background:#ef4444; color:white; border:none; padding:2px 8px; border-radius:4px; font-size:11px; cursor:pointer; margin-right:8px; font-family:'Cairo';">تبديل 🔄</button></div>
             <div>⛏️ الفأس: <span id="livesCount">--</span></div>
             <div>🔥 السلسلة: <span id="streakCount">٠</span></div>
             <div>🪙 الذهب: <span id="scoreVal">٠</span></div>
-            <div class="bonus-float-msg" id="bonusMsg">+١٠٠ ذهب إضافي! 💰</div>
+            <div class="bonus-float-msg" id="bonusMsg">+٥٠ ذهب! 💰</div>
         </div>
 
         <!-- ساحة اللعب -->
         <div class="mine-arena" id="arenaBox">
-            <div class="progress-track" id="progressTrack">
-                <div class="step-node active" id="node-0">١</div>
-                <div class="step-node" id="node-1">٢</div>
-                <div class="step-node" id="node-2">٣</div>
-                <div class="step-node" id="node-3">٤</div>
-                <div class="step-node" id="node-4">٥</div>
-                <div class="step-node" id="node-5">🎁</div>
-            </div>
+            <div class="progress-track" id="progressTrack"></div>
 
-            <div class="door-card">
-                <div class="door-title">🔒 الباب الحجري للمغارة <span id="currentRoomNum">١</span></div>
-                <div class="question-box" id="questionDisplay">؟ × ؟ = ؟</div>
-                <div class="hint-box" id="hintBox">💡 تلميح: فكر في مضاعفات العدد المطلوبة</div>
+            <div class="rock-stage">
+                <div class="pickaxe" id="pickAxeIcon">🪓</div>
+                <div class="rock-card" id="rockCard">
+                    <div class="door-title">🪨 الحجرة رقم <span id="currentRoomNum">١</span></div>
+                    <div class="question-box" id="questionDisplay">؟ × ؟ = ؟</div>
+                    <div class="hint-box" id="hintBox">💡 تلميح: فكر في المضاعفات</div>
+                </div>
             </div>
 
             <div class="options-grid" id="optionsGrid"></div>
         </div>
 
-        <!-- شاشة النتيجة والنهاية -->
+        <!-- شاشة النتيجة -->
         <div class="modal hidden" id="gameOverModal">
             <h1 id="gameOverTitle">انتهت الرحلة! 🏆</h1>
             <p id="finalScoreText">لقد جمعت ٠ قطعة ذهبية</p>
             <p id="saveStatus" style="color: #38bdf8; font-size: 14px; margin-bottom: 10px;"></p>
             
             <div class="leaderboard-box">
-                <h3>🏆 أبطال تنقيب الذهب (الأعلى نقاطاً)</h3>
+                <h3>🏆 أبطال تنقيب الذهب (منجم الذهب)</h3>
                 <div id="leaderboardList">جاري تحميل الأبطال...</div>
             </div>
 
@@ -120,9 +140,7 @@
         let studentData = null;
         try {
             studentData = JSON.parse(localStorage.getItem('current_student'));
-        } catch (e) {
-            studentData = null;
-        }
+        } catch (e) { studentData = null; }
 
         if (!studentData || !studentData.name) {
             alert('الرجاء اختيار اسمك والصف الدراسي أولاً للبدء!');
@@ -160,18 +178,16 @@
                     gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
                     osc.start();
                     osc.stop(audioCtx.currentTime + 0.3);
-                } else if (type === 'chest') {
-                    osc.type = 'triangle';
-                    osc.frequency.setValueAtTime(400, audioCtx.currentTime);
-                    osc.frequency.exponentialRampToValueAtTime(900, audioCtx.currentTime + 0.4);
+                } else if (type === 'break') {
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(100, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.15);
                     gainNode.gain.setValueAtTime(0.4, audioCtx.currentTime);
-                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.45);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
                     osc.start();
-                    osc.stop(audioCtx.currentTime + 0.45);
+                    osc.stop(audioCtx.currentTime + 0.2);
                 }
-            } catch (e) {
-                console.log("Audio error", e);
-            }
+            } catch (e) { console.log("Audio error", e); }
         }
 
         function toArabicNum(num) {
@@ -179,17 +195,20 @@
             return String(num).replace(/\d/g, (d) => arabicNumbers[d]);
         }
 
+        // الإعدادات السحابية الافتراضية
         let customSettings = {
             maxLives: 3,
             goldPerDoor: 100,
             wrongPenaltyLives: 1,
             streakBonusGold: 50,
-            totalRooms: 5
+            totalRooms: 5,
+            enableMissingFactor: true,
+            enableProduct: true
         };
 
         async function loadCloudSettings() {
             try {
-                const { data, error } = await supabaseClient
+                const { data } = await supabaseClient
                     .from('game_settings')
                     .select('value')
                     .eq('key', 'gold_mine_settings')
@@ -198,12 +217,11 @@
                 if (data && data.value) {
                     customSettings = { ...customSettings, ...data.value };
                 }
-            } catch (e) {
-                console.log("Using default gold mine settings fallback");
-            }
+            } catch (e) { console.log("Gold Mine cloud settings fallback"); }
 
             document.getElementById('ruleLives').textContent = toArabicNum(customSettings.maxLives);
             document.getElementById('rulePoints').textContent = toArabicNum(customSettings.goldPerDoor);
+            document.getElementById('ruleQuestions').textContent = toArabicNum(customSettings.totalRooms);
             document.getElementById('livesCount').textContent = toArabicNum(customSettings.maxLives);
         }
 
@@ -225,14 +243,21 @@
 
         function initGameSettings() {
             const cls = String(studentData.cls || '').trim();
-            if (cls.includes('٤') || cls.includes('4') || cls.startsWith('4')) {
-                maxTable = 6;
-            } else if (cls.includes('٥') || cls.includes('5') || cls.includes('٦') || cls.includes('6')) {
-                maxTable = 12;
-            } else {
-                maxTable = 10;
-            }
+            if (cls.includes('٤') || cls.includes('4') || cls.startsWith('4')) maxTable = 6;
+            else if (cls.includes('٥') || cls.includes('5') || cls.includes('٦') || cls.includes('6')) maxTable = 12;
+            else maxTable = 10;
+            
+            buildProgressTrack();
             startGameEngine();
+        }
+
+        function buildProgressTrack() {
+            const track = document.getElementById('progressTrack');
+            track.innerHTML = '';
+            for(let i = 0; i < customSettings.totalRooms; i++) {
+                track.innerHTML += `<div class="step-node" id="node-${i}">${toArabicNum(i+1)}</div>`;
+            }
+            track.innerHTML += `<div class="step-node" id="node-${customSettings.totalRooms}">🎁</div>`;
         }
 
         function startGameEngine() {
@@ -251,7 +276,7 @@
             document.getElementById('streakCount').textContent = toArabicNum(streak);
             document.getElementById('currentRoomNum').textContent = toArabicNum(currentRoom + 1);
             
-            for (let i = 0; i < 6; i++) {
+            for (let i = 0; i <= customSettings.totalRooms; i++) {
                 const node = document.getElementById(`node-${i}`);
                 if (!node) continue;
                 node.className = 'step-node';
@@ -274,9 +299,15 @@
             let num2 = Math.floor(Math.random() * 10) + 1;
             currentCorrectAnswer = num1 * num2;
 
-            let puzzleType = Math.random() > 0.5 ? 'missing' : 'product';
+            // تحديد نوع السؤال بناءً على إعدادات المدير
+            let mode = 'product';
+            if (customSettings.enableMissingFactor && customSettings.enableProduct) {
+                mode = Math.random() > 0.5 ? 'missing' : 'product';
+            } else if (customSettings.enableMissingFactor) {
+                mode = 'missing';
+            }
 
-            if (puzzleType === 'missing') {
+            if (mode === 'missing') {
                 document.getElementById('questionDisplay').textContent = `${toArabicNum(num1)} × ؟ = ${toArabicNum(currentCorrectAnswer)}`;
                 currentHint = `💡 تلميح: ما هو العدد الذي إذا ضربته في ${toArabicNum(num1)} يعطيك ${toArabicNum(currentCorrectAnswer)}؟`;
             } else {
@@ -284,7 +315,7 @@
                 currentHint = `💡 تلميح: اجمع العدد ${toArabicNum(num1)} مع نفسه ${toArabicNum(num2)} مرات.`;
             }
 
-            let correctOptionVal = (puzzleType === 'missing') ? num2 : currentCorrectAnswer;
+            let correctOptionVal = (mode === 'missing') ? num2 : currentCorrectAnswer;
             let options = [correctOptionVal];
 
             while (options.length < 4) {
@@ -308,7 +339,20 @@
 
         function checkAnswer(selectedOpt, correctVal) {
             if (selectedOpt === correctVal) {
+                // تأثير الفأس وتكسير الصخرة
+                playSound('break');
                 playSound('correct');
+
+                const axe = document.getElementById('pickAxeIcon');
+                const rock = document.getElementById('rockCard');
+                axe.classList.add('swing');
+                rock.classList.add('break');
+
+                setTimeout(() => {
+                    axe.classList.remove('swing');
+                    rock.classList.remove('break');
+                }, 500);
+
                 score += customSettings.goldPerDoor;
                 streak++;
 
@@ -322,10 +366,9 @@
                 updateHUD();
 
                 if (currentRoom >= customSettings.totalRooms) {
-                    playSound('chest');
-                    endGame(true);
+                    setTimeout(() => endGame(true), 600);
                 } else {
-                    generateNewPuzzle();
+                    setTimeout(generateNewPuzzle, 500);
                 }
             } else {
                 playSound('wrong');
@@ -339,7 +382,7 @@
                 updateHUD();
 
                 if (lives <= 0) {
-                    endGame(false);
+                    setTimeout(() => endGame(false), 500);
                 }
             }
         }
@@ -359,9 +402,11 @@
             document.getElementById('saveStatus').textContent = 'جاري حفظ رصيد الذهب بالسحابة...';
 
             try {
+                // حفظ النتيجة مفصولة باسم "لغز منجم الذهب"
                 const { error } = await supabaseClient.from('scores').insert([{
                     student_name: studentData.name,
                     cls: studentData.cls,
+                    game_name: 'لغز منجم الذهب',
                     points: score,
                     weekly_points: score,
                     is_guest: false
@@ -380,13 +425,13 @@
             const lbList = document.getElementById('leaderboardList');
             lbList.innerHTML = 'جاري تحضير الأبطال...';
             try {
-                const { data, error } = await supabaseClient
+                const { data } = await supabaseClient
                     .from('scores')
                     .select('student_name, points')
+                    .eq('game_name', 'لغز منجم الذهب')
                     .order('points', { ascending: false })
                     .limit(5);
 
-                if (error) throw error;
                 if (!data || data.length === 0) {
                     lbList.innerHTML = 'لا توجد نتائج مسجلة بعد.';
                     return;
