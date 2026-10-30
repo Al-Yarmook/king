@@ -5,130 +5,47 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>لوحة التحكم الشاملة - ملك جدول الضرب</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="config.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Cairo', sans-serif; background: #f4f7f6; margin: 0; padding: 20px; }
-        .container { max-width: 1200px; margin: 0 auto; }
-        header { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
-        h1 { color: #d81b60; margin: 0; font-size: 24px; }
-        .nav-tabs { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
-        .tab-btn { background: white; border: 2px solid #d81b60; color: #d81b60; padding: 10px 20px; border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.3s; font-family: 'Cairo'; }
+        body { font-family: 'Cairo', sans-serif; background: #f4f7f6; margin: 0; padding: 20px; direction: rtl; text-align: right; }
+        .container { max-width: 1000px; margin: 0 auto; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        h1 { color: #d81b60; text-align: center; margin-bottom: 25px; }
+        .nav-tabs { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 25px; border-bottom: 2px solid #eee; padding-bottom: 15px; }
+        .tab-btn { background: #e2e8f0; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; font-family: 'Cairo'; transition: 0.2s; }
         .tab-btn.active, .tab-btn:hover { background: #d81b60; color: white; }
-        .section-card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; display: none; }
-        .section-card.active { display: block; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { border: 1px solid #ddd; padding: 10px; text-align: center; font-size: 13px; }
-        th { background: #d81b60; color: white; }
-        .btn { background: #d81b60; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; font-family: 'Cairo'; transition: 0.3s; }
-        .btn:hover { background: #ad1457; }
-        .btn-green { background: #2e7d32; }
-        .btn-green:hover { background: #1b5e20; }
-        .btn-blue { background: #1565c0; }
-        .btn-blue:hover { background: #0d47a1; }
-        .btn-orange { background: #f57c00; }
-        .btn-orange:hover { background: #e65100; }
-        .form-row { display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap; }
-        .form-group { flex: 1; min-width: 200px; text-align: right; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .form-group { margin-bottom: 15px; }
         label { display: block; margin-bottom: 5px; font-weight: 600; color: #333; }
-        input, select { width: 100%; padding: 8px 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-family: 'Cairo'; }
-        .table-input { width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; text-align: center; font-family: 'Cairo'; }
-        .danger-zone { border: 2px dashed #d32f2f; padding: 20px; border-radius: 10px; background: #ffebee; margin-top: 20px; }
-        .hidden { display: none !important; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; box-sizing: border-box; font-family: 'Cairo'; }
+        .btn { background: #d81b60; color: white; border: none; padding: 10px 25px; border-radius: 8px; font-weight: bold; cursor: pointer; font-family: 'Cairo'; transition: 0.3s; }
+        .btn:hover { background: #ad1457; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { border: 1px solid #e2e8f0; padding: 10px; text-align: center; font-size: 14px; }
+        th { background: #f8fafc; color: #334155; }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <header>
-            <h1 id="welcomeTitle">لوحة التحكم السحابية</h1>
-            <button class="btn" onclick="logout()">تسجيل الخروج 🚪</button>
-        </header>
-
-        <div class="nav-tabs" id="navTabs">
-            <button class="tab-btn active" onclick="switchTab('students')">👥 بيانات الطلبة</button>
-            <button class="tab-btn admin-only" onclick="switchTab('staff')">👨‍🏫 إدارة المعلمين</button>
-            <button class="tab-btn supervisor-allowed" onclick="switchTab('games')">🎮 إعداد الألعاب والمستويات</button>
-            <button class="tab-btn supervisor-allowed" onclick="switchTab('rocketSettings')">🚀 إعدادات لعبة الصواريخ</button>
-            <button class="tab-btn" onclick="switchTab('scores')">📊 درجات الطلبة</button>
-            <button class="tab-btn admin-only" onclick="switchTab('settings')">⚙️ تصفير النتائج</button>
-            <button class="tab-btn" onclick="switchTab('profile')">👤 بياناتي الشخصية</button>
+        <h1>لوحة التحكم الشاملة ⚙️</h1>
+        
+        <!-- أزرار التنقل بين الأقسام -->
+        <div class="nav-tabs">
+            <button class="tab-btn active" onclick="switchTab('rocketSettingsTab', event)">🚀 إعدادات لعبة الصواريخ</button>
+            <button class="tab-btn" onclick="switchTab('studentsTab', event)">👥 إدارة الطلبة</button>
+            <button class="tab-btn" onclick="switchTab('scoresTab', event)">🏆 لوحة النتائج</button>
         </div>
 
-        <!-- 1. قسم بيانات الطلبة -->
-        <div id="students" class="section-card active">
-            <h2>إدارة بيانات الطلبة</h2>
-            <div style="margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
-                <button class="btn btn-blue" onclick="downloadStudentTemplate()">📥 تحميل قالب إكسل مفرغ</button>
-                <input type="file" id="studentExcelFile" accept=".xlsx, .xls" style="display:none" onchange="uploadStudentExcel(event)">
-                <button class="btn btn-green" onclick="document.getElementById('studentExcelFile').click()">📤 رفع ملف إكسل للطلبة</button>
-                <button class="btn" onclick="exportStudentsExcel()">📊 تحميل جميع بيانات الطلبة إكسل</button>
-            </div>
-            <h3>إضافة طالب يدويّاً</h3>
-            <div class="form-row">
-                <div class="form-group"><label>اسم الطالب:</label><input type="text" id="stdName" placeholder="الاسم الكامل"></div>
-                <div class="form-group"><label>الصف (مثال: 5ب4):</label><input type="text" id="stdClass" placeholder="5ب4"></div>
-                <div class="form-group"><label>الرقم الشخصي:</label><input type="text" id="stdCpr" placeholder="اختياري"></div>
-                <div class="form-group" style="align-self: flex-end;"><button class="btn" onclick="addStudentManual()">إضافة الطالب ➕</button></div>
-            </div>
-            <h3>قائمة الطلاب المسجلين</h3>
-            <table id="studentsTable">
-                <thead><tr><th>اسم الطالب</th><th>الصف/الفرقة</th><th>الرقم الشخصي</th><th>الإجراءات والتحديث</th></tr></thead>
-                <tbody></tbody>
-            </table>
-        </div>
-
-        <!-- 2. قسم إدارة المعلمين -->
-        <div id="staff" class="section-card">
-            <h2>إدارة المعلمين والإدارة</h2>
-            <div style="margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
-                <button class="btn btn-blue" onclick="downloadStaffTemplate()">📥 تحميل قالب إكسل المعلمين</button>
-                <input type="file" id="staffExcelFile" accept=".xlsx, .xls" style="display:none" onchange="uploadStaffExcel(event)">
-                <button class="btn btn-green" onclick="document.getElementById('staffExcelFile').click()">📤 رفع ملف إكسل المعلمين</button>
-                <button class="btn" onclick="exportStaffExcel()">📊 تصدير بيانات المعلمين إكسل</button>
-            </div>
-            <h3>إضافة معلم جديد</h3>
-            <div class="form-row">
-                <div class="form-group"><label>اسم المعلم:</label><input type="text" id="stfName"></div>
-                <div class="form-group"><label>الرقم الشخصي:</label><input type="text" id="stfCpr"></div>
-                <div class="form-group"><label>البريد الإلكتروني:</label><input type="email" id="stfEmail"></div>
-                <div class="form-group"><label>كلمة المرور المؤقتة:</label><input type="text" id="stfPass" value="0"></div>
-            </div>
-            <div class="form-row">
-                <div class="form-group"><label>الصفوف التي يدرسها:</label><input type="text" id="stfClasses" placeholder="5ب4, 4ب2"></div>
-                <div class="form-group"><label>الدور:</label><select id="stfRole"><option value="Teacher">معلم</option><option value="Supervisor">مشرف</option><option value="Admin">مدير</option></select></div>
-                <div class="form-group" style="align-self: flex-end;"><button class="btn" onclick="addStaffManual()">حفظ المعلم ➕</button></div>
-            </div>
-            <h3>قائمة المعلمين (التعديل المباشر، كلمة المرور، أو الحذف)</h3>
-            <table id="staffTable">
-                <thead><tr><th>الاسم</th><th>الرقم الشخصي</th><th>اسم المستخدم</th><th>البريد</th><th>الدور</th><th>الصفوف</th><th>الإجراءات</th></tr></thead>
-                <tbody></tbody>
-            </table>
-        </div>
-
-        <!-- 3. قسم إعداد الألعاب والمستويات -->
-        <div id="games" class="section-card">
-            <h2>إعداد مستويات وجداول الضرب للألعاب (من الثاني حتى السادس)</h2>
-            <div class="form-row">
-                <div class="form-group"><label>الصف الثاني الابتدائي:</label><input type="number" id="lvl2" value="3"></div>
-                <div class="form-group"><label>الصف الثالث الابتدائي:</label><input type="number" id="lvl3" value="5"></div>
-                <div class="form-group"><label>الصف الرابع الابتدائي:</label><input type="number" id="lvl4" value="10"></div>
-            </div>
-            <div class="form-row">
-                <div class="form-group"><label>الصف الخامس الابتدائي:</label><input type="number" id="lvl5" value="12"></div>
-                <div class="form-group"><label>الصف السادس الابتدائي:</label><input type="number" id="lvl6" value="12"></div>
-            </div>
-            <button class="btn" onclick="saveGameLevels()">حفظ إعدادات المستويات 💾</button>
-        </div>
-
-        <!-- 3. مكرر/مضاف: قسم إعدادات لعبة سباق الصواريخ -->
-        <div id="rocketSettings" class="section-card">
+        <!-- 1. قسم إعدادات لعبة صواريخ الفضاء -->
+        <div id="rocketSettingsTab" class="tab-content active">
             <h2>إعدادات لعبة "سباق صواريخ الفضاء" 🚀</h2>
-            <div class="form-row">
+            <div class="grid-2">
                 <div class="form-group">
                     <label>وقت الجولة الافتراضي (بالثواني):</label>
-                    <input type="number" id="settingGameTime" value="90">
+                    <input type="number" id="settingGameTime" value="60">
                 </div>
                 <div class="form-group">
                     <label>نقاط الإجابة الصحيحة:</label>
@@ -138,492 +55,198 @@
                     <label>نقاط الخصم للإجابة الخاطئة:</label>
                     <input type="number" id="settingWrongPenalty" value="30">
                 </div>
-            </div>
-            <div class="form-row">
                 <div class="form-group">
                     <label>عدد الإجابات المتتالية للمكافأة (Streak):</label>
                     <input type="number" id="settingStreakCount" value="5">
                 </div>
                 <div class="form-group">
                     <label>الوقت الإضافي للمكافأة (بالثواني):</label>
-                    <input type="number" id="settingBonusTime" value="30">
+                    <input type="number" id="settingBonusTime" value="10">
                 </div>
             </div>
             <button class="btn" onclick="saveRocketSettings()">حفظ إعدادات لعبة الصواريخ 💾</button>
         </div>
 
-        <!-- 4. قسم درجات الطلبة -->
-        <div id="scores" class="section-card">
-            <h2>مشاهدة وتحميل درجات الطلبة</h2>
-            <div class="form-row">
-                <div class="form-group"><label>اختر اللعبة / المستوى:</label><select id="gameFilter"><option value="all">جميع الألعاب</option></select></div>
-                <div class="form-group" style="align-self: flex-end;"><button class="btn btn-green" onclick="exportScoresExcel()">📊 تحميل ملف إكسل للدرجات</button></div>
+        <!-- 2. قسم إدارة الطلبة -->
+        <div id="studentsTab" class="tab-content">
+            <h2>إدارة وعرض الطلبة المسجلين 👥</h2>
+            <div class="form-group grid-2">
+                <div>
+                    <label>اسم الطالب الجديد:</label>
+                    <input type="text" id="newStudentName" placeholder="أدخل اسم الطالب الرباعي">
+                </div>
+                <div>
+                    <label>الصف الدراسي:</label>
+                    <input type="text" id="newStudentClass" placeholder="مثال: ٥ب٤">
+                </div>
             </div>
-            <table id="scoresTable">
-                <thead><tr><th>اسم الطالب</th><th>الصف</th><th>اللعبة</th><th>النتيجة / النقاط</th><th>الوقت والتاريخ</th></tr></thead>
-                <tbody></tbody>
+            <button class="btn" onclick="addStudent()">إضافة طالب جديد ➕</button>
+            
+            <table style="margin-top: 20px;">
+                <thead>
+                    <tr>
+                        <th>اسم الطالب</th>
+                        <th>الصف الدراسي</th>
+                        <th>الإجراء</th>
+                    </tr>
+                </thead>
+                <tbody id="studentsTableBody">
+                    <tr><td colspan="3">جاري تحميل بيانات الطلبة...</td></tr>
+                </tbody>
             </table>
         </div>
 
-        <!-- 5. قسم الإعدادات وتصفير النتائج -->
-        <div id="settings" class="section-card">
-            <h2>الإعدادات العامة وتصفير النتائج</h2>
-            <div class="danger-zone">
-                <h3 style="color: #d32f2f; margin-top:0;">⚠️ منطقة الخطر: تصفير درجات الألعاب</h3>
-                <div class="form-row" style="max-width: 400px;">
-                    <div class="form-group"><label>أدخل كلمة مرور الحساب للتأكيد:</label><input type="password" id="confirmResetPass"></div>
-                </div>
-                <button class="btn" style="background: #d32f2f;" onclick="resetScoresData()">تصفير كافة النتائج الآن 🗑️</button>
-            </div>
-        </div>
-
-        <!-- 6. الملف الشخصي -->
-        <div id="profile" class="section-card">
-            <h2>البيانات الشخصية وتغيير كلمة المرور</h2>
-            <div class="form-row">
-                <div class="form-group"><label>الاسم:</label><input type="text" id="profName"></div>
-                <div class="form-group"><label>الرقم الشخصي:</label><input type="text" id="profCpr"></div>
-            </div>
-            <div class="form-row">
-                <div class="form-group"><label>البريد الإلكتروني:</label><input type="email" id="profEmail"></div>
-                <div class="form-group"><label>كلمة المرور الجديدة:</label><input type="password" id="profNewPass" placeholder="اتركها فارغة إن لم ترد التغيير"></div>
-            </div>
-            <button class="btn" onclick="updateProfile()">تحديث ومزامنة البيانات 🚀</button>
+        <!-- 3. قسم لوحة النتائج -->
+        <div id="scoresTab" class="tab-content">
+            <h2>سجل درجات ونقاط الأبطال 🏆</h2>
+            <button class="btn" onclick="loadScores()">تحديث القائمة 🔄</button>
+            <table>
+                <thead>
+                    <tr>
+                        <th>المركز</th>
+                        <th>اسم الطالب</th>
+                        <th>الصف</th>
+                        <th>النقاط</th>
+                    </tr>
+                </thead>
+                <tbody id="scoresTableBody">
+                    <tr><td colspan="4">انقر فوق تحديث لجلب النتائج...</td></tr>
+                </tbody>
+            </table>
         </div>
     </div>
 
     <script>
-        let currentUser = JSON.parse(localStorage.getItem('current_staff_user'));
-        if(!currentUser) { 
-            window.location.href = 'staff.html'; 
-        } else {
-            const roleVal = String(currentUser.role || 'Teacher').trim().toLowerCase();
-            const roleName = (roleVal === 'admin' || roleVal === 'مدير') ? 'مدير النظام' : (roleVal === 'supervisor' || roleVal === 'مشرف') ? 'مشرف' : 'معلم';
-            document.getElementById('welcomeTitle').textContent = `أهلاً بك يا ${currentUser.name || 'مستخدم'} (${roleName})`;
-
-            if(roleVal === 'teacher' || roleVal === 'معلم') {
-                document.querySelectorAll('.admin-only').forEach(el => el.classList.add('hidden'));
-                document.querySelectorAll('.supervisor-allowed').forEach(el => el.classList.add('hidden'));
-            } else if(roleVal === 'supervisor' || roleVal === 'مشرف') {
-                document.querySelectorAll('.admin-only').forEach(el => el.classList.add('hidden'));
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            loadStudents();
-            loadRocketSettings();
-        });
-
-        function switchTab(tabId) {
-            const roleVal = String(currentUser.role || '').trim().toLowerCase();
-            if((tabId === 'staff' || tabId === 'settings') && roleVal !== 'admin' && roleVal !== 'مدير') {
-                alert('عذراً، هذه الصلاحية خاصة بمدير النظام فقط.');
-                return;
-            }
-            if((tabId === 'games' || tabId === 'rocketSettings') && roleVal === 'teacher') {
-                alert('عذراً، إعدادات الألعاب خاصة بالمشرف والمدير فقط.');
-                return;
-            }
-            document.querySelectorAll('.section-card').forEach(el => el.classList.remove('active'));
+        // التبديل بين التبويبات
+        function switchTab(tabId, evt) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
-            event.currentTarget.classList.add('active');
-            if(tabId === 'students') loadStudents();
-            if(tabId === 'staff') loadStaff();
-            if(tabId === 'scores') loadScores();
-            if(tabId === 'profile') loadProfile();
+            evt.currentTarget.classList.add('active');
+            if(tabId === 'scoresTab') loadScores();
+            if(tabId === 'studentsTab') loadStudents();
         }
 
-        // دوال حفظ وتحميل إعدادات لعبة الصواريخ
+        // تحميل وعرض إعدادات لعبة الصواريخ في لوحة التحكم
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedSettings = JSON.parse(localStorage.getItem('rocket_game_settings'));
+            if(savedSettings) {
+                document.getElementById('settingGameTime').value = savedSettings.gameTime || 60;
+                document.getElementById('settingCorrectPoints').value = savedSettings.correctPoints || 100;
+                document.getElementById('settingWrongPenalty').value = savedSettings.wrongPenalty || 30;
+                document.getElementById('settingStreakCount').value = savedSettings.streakCount || 5;
+                document.getElementById('settingBonusTime').value = savedSettings.bonusTime || 10;
+            }
+            loadStudents();
+        });
+
+        // حفظ إعدادات لعبة الصواريخ ومزامنتها
         function saveRocketSettings() {
             const settings = {
-                gameTime: parseInt(document.getElementById('settingGameTime').value) || 90,
+                gameTime: parseInt(document.getElementById('settingGameTime').value) || 60,
                 correctPoints: parseInt(document.getElementById('settingCorrectPoints').value) || 100,
                 wrongPenalty: parseInt(document.getElementById('settingWrongPenalty').value) || 30,
                 streakCount: parseInt(document.getElementById('settingStreakCount').value) || 5,
-                bonusTime: parseInt(document.getElementById('settingBonusTime').value) || 30
+                bonusTime: parseInt(document.getElementById('settingBonusTime').value) || 10
             };
             localStorage.setItem('rocket_game_settings', JSON.stringify(settings));
-            alert('تم حفظ إعدادات لعبة الصواريخ بنجاح! سيتم تطبيقها فوراً على اللاعبين.');
+            alert('✅ تم حفظ إعدادات لعبة الصواريخ ومزامنتها بنجاح!');
         }
 
-        function loadRocketSettings() {
-            const saved = JSON.parse(localStorage.getItem('rocket_game_settings'));
-            if(saved) {
-                document.getElementById('settingGameTime').value = saved.gameTime;
-                document.getElementById('settingCorrectPoints').value = saved.correctPoints;
-                document.getElementById('settingWrongPenalty').value = saved.wrongPenalty;
-                document.getElementById('settingStreakCount').value = saved.streakCount;
-                document.getElementById('settingBonusTime').value = saved.bonusTime;
-            }
-        }
-
+        // جلب وعرض الطلبة من سحابة Supabase
         async function loadStudents() {
-            let query = supabaseClient.from('students').select('*');
-            const roleVal = String(currentUser.role || '').trim().toLowerCase();
-            if(roleVal === 'teacher' && currentUser.classes) {
-                let clsList = currentUser.classes.split(',').map(c => c.trim());
-                query = query.in('cls', clsList);
-            }
-            const { data, error } = await query;
-            const tbody = document.querySelector('#studentsTable tbody');
-            tbody.innerHTML = '';
-            if(data && data.length > 0) {
-                data.forEach(s => {
-                    if(!s.id && !s.cpr) return;
-                    let rowId = s.id || s.cpr;
-                    tbody.innerHTML += `
-                        <tr>
-                            <td><input type="text" class="table-input" id="std_name_${rowId}" value="${s.name || ''}"></td>
-                            <td><input type="text" class="table-input" id="std_cls_${rowId}" value="${s.cls || ''}"></td>
-                            <td><input type="text" class="table-input" id="std_cpr_${rowId}" value="${s.cpr || ''}"></td>
-                            <td>
-                                <button class="btn btn-orange" onclick="updateStudentManual('${rowId}')">حفظ 💾</button>
-                                <button class="btn" style="background:#d32f2f;" onclick="deleteStudent('${rowId}')">حذف 🗑️</button>
-                            </td>
-                        </tr>`;
-                });
-            } else {
-                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#666;">لا توجد بيانات طلاب مسجلة حالياً.</td></tr>`;
-            }
-        }
-
-        async function updateStudentManual(rowId) {
-            const name = document.getElementById(`std_name_${rowId}`).value.trim();
-            const cls = document.getElementById(`std_cls_${rowId}`).value.trim();
-            const cpr = document.getElementById(`std_cpr_${rowId}`).value.trim();
-
-            if(!name || !cls) { alert('الاسم والصف حقول إجبارية!'); return; }
-
-            let query = supabaseClient.from('students').update({ name, cls, cpr });
-            if(!isNaN(rowId)) {
-                query = query.eq('id', rowId);
-            } else {
-                query = query.eq('cpr', rowId);
-            }
-
-            const { error } = await query;
-            if(error) { 
-                console.error("Student Update Error:", error);
-                alert('خطأ أثناء التحديث: ' + error.message); 
-            } else { 
-                alert('تم تحديث بيانات الطالب بنجاح!'); 
-                loadStudents(); 
-            }
-        }
-
-        async function addStudentManual() {
-            const name = document.getElementById('stdName').value.trim();
-            const cls = document.getElementById('stdClass').value.trim();
-            const cpr = document.getElementById('stdCpr').value.trim();
-            if(!name || !cls) { alert('الرجاء إدخال اسم الطالب والصف!'); return; }
-            const { error } = await supabaseClient.from('students').insert([{ name, cls, cpr }]);
-            if(error) { 
-                console.error("Student Add Error:", error);
-                alert('خطأ في الإضافة: ' + error.message); 
-            } else { 
-                alert('تمت الإضافة بنجاح'); 
-                document.getElementById('stdName').value=''; 
-                document.getElementById('stdClass').value=''; 
-                document.getElementById('stdCpr').value=''; 
-                loadStudents(); 
-            }
-        }
-
-        async function deleteStudent(rowId) {
-            if(confirm('هل أنت متأكد من الحذف؟')) {
-                let query = supabaseClient.from('students').delete();
-                if(!isNaN(rowId)) {
-                    query = query.eq('id', rowId);
-                } else {
-                    query = query.eq('cpr', rowId);
-                }
-                const { error } = await query;
-                if(error) {
-                    console.error("Student Delete Error:", error);
-                    alert('خطأ أثناء الحذف: ' + error.message);
-                } else {
-                    alert('تم حذف الطالب بنجاح!');
-                    loadStudents();
-                }
-            }
-        }
-
-        function downloadStudentTemplate() {
-            const ws = XLSX.utils.json_to_sheet([{ name: "محمد أحمد", cls: "5ب4", cpr: "900000000" }]);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "الطلاب");
-            XLSX.writeFile(wb, "student_template.xlsx");
-        }
-
-        async function uploadStudentExcel(e) {
-            const file = e.target.files[0];
-            if(!file) return;
-            const reader = new FileReader();
-            reader.onload = async function(evt) {
-                try {
-                    const data = new Uint8Array(evt.target.result);
-                    const workbook = XLSX.read(data, {type: 'array'});
-                    const sheet = workbook.Sheets[workbook.SheetNames[0]];
-                    const rows = XLSX.utils.sheet_to_json(sheet, {defval: ""});
-                    
-                    let successCount = 0;
-                    for(let r of rows) {
-                        let keys = Object.keys(r);
-                        let studentName = "", studentClass = "", studentCpr = "";
-
-                        keys.forEach(k => {
-                            let lk = k.toLowerCase().trim();
-                            if(lk.includes('name') || lk.includes('اسم') || lk.includes('طالب')) studentName = r[k];
-                            if(lk.includes('class') || lk.includes('cls') || lk.includes('صف') || lk.includes('شعبة')) studentClass = r[k];
-                            if(lk.includes('cpr') || lk.includes('شخصي') || lk.includes('رقم')) studentCpr = r[k];
-                        });
-
-                        if(studentName && studentClass) {
-                            const { error } = await supabaseClient.from('students').insert([{ 
-                                name: String(studentName).trim(), 
-                                cls: String(studentClass).trim(), 
-                                cpr: studentCpr ? String(studentCpr).trim() : null 
-                            }]);
-                            if(!error) {
-                                successCount++;
-                            }
-                        }
-                    }
-                    alert(`تم رفع واستيراد (${successCount}) طالباً بنجاح!`);
-                    loadStudents();
-                } catch (err) {
-                    console.error("Excel Upload Error:", err);
-                    alert('حدث خطأ أثناء معالجة ملف الإكسل.');
-                }
-            };
-            reader.readAsArrayBuffer(file);
-        }
-
-        async function exportStudentsExcel() {
-            const { data } = await supabaseClient.from('students').select('*');
-            const ws = XLSX.utils.json_to_sheet(data);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "الطلاب");
-            XLSX.writeFile(wb, "all_students.xlsx");
-        }
-
-        async function loadStaff() {
-            const roleVal = String(currentUser.role || '').trim().toLowerCase();
-            if(roleVal !== 'admin' && roleVal !== 'مدير') { return; }
-            const { data, error } = await supabaseClient.from('staff').select('*');
-            const tbody = document.querySelector('#staffTable tbody');
-            tbody.innerHTML = '';
-            if(data && data.length > 0) {
-                data.forEach(st => {
-                    let staffKey = st.cpr || st.username;
-                    if(!staffKey) return;
-                    tbody.innerHTML += `
-                        <tr>
-                            <td><input type="text" class="table-input" id="stf_name_${staffKey}" value="${st.name || ''}"></td>
-                            <td><input type="text" class="table-input" id="stf_cpr_${staffKey}" value="${st.cpr || ''}"></td>
-                            <td><input type="text" class="table-input" id="stf_username_${staffKey}" value="${st.username || ''}"></td>
-                            <td><input type="text" class="table-input" id="stf_email_${staffKey}" value="${st.email || ''}"></td>
-                            <td><input type="text" class="table-input" id="stf_role_${staffKey}" value="${st.role || ''}"></td>
-                            <td><input type="text" class="table-input" id="stf_classes_${staffKey}" value="${st.classes || ''}"></td>
-                            <td>
-                                <button class="btn btn-orange" onclick="updateStaffManual('${staffKey}')">حفظ 💾</button>
-                                <button class="btn" style="background:#d32f2f; padding:5px 6px;" onclick="changeStaffPassManual('${staffKey}')">كلمة المرور 🔑</button>
-                                <button class="btn" style="background:#555; padding:5px 6px;" onclick="deleteStaffManual('${staffKey}')">حذف 🗑️</button>
-                            </td>
-                        </tr>`;
-                });
-            } else {
-                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#666;">لا توجد بيانات معلمين مسجلة حالياً.</td></tr>`;
-            }
-        }
-
-        async function updateStaffManual(staffKey) {
-            const name = document.getElementById(`stf_name_${staffKey}`).value.trim();
-            const cpr = document.getElementById(`stf_cpr_${staffKey}`).value.trim();
-            const username = document.getElementById(`stf_username_${staffKey}`).value.trim();
-            const email = document.getElementById(`stf_email_${staffKey}`).value.trim();
-            const role = document.getElementById(`stf_role_${staffKey}`).value.trim();
-            const classes = document.getElementById(`stf_classes_${staffKey}`).value.trim();
-
-            const { error } = await supabaseClient.from('staff').update({ name, cpr, username, email, role, classes }).eq('cpr', staffKey);
-            if(error) { 
-                console.error("Staff Update Error:", error);
-                alert('خطأ أثناء التحديث: ' + error.message); 
-            } else { 
-                alert('تم تحديث بيانات المعلم بنجاح!'); 
-                loadStaff(); 
-            }
-        }
-
-        async function deleteStaffManual(staffKey) {
-            if(confirm('هل أنت متأكد من حذف هذا المعلم نهائياً؟')) {
-                const { error } = await supabaseClient.from('staff').delete().eq('cpr', staffKey);
-                if(error) {
-                    console.error("Staff Delete Error:", error);
-                    alert('خطأ أثناء الحذف: ' + error.message);
-                } else {
-                    alert('تم حذف المعلم بنجاح!');
-                    loadStaff();
-                }
-            }
-        }
-
-        async function changeStaffPassManual(staffKey) {
-            const p1 = prompt('أدخل كلمة المرور الجديدة للمعلم:');
-            if(p1 === null || !p1.trim()) return;
-            const p2 = prompt('أعد إدخال كلمة المرور الجديدة للتأكيد:');
-            if(p2 === null || p1 !== p2) {
-                alert('كلمتا المرور غير متطابقتين!');
+            const tbody = document.getElementById('studentsTableBody');
+            tbody.innerHTML = '<tr><td colspan="3">جاري التحميل...</td></tr>';
+            
+            const { data, error } = await supabaseClient.from('students').select('*');
+            if(error) {
+                tbody.innerHTML = '<tr><td colspan="3" style="color:red;">حدث خطأ أثناء جلب الطلبة.</td></tr>';
                 return;
             }
 
-            const { error } = await supabaseClient.from('staff').update({ password: p1.trim() }).eq('cpr', staffKey);
-            if(error) {
-                alert('خطأ أثناء تغيير كلمة المرور.');
-            } else {
-                alert('تم تغيير كلمة المرور بنجاح!');
+            if(!data || data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3">لا توجد بيانات طلاب مسجلة.</td></tr>';
+                return;
             }
-        }
 
-        async function addStaffManual() {
-            const name = document.getElementById('stfName').value.trim();
-            const cpr = document.getElementById('stfCpr').value.trim();
-            const email = document.getElementById('stfEmail').value.trim();
-            const password = document.getElementById('stfPass').value.trim() || '0';
-            const classes = document.getElementById('stfClasses').value.trim();
-            const role = document.getElementById('stfRole').value;
-            const username = cpr || email;
-
-            const { error } = await supabaseClient.from('staff').insert([{ name, cpr, username, email, password, classes, role }]);
-            if(error) { alert('خطأ في الإضافة: ' + error.message); } else { alert('تم إضافة المعلم بنجاح'); loadStaff(); }
-        }
-
-        function downloadStaffTemplate() {
-            const ws = XLSX.utils.json_to_sheet([{ name: "أحمد علي", cpr: "900000000", username: "900000000", email: "teacher@yarmook.bh", password: "0", classes: "5ب4", role: "Teacher" }]);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "المعلمين");
-            XLSX.writeFile(wb, "staff_template.xlsx");
-        }
-
-        async function uploadStaffExcel(e) {
-            const file = e.target.files[0];
-            if(!file) return;
-            const reader = new FileReader();
-            reader.onload = async function(evt) {
-                const data = new Uint8Array(evt.target.result);
-                const workbook = XLSX.read(data, {type: 'array'});
-                const sheet = workbook.Sheets[workbook.SheetNames[0]];
-                const rows = XLSX.utils.sheet_to_json(sheet, {defval: ""});
-                
-                for(let r of rows) {
-                    let keys = Object.keys(r);
-                    let stName = "", stCpr = "", stUsername = "", stEmail = "", stRole = "Teacher", stClasses = "";
-
-                    keys.forEach(k => {
-                        let lk = k.toLowerCase().trim();
-                        if(lk.includes('name') || lk.includes('اسم')) stName = r[k];
-                        if(lk.includes('cpr') || lk.includes('شخصي')) stCpr = r[k];
-                        if(lk.includes('username') || lk.includes('مستخدم')) stUsername = r[k];
-                        if(lk.includes('email') || lk.includes('بريد')) stEmail = r[k];
-                        if(lk.includes('role') || lk.includes('دور')) stRole = r[k];
-                        if(lk.includes('class') || lk.includes('صفوف')) stClasses = r[k];
-                    });
-
-                    if(stName) {
-                        await supabaseClient.from('staff').insert([{
-                            name: String(stName).trim(), 
-                            cpr: stCpr ? String(stCpr).trim() : null, 
-                            username: stUsername ? String(stUsername).trim() : (stCpr ? String(stCpr).trim() : stEmail),
-                            email: stEmail ? String(stEmail).trim() : null, 
-                            password: '0', 
-                            classes: String(stClasses).trim(), 
-                            role: String(stRole).trim()
-                        }]);
-                    }
-                }
-                alert('تم رفع المعلمين بنجاح!');
-                loadStaff();
-            };
-            reader.readAsArrayBuffer(file);
-        }
-
-        async function exportStaffExcel() {
-            const { data } = await supabaseClient.from('staff').select('name, cpr, username, email, role, classes');
-            const ws = XLSX.utils.json_to_sheet(data);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "المعلمين");
-            XLSX.writeFile(wb, "all_staff.xlsx");
-        }
-
-        async function loadScores() {
-            let query = supabaseClient.from('scores').select('*');
-            const { data } = await query;
-            const tbody = document.querySelector('#scoresTable tbody');
             tbody.innerHTML = '';
-            if(data) {
-                data.forEach(sc => {
-                    tbody.innerHTML += `<tr><td>${sc.student_name || 'طالب'}</td><td>${sc.student_class || ''}</td><td>${sc.game_name || 'لعبة جدول الضرب'}</td><td>${sc.score}</td><td>${new Date(sc.created_at).toLocaleString()}</td></tr>`;
-                });
-            }
+            data.forEach(s => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${s.name}</td>
+                        <td>${s.cls}</td>
+                        <td><button style="background:#ef4444; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;" onclick="deleteStudent('${s.id}')">حذف</button></td>
+                    </tr>
+                `;
+            });
         }
 
-        function exportScoresExcel() {
-            const table = document.getElementById('scoresTable');
-            const wb = XLSX.utils.table_to_book(table, {sheet: "الدرجات"});
-            XLSX.writeFile(wb, "students_scores.xlsx");
-        }
+        // إضافة طالب جديد للسحابة
+        async function addStudent() {
+            const name = document.getElementById('newStudentName').value.trim();
+            const cls = document.getElementById('newStudentClass').value.trim();
 
-        async function saveGameLevels() {
-            alert('تم حفظ إعدادات مستويات الصفوف بنجاح!');
-        }
-
-        async function resetScoresData() {
-            const pass = document.getElementById('confirmResetPass').value.trim();
-            if(pass !== currentUser.password) { alert('كلمة المرور غير صحيحة!'); return; }
-            if(confirm('هل أنت متأكد تماماً من تصفير جميع النتائج؟')) {
-                const { error } = await supabaseClient.from('scores').delete().neq('id', 0);
-                if(!error) { alert('تم تصفير النتائج بنجاح'); }
-            }
-        }
-
-        async function loadProfile() {
-            document.getElementById('profName').value = currentUser.name || '';
-            document.getElementById('profCpr').value = currentUser.cpr || '';
-            document.getElementById('profEmail').value = currentUser.email || '';
-        }
-
-        async function updateProfile() {
-            const name = document.getElementById('profName').value.trim();
-            const cpr = document.getElementById('profCpr').value.trim();
-            const email = document.getElementById('profEmail').value.trim();
-            const newPass = document.getElementById('profNewPass').value.trim();
-
-            let updateData = { name, cpr, email };
-            if(newPass) updateData.password = newPass;
-
-            let query = supabaseClient.from('staff').update(updateData);
-            if (currentUser.cpr) {
-                query = query.eq('cpr', currentUser.cpr);
-            } else if (currentUser.username) {
-                query = query.eq('username', currentUser.username);
+            if(!name || !cls) {
+                alert('الرجاء إدخال اسم الطالب الصف الدراسي.');
+                return;
             }
 
-            const { data, error } = await query.select();
+            const { error } = await supabaseClient.from('students').insert([{ name, cls }]);
             if(error) {
-                alert('حدث خطأ أثناء التحديث في السحابة.');
-            } else {
-                alert('تم تحديث ومزامنة بياناتك الشخصية بنجاح!');
-                if(data && data.length > 0) {
-                    currentUser = data[0];
-                    localStorage.setItem('current_staff_user', JSON.stringify(currentUser));
-                }
+                alert('خطأ أثناء إضافة الطالب: ' + error.message);
+                return;
             }
+
+            alert('✅ تم إضافة الطالب بنجاح!');
+            document.getElementById('newStudentName').value = '';
+            document.getElementById('newStudentClass').value = '';
+            loadStudents();
         }
 
-        function logout() {
-            localStorage.removeItem('current_staff_user');
-            window.location.href = 'staff.html';
+        // حذف طالب
+        async function deleteStudent(id) {
+            if(!confirm('هل أنت متكد من حذف هذا الطالب؟')) return;
+            const { error } = await supabaseClient.from('students').delete().eq('id', id);
+            if(error) {
+                alert('خطأ أثناء الحذف.');
+                return;
+            }
+            loadStudents();
+        }
+
+        // تحميل لوحة النتائج والدرجات
+        async function loadScores() {
+            const tbody = document.getElementById('scoresTableBody');
+            tbody.innerHTML = '<tr><td colspan="4">جاري تحميل النتائج...</td></tr>';
+
+            const { data, error } = await supabaseClient
+                .from('scores')
+                .select('student_name, cls, points')
+                .order('points', { ascending: false })
+                .limit(20);
+
+            if(error) {
+                tbody.innerHTML = '<tr><td colspan="4" style="color:red;">تعذر جلب النتائج.</td></tr>';
+                return;
+            }
+
+            if(!data || data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4">لا توجد درجات مسجلة حتى الآن.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = '';
+            data.forEach((row, index) => {
+                let medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : (index + 1);
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${medal}</td>
+                        <td>${row.student_name}</td>
+                        <td>${row.cls || '-'}</td>
+                        <td><b>${row.points}</b></td>
+                    </tr>
+                `;
+            });
         }
     </script>
 </body>
