@@ -19,24 +19,20 @@
 
         .mine-arena { flex: 1; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 20px 15px; box-sizing: border-box; background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40"><rect width="40" height="40" fill="%231e140c"/><path d="0 0L40 40M40 0L0 40" stroke="%232a1b10" stroke-width="1"/></svg>'); }
         
-        /* خريطة تقدم المنجم */
         .progress-track { display: flex; gap: 8px; align-items: center; justify-content: center; width: 100%; background: rgba(0,0,0,0.4); padding: 8px; border-radius: 12px; border: 1px solid #78350f; }
         .step-node { width: 32px; height: 32px; border-radius: 50%; background: #451a03; border: 2px solid #92400e; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; color: #d97706; transition: 0.3s; }
         .step-node.active { background: #f59e0b; color: #1e140c; border-color: #fef08a; box-shadow: 0 0 10px #f59e0b; transform: scale(1.15); }
         .step-node.done { background: #10b981; color: white; border-color: #a7f3d0; }
         
-        /* كرت الباب واللغز */
         .door-card { background: linear-gradient(145deg, #451a03, #2d1b0e); border: 3px solid #b45309; border-radius: 16px; padding: 20px; width: 90%; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.6); position: relative; z-index: 5; margin: 10px 0; }
         .door-title { color: #fef08a; font-size: 16px; margin-bottom: 8px; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 8px; }
-        .question-box { background: rgba(0,0,0,0.5); border: 2px dashed #f59e0b; padding: 12px 20px; border-radius: 12px; font-size: 28px; font-weight: 900; color: #ffffff; letter-spacing: 1px; margin: 10px 0; }
+        .question-box { background: rgba(0,0,0,0.5); border: 2px dashed #f59e0b; padding: 12px 20px; border-radius: 12px; font-size: 26px; font-weight: 900; color: #ffffff; letter-spacing: 1px; margin: 10px 0; }
         
-        /* خيارات العثور على الكنز */
         .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; max-width: 450px; }
         .opt-btn { background: linear-gradient(135deg, #78350f, #451a03); border: 2px solid #d97706; color: #fef08a; padding: 14px; border-radius: 12px; font-size: 22px; font-weight: bold; cursor: pointer; transition: 0.2s; font-family: 'Cairo'; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
         .opt-btn:hover { background: #b45309; color: white; transform: translateY(-2px); }
         .opt-btn:active { transform: translateY(1px); }
 
-        /* التلميحات */
         .hint-box { background: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444; color: #fca5a5; padding: 8px 15px; border-radius: 8px; font-size: 13px; margin-top: 8px; display: none; }
 
         .modal { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(18, 10, 5, 0.97); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; text-align: center; padding: 25px; box-sizing: border-box; }
@@ -59,7 +55,7 @@
 <body>
 
     <div class="game-container" id="gameContainer">
-        <!-- شاشة التعليمات والقواعد -->
+        <!-- تعليمات اللعبة -->
         <div class="modal" id="instructionsModal">
             <h1>⛏️ تعليمات لغز منجم الذهب</h1>
             <div class="instructions-box">
@@ -73,18 +69,17 @@
             <button class="btn" onclick="startTheGameSession()">ابدأ التنقيب الآن 🪙</button>
         </div>
 
-        <!-- شاشة المعلومات العلوية HUD -->
+        <!-- الشريط العلوي HUD مع زر التبديل السريع -->
         <div class="hud">
-            <div>المستكشف: <span id="playerName">بطل</span></div>
+            <div>المستكشف: <span id="playerName">بطل</span> <button onclick="changePlayerQuick()" style="background:#ef4444; color:white; border:none; padding:2px 8px; border-radius:4px; font-size:11px; cursor:pointer; margin-right:8px; font-family:'Cairo';">تبديل 🔄</button></div>
             <div>⛏️ الفأس: <span id="livesCount">--</span></div>
             <div>🔥 السلسلة: <span id="streakCount">٠</span></div>
             <div>🪙 الذهب: <span id="scoreVal">٠</span></div>
             <div class="bonus-float-msg" id="bonusMsg">+١٠٠ ذهب إضافي! 💰</div>
         </div>
 
-        <!-- ساحة المنجم والمغارة -->
+        <!-- ساحة اللعب -->
         <div class="mine-arena" id="arenaBox">
-            <!-- مسار التقدم في غرف المنجم -->
             <div class="progress-track" id="progressTrack">
                 <div class="step-node active" id="node-0">١</div>
                 <div class="step-node" id="node-1">٢</div>
@@ -94,20 +89,16 @@
                 <div class="step-node" id="node-5">🎁</div>
             </div>
 
-            <!-- كرت الباب المغلق -->
             <div class="door-card">
                 <div class="door-title">🔒 الباب الحجري للمغارة <span id="currentRoomNum">١</span></div>
                 <div class="question-box" id="questionDisplay">؟ × ؟ = ؟</div>
-                <div class="hint-box" id="hintBox">💡 تلميح: فكر في مضاعفات العدد المطلوب</div>
+                <div class="hint-box" id="hintBox">💡 تلميح: فكر في مضاعفات العدد المطلوبة</div>
             </div>
 
-            <!-- خيارات الحل لفتح الباب -->
-            <div class="options-grid" id="optionsGrid">
-                <!-- أزرار الخيارات تظهر هنا -->
-            </div>
+            <div class="options-grid" id="optionsGrid"></div>
         </div>
 
-        <!-- شاشة نهاية اللعبة والنتائج -->
+        <!-- شاشة النتيجة والنهاية -->
         <div class="modal hidden" id="gameOverModal">
             <h1 id="gameOverTitle">انتهت الرحلة! 🏆</h1>
             <p id="finalScoreText">لقد جمعت ٠ قطعة ذهبية</p>
@@ -126,7 +117,6 @@
     </div>
 
     <script>
-        // 1. التحقق من بيان الطالب
         let studentData = null;
         try {
             studentData = JSON.parse(localStorage.getItem('current_student'));
@@ -141,7 +131,11 @@
             document.getElementById('playerName').textContent = studentData.name;
         }
 
-        // المؤثرات الصوتية
+        function changePlayerQuick() {
+            localStorage.removeItem('current_student');
+            window.location.href = 'student.html';
+        }
+
         function playSound(type) {
             try {
                 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -185,7 +179,6 @@
             return String(num).replace(/\d/g, (d) => arabicNumbers[d]);
         }
 
-        // الإعدادات السحابية الافتراضية
         let customSettings = {
             maxLives: 3,
             goldPerDoor: 100,
@@ -194,7 +187,6 @@
             totalRooms: 5
         };
 
-        // 2. تحميل إعدادات اللعبة من Supabase
         async function loadCloudSettings() {
             try {
                 const { data, error } = await supabaseClient
@@ -217,7 +209,6 @@
 
         loadCloudSettings();
 
-        // متغيرات الحالة
         let score = 0;
         let lives = customSettings.maxLives;
         let currentRoom = 0;
@@ -260,7 +251,6 @@
             document.getElementById('streakCount').textContent = toArabicNum(streak);
             document.getElementById('currentRoomNum').textContent = toArabicNum(currentRoom + 1);
             
-            // تحديث شريط التقدم
             for (let i = 0; i < 6; i++) {
                 const node = document.getElementById(`node-${i}`);
                 if (!node) continue;
@@ -277,7 +267,6 @@
             setTimeout(() => msg.classList.remove('show'), 2000);
         }
 
-        // توليد لغز المغارة
         function generateNewPuzzle() {
             document.getElementById('hintBox').style.display = 'none';
 
@@ -285,7 +274,6 @@
             let num2 = Math.floor(Math.random() * 10) + 1;
             currentCorrectAnswer = num1 * num2;
 
-            // تنوع أنماط الألغاز
             let puzzleType = Math.random() > 0.5 ? 'missing' : 'product';
 
             if (puzzleType === 'missing') {
@@ -296,7 +284,6 @@
                 currentHint = `💡 تلميح: اجمع العدد ${toArabicNum(num1)} مع نفسه ${toArabicNum(num2)} مرات.`;
             }
 
-            // خيارات الإجابة
             let correctOptionVal = (puzzleType === 'missing') ? num2 : currentCorrectAnswer;
             let options = [correctOptionVal];
 
@@ -345,7 +332,6 @@
                 lives -= customSettings.wrongPenaltyLives;
                 streak = 0;
                 
-                // إظهار التلميح
                 const hintEl = document.getElementById('hintBox');
                 hintEl.textContent = currentHint;
                 hintEl.style.display = 'block';
