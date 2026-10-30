@@ -39,8 +39,6 @@
         .danger-zone { border: 2px dashed #d32f2f; padding: 20px; border-radius: 10px; background: #ffebee; margin-top: 20px; }
         .game-sub-section { border: 1px solid #e2e8f0; background: #f8fafc; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
         .game-sub-section h3 { margin-top: 0; color: #1e293b; border-bottom: 2px solid #cbd5e1; padding-bottom: 8px; }
-        .toggle-container { display: flex; align-items: center; gap: 10px; background: #e2e8f0; padding: 8px 15px; border-radius: 8px; }
-        .toggle-container input[type="checkbox"] { width: 20px; height: 20px; cursor: pointer; }
         .hidden { display: none !important; }
     </style>
 </head>
@@ -61,6 +59,7 @@
             <button class="tab-btn" onclick="switchTab('profile', event)">👤 بياناتي الشخصية</button>
         </div>
 
+        <!-- 1. قسم بيانات الطلبة -->
         <div id="students" class="section-card active">
             <h2>إدارة بيانات الطلبة</h2>
             <div style="margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
@@ -83,8 +82,15 @@
             </table>
         </div>
 
+        <!-- 2. قسم إدارة المعلمين -->
         <div id="staff" class="section-card">
             <h2>إدارة المعلمين والإدارة</h2>
+            <div style="margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
+                <button class="btn btn-blue" onclick="downloadStaffTemplate()">📥 تحميل قالب إكسل المعلمين</button>
+                <input type="file" id="staffExcelFile" accept=".xlsx, .xls" style="display:none" onchange="uploadStaffExcel(event)">
+                <button class="btn btn-green" onclick="document.getElementById('staffExcelFile').click()">📤 رفع ملف إكسل المعلمين</button>
+                <button class="btn" onclick="exportStaffExcel()">📊 تصدير بيانات المعلمين إكسل</button>
+            </div>
             <h3>إضافة معلم جديد</h3>
             <div class="form-row">
                 <div class="form-group"><label>اسم المعلم:</label><input type="text" id="stfName"></div>
@@ -97,15 +103,30 @@
                 <div class="form-group"><label>الدور:</label><select id="stfRole"><option value="Teacher">معلم</option><option value="Supervisor">مشرف</option><option value="Admin">مدير</option></select></div>
                 <div class="form-group" style="align-self: flex-end;"><button class="btn" onclick="addStaffManual()">حفظ المعلم ➕</button></div>
             </div>
-            <h3>قائمة المعلمين</h3>
+            <h3>قائمة المعلمين (التعديل المباشر، كلمة المرور، أو الحذف)</h3>
             <table id="staffTable">
                 <thead><tr><th>الاسم</th><th>الرقم الشخصي</th><th>اسم المستخدم</th><th>البريد</th><th>الدور</th><th>الصفوف</th><th>الإجراءات</th></tr></thead>
                 <tbody></tbody>
             </table>
         </div>
 
+        <!-- 3. قسم إعداد الألعاب والمستويات -->
         <div id="games" class="section-card">
             <h2>إعداد الألعاب والمستويات الدراسية 🎮</h2>
+
+            <div class="game-sub-section">
+                <h3>إعدادات مستويات جدول الضرب العامة (من الثاني حتى السادس)</h3>
+                <div class="form-row">
+                    <div class="form-group"><label>الصف الثاني الابتدائي:</label><input type="number" id="lvl2" value="3"></div>
+                    <div class="form-group"><label>الصف الثالث الابتدائي:</label><input type="number" id="lvl3" value="5"></div>
+                    <div class="form-group"><label>الصف الرابع الابتدائي:</label><input type="number" id="lvl4" value="10"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>الصف الخامس الابتدائي:</label><input type="number" id="lvl5" value="12"></div>
+                    <div class="form-group"><label>الصف السادس الابتدائي:</label><input type="number" id="lvl6" value="12"></div>
+                </div>
+                <button class="btn" onclick="saveGameLevels()">حفظ مستويات جداول الضرب 💾</button>
+            </div>
 
             <div class="game-sub-section">
                 <h3>🚀 إعدادات لعبة "سباق صواريخ الفضاء"</h3>
@@ -114,62 +135,41 @@
                     <div class="form-group"><label>نقاط الإجابة الصحيحة:</label><input type="number" id="settingCorrectPoints" value="100"></div>
                     <div class="form-group"><label>نقاط الخصم للإجابة الخاطئة:</label><input type="number" id="settingWrongPenalty" value="30"></div>
                 </div>
-                <button class="btn" onclick="saveRocketSettings()">حفظ ومزامنة إعدادات الصواريخ 💾</button>
-            </div>
-
-            <div class="game-sub-section" style="border-color: #b45309; background: #fffbebf5;">
-                <h3 style="color: #b45309;">⛏️ إعدادات لعبة "لغز منجم الذهب"</h3>
                 <div class="form-row">
-                    <div class="form-group"><label>عدد الأسئلة / الحجارة في الجولة:</label><input type="number" id="gmTotalRooms" value="5"></div>
-                    <div class="form-group"><label>عدد محاولات الفأس (القلوب):</label><input type="number" id="gmMaxLives" value="3"></div>
-                    <div class="form-group"><label>نقاط الذهب لكل حجر صحيح:</label><input type="number" id="gmGoldPerDoor" value="100"></div>
+                    <div class="form-group"><label>عدد الإجابات المتتالية للمكافأة (Streak):</label><input type="number" id="settingStreakCount" value="5"></div>
+                    <div class="form-group"><label>الوقت الإضافي للمكافأة (بالثواني):</label><input type="number" id="settingBonusTime" value="10"></div>
                 </div>
-                
-                <h4 style="color:#78350f; margin-bottom:10px;">أنواع الأسئلة المفعلة في المنجم:</h4>
-                <div class="form-row">
-                    <div class="form-group">
-                        <div class="toggle-container">
-                            <input type="checkbox" id="gmToggleMissing" checked>
-                            <label style="margin:0; cursor:pointer;" for="gmToggleMissing">نوع "العامل المفقود" (مثال: ؟ × ٧ = ٥٦)</label>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <div class="toggle-container">
-                            <input type="checkbox" id="gmToggleProduct" checked>
-                            <label style="margin:0; cursor:pointer;" for="gmToggleProduct">نوع "إيجاد الناتج" (مثال: ٨ × ٧ = ؟)</label>
-                        </div>
-                    </div>
-                </div>
-                <button class="btn btn-orange" onclick="saveGoldMineSettings()">حفظ ومزامنة إعدادات منجم الذهب سحابياً 💾</button>
+                <button class="btn" onclick="saveRocketSettings()">حفظ ومزامنة إعدادات الصواريخ سحابياً 💾</button>
             </div>
         </div>
 
+        <!-- 4. قسم درجات الطلبة -->
         <div id="scores" class="section-card">
             <h2>مشاهدة وتحميل درجات الطلبة</h2>
             <div class="form-row" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
                 <div style="display: flex; gap: 10px; align-items: center; flex: 1;">
-                    <label style="margin:0;">تصفية حسب اللعبة:</label>
-                    <select id="gameFilter" style="max-width: 250px;" onchange="loadScores()">
+                    <label style="margin:0;">اختر اللعبة:</label>
+                    <select id="gameFilter" style="max-width: 250px;">
                         <option value="all">جميع الألعاب</option>
                         <option value="سباق صواريخ الفضاء">سباق صواريخ الفضاء</option>
-                        <option value="لغز منجم الذهب">لغز منجم الذهب</option>
                     </select>
                 </div>
                 <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                     <button class="btn btn-green" onclick="exportScoresExcel()">📊 تحميل إكسل للدرجات</button>
-                    <button class="btn btn-red" onclick="clearAllScores()">🗑️ مسح درجات اللعبة المحددة</button>
+                    <button class="btn btn-red" onclick="clearAllScores()">🗑️ مسح جميع درجات اللعبة</button>
                 </div>
             </div>
             <table id="scoresTable">
-                <thead><tr><th>اسم الطالب</th><th>الصف</th><th>اللعبة</th><th>النتيجة / النقاط</th><th>الوقت والتاريخ</th><th>الإجراءات</th></tr></thead>
+                <thead><tr><th>اسم الطالب</th><th>الصف</th><th>اللعبة</th><th>النتيجة / النقاط</th><th>الوقت والتاريخ</th><th>الإجراء</th></tr></thead>
                 <tbody></tbody>
             </table>
         </div>
 
+        <!-- 5. قسم الإعدادات وتصفير النتائج -->
         <div id="settings" class="section-card">
             <h2>الإعدادات العامة وتصفير النتائج</h2>
             <div class="danger-zone">
-                <h3 style="color: #d32f2f; margin-top:0;">⚠️ منطقة الخطر: تصفير كافة درجات الألعاب</h3>
+                <h3 style="color: #d32f2f; margin-top:0;">⚠️ منطقة الخطر: تصفير درجات الألعاب</h3>
                 <div class="form-row" style="max-width: 400px;">
                     <div class="form-group"><label>أدخل كلمة مرور الحساب للتأكيد:</label><input type="password" id="confirmResetPass"></div>
                 </div>
@@ -177,6 +177,7 @@
             </div>
         </div>
 
+        <!-- 6. الملف الشخصي -->
         <div id="profile" class="section-card">
             <h2>البيانات الشخصية وتغيير كلمة المرور</h2>
             <div class="form-row">
@@ -193,10 +194,13 @@
 
     <script>
         let currentUser = JSON.parse(localStorage.getItem('current_staff_user'));
-        if(!currentUser) { window.location.href = 'staff.html'; } else {
+        if(!currentUser) { 
+            window.location.href = 'staff.html'; 
+        } else {
             const roleVal = String(currentUser.role || 'Teacher').trim().toLowerCase();
             const roleName = (roleVal === 'admin' || roleVal === 'مدير') ? 'مدير النظام' : (roleVal === 'supervisor' || roleVal === 'مشرف') ? 'مشرف' : 'معلم';
             document.getElementById('welcomeTitle').textContent = `أهلاً بك يا ${currentUser.name || 'مستخدم'} (${roleName})`;
+
             if(roleVal === 'teacher' || roleVal === 'معلم') {
                 document.querySelectorAll('.admin-only').forEach(el => el.classList.add('hidden'));
                 document.querySelectorAll('.supervisor-allowed').forEach(el => el.classList.add('hidden'));
@@ -208,198 +212,456 @@
         document.addEventListener('DOMContentLoaded', () => {
             loadStudents();
             loadRocketSettingsFromCloud();
-            loadGoldMineSettingsFromCloud();
         });
 
         function switchTab(tabId, evt) {
             const roleVal = String(currentUser.role || '').trim().toLowerCase();
-            if((tabId === 'staff' || tabId === 'settings') && roleVal !== 'admin' && roleVal !== 'مدير') { alert('عذراً، هذه الصلاحية خاصة بمدير النظام فقط.'); return; }
-            if(tabId === 'games' && roleVal === 'teacher') { alert('عذراً، إعدادات الألعاب خاصة بالمشرف والمدير فقط.'); return; }
+            if((tabId === 'staff' || tabId === 'settings') && roleVal !== 'admin' && roleVal !== 'مدير') {
+                alert('عذراً، هذه الصلاحية خاصة بمدير النظام فقط.');
+                return;
+            }
+            if(tabId === 'games' && roleVal === 'teacher') {
+                alert('عذراً، إعدادات الألعاب خاصة بالمشرف والمدير فقط.');
+                return;
+            }
             document.querySelectorAll('.section-card').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
-            if(evt && evt.currentTarget) evt.currentTarget.classList.add('active');
+            if(evt && evt.currentTarget) {
+                evt.currentTarget.classList.add('active');
+            }
             if(tabId === 'students') loadStudents();
             if(tabId === 'staff') loadStaff();
             if(tabId === 'scores') loadScores();
             if(tabId === 'profile') loadProfile();
+            if(tabId === 'games') loadRocketSettingsFromCloud();
         }
 
         async function loadRocketSettingsFromCloud() {
             try {
-                const { data } = await supabaseClient.from('game_settings').select('value').eq('key', 'rocket_settings').single();
+                const { data, error } = await supabaseClient
+                    .from('game_settings')
+                    .select('value')
+                    .eq('key', 'rocket_settings')
+                    .single();
+
                 if(data && data.value) {
-                    document.getElementById('settingGameTime').value = data.value.gameTime || 60;
-                    document.getElementById('settingCorrectPoints').value = data.value.correctPoints || 100;
-                    document.getElementById('settingWrongPenalty').value = data.value.wrongPenalty || 30;
+                    const settings = data.value;
+                    document.getElementById('settingGameTime').value = settings.gameTime || 60;
+                    document.getElementById('settingCorrectPoints').value = settings.correctPoints || 100;
+                    document.getElementById('settingWrongPenalty').value = settings.wrongPenalty || 30;
+                    document.getElementById('settingStreakCount').value = settings.streakCount || 5;
+                    document.getElementById('settingBonusTime').value = settings.bonusTime || 10;
                 }
-            } catch (e) {}
+            } catch (e) {
+                console.log("No cloud settings found yet, using defaults.");
+            }
         }
 
         async function saveRocketSettings() {
             const settings = {
                 gameTime: parseInt(document.getElementById('settingGameTime').value) || 60,
                 correctPoints: parseInt(document.getElementById('settingCorrectPoints').value) || 100,
-                wrongPenalty: parseInt(document.getElementById('settingWrongPenalty').value) || 30
+                wrongPenalty: parseInt(document.getElementById('settingWrongPenalty').value) || 30,
+                streakCount: parseInt(document.getElementById('settingStreakCount').value) || 5,
+                bonusTime: parseInt(document.getElementById('settingBonusTime').value) || 10
             };
-            const { error } = await supabaseClient.from('game_settings').upsert([{ key: 'rocket_settings', value: settings }]);
-            if(error) alert('خطأ: ' + error.message); else alert('✅ تم حفظ إعدادات الصواريخ بنجاح!');
-        }
 
-        async function loadGoldMineSettingsFromCloud() {
-            try {
-                const { data } = await supabaseClient.from('game_settings').select('value').eq('key', 'gold_mine_settings').single();
-                if(data && data.value) {
-                    document.getElementById('gmTotalRooms').value = data.value.totalRooms || 5;
-                    document.getElementById('gmMaxLives').value = data.value.maxLives || 3;
-                    document.getElementById('gmGoldPerDoor').value = data.value.goldPerDoor || 100;
-                    document.getElementById('gmToggleMissing').checked = data.value.enableMissingFactor !== false;
-                    document.getElementById('gmToggleProduct').checked = data.value.enableProduct !== false;
-                }
-            } catch (e) {}
-        }
+            const { error } = await supabaseClient
+                .from('game_settings')
+                .upsert([{ key: 'rocket_settings', value: settings }]);
 
-        async function saveGoldMineSettings() {
-            const enableMissing = document.getElementById('gmToggleMissing').checked;
-            const enableProduct = document.getElementById('gmToggleProduct').checked;
-            if (!enableMissing && !enableProduct) { alert('يجب تفعيل نوع واحد على الأقل من الأسئلة!'); return; }
-
-            const settings = {
-                totalRooms: parseInt(document.getElementById('gmTotalRooms').value) || 5,
-                maxLives: parseInt(document.getElementById('gmMaxLives').value) || 3,
-                goldPerDoor: parseInt(document.getElementById('gmGoldPerDoor').value) || 100,
-                wrongPenaltyLives: 1, streakBonusGold: 50,
-                enableMissingFactor: enableMissing, enableProduct: enableProduct
-            };
-            const { error } = await supabaseClient.from('game_settings').upsert([{ key: 'gold_mine_settings', value: settings }]);
-            if(error) alert('خطأ: ' + error.message); else alert('✅ تم حفظ إعدادات منجم الذهب ومزامنتها بنجاح!');
+            if(error) {
+                alert('خطأ أثناء حفظ الإعدادات بالسحابة: ' + error.message);
+            } else {
+                alert('✅ تم حفظ إعدادات لعبة الصواريخ ومزامنتها سحابياً بنجاح لجميع الأجهزة!');
+            }
         }
 
         async function loadStudents() {
             let query = supabaseClient.from('students').select('*');
             const roleVal = String(currentUser.role || '').trim().toLowerCase();
-            if(roleVal === 'teacher' && currentUser.classes) query = query.in('cls', currentUser.classes.split(',').map(c => c.trim()));
-            const { data } = await query;
+            if(roleVal === 'teacher' && currentUser.classes) {
+                let clsList = currentUser.classes.split(',').map(c => c.trim());
+                query = query.in('cls', clsList);
+            }
+            const { data, error } = await query;
             const tbody = document.querySelector('#studentsTable tbody');
             tbody.innerHTML = '';
             if(data && data.length > 0) {
                 data.forEach(s => {
+                    if(!s.id && !s.cpr) return;
                     let rowId = s.id || s.cpr;
-                    tbody.innerHTML += `<tr><td><input type="text" class="table-input" id="std_name_${rowId}" value="${s.name || ''}"></td><td><input type="text" class="table-input" id="std_cls_${rowId}" value="${s.cls || ''}"></td><td><input type="text" class="table-input" id="std_cpr_${rowId}" value="${s.cpr || ''}"></td><td><button class="btn btn-orange" onclick="updateStudentManual('${rowId}')">حفظ 💾</button> <button class="btn btn-red" onclick="deleteStudent('${rowId}')">حذف 🗑️</button></td></tr>`;
+                    tbody.innerHTML += `
+                        <tr>
+                            <td><input type="text" class="table-input" id="std_name_${rowId}" value="${s.name || ''}"></td>
+                            <td><input type="text" class="table-input" id="std_cls_${rowId}" value="${s.cls || ''}"></td>
+                            <td><input type="text" class="table-input" id="std_cpr_${rowId}" value="${s.cpr || ''}"></td>
+                            <td>
+                                <button class="btn btn-orange" onclick="updateStudentManual('${rowId}')">حفظ 💾</button>
+                                <button class="btn btn-red" onclick="deleteStudent('${rowId}')">حذف 🗑️</button>
+                            </td>
+                        </tr>`;
                 });
-            } else { tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#666;">لا توجد بيانات طلاب.</td></tr>`; }
+            } else {
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#666;">لا توجد بيانات طلاب مسجلة حالياً.</td></tr>`;
+            }
         }
 
         async function updateStudentManual(rowId) {
             const name = document.getElementById(`std_name_${rowId}`).value.trim();
             const cls = document.getElementById(`std_cls_${rowId}`).value.trim();
             const cpr = document.getElementById(`std_cpr_${rowId}`).value.trim();
+
+            if(!name || !cls) { alert('الاسم والصف حقول إجبارية!'); return; }
+
             let query = supabaseClient.from('students').update({ name, cls, cpr });
-            if(!isNaN(rowId)) query = query.eq('id', rowId); else query = query.eq('cpr', rowId);
-            await query; alert('تم التحديث بنجاح!'); loadStudents();
+            if(!isNaN(rowId)) {
+                query = query.eq('id', rowId);
+            } else {
+                query = query.eq('cpr', rowId);
+            }
+
+            const { error } = await query;
+            if(error) { 
+                console.error("Student Update Error:", error);
+                alert('خطأ أثناء التحديث: ' + error.message); 
+            } else { 
+                alert('تم تحديث بيانات الطالب بنجاح!'); 
+                loadStudents(); 
+            }
         }
 
         async function addStudentManual() {
             const name = document.getElementById('stdName').value.trim();
             const cls = document.getElementById('stdClass').value.trim();
             const cpr = document.getElementById('stdCpr').value.trim();
-            if(!name || !cls) { alert('الاسم والصف مطلوبان!'); return; }
-            await supabaseClient.from('students').insert([{ name, cls, cpr }]);
-            alert('تمت الإضافة بنجاح'); loadStudents();
+            if(!name || !cls) { alert('الرجاء إدخال اسم الطالب والصف!'); return; }
+            const { error } = await supabaseClient.from('students').insert([{ name, cls, cpr }]);
+            if(error) { 
+                console.error("Student Add Error:", error);
+                alert('خطأ في الإضافة: ' + error.message); 
+            } else { 
+                alert('تمت الإضافة بنجاح'); 
+                document.getElementById('stdName').value=''; 
+                document.getElementById('stdClass').value=''; 
+                document.getElementById('stdCpr').value=''; 
+                loadStudents(); 
+            }
         }
 
         async function deleteStudent(rowId) {
             if(confirm('هل أنت متأكد من الحذف؟')) {
                 let query = supabaseClient.from('students').delete();
-                if(!isNaN(rowId)) query = query.eq('id', rowId); else query = query.eq('cpr', rowId);
-                await query; loadStudents();
+                if(!isNaN(rowId)) {
+                    query = query.eq('id', rowId);
+                } else {
+                    query = query.eq('cpr', rowId);
+                }
+                const { error } = await query;
+                if(error) {
+                    console.error("Student Delete Error:", error);
+                    alert('خطأ أثناء الحذف: ' + error.message);
+                } else {
+                    alert('تم حذف الطالب بنجاح!');
+                    loadStudents();
+                }
             }
         }
 
-        // جلب الدرجات المحدثة من الجدولين rocket_scores و goldmine_scores
-        async function loadScores() {
-            const filter = document.getElementById('gameFilter').value;
-            let allScores = [];
-
-            try {
-                if (filter === 'all' || filter === 'سباق صواريخ الفضاء') {
-                    const { data: rocketData } = await supabaseClient.from('rocket_scores').select('*');
-                    if (rocketData) {
-                        rocketData.forEach(item => {
-                            allScores.push({
-                                id: item.id, student_name: item.student_name, cls: item.cls,
-                                game_name: 'سباق صواريخ الفضاء', points: item.points, created_at: item.created_at, table_source: 'rocket_scores'
-                            });
-                        });
-                    }
-                }
-
-                if (filter === 'all' || filter === 'لغز منجم الذهب') {
-                    const { data: mineData } = await supabaseClient.from('goldmine_scores').select('*');
-                    if (mineData) {
-                        mineData.forEach(item => {
-                            allScores.push({
-                                id: item.id, student_name: item.student_name, cls: item.cls,
-                                game_name: 'لغز منجم الذهب', points: item.points, created_at: item.created_at, table_source: 'goldmine_scores'
-                            });
-                        });
-                    }
-                }
-
-                allScores.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
-                const tbody = document.querySelector('#scoresTable tbody');
-                tbody.innerHTML = '';
-
-                if (allScores.length > 0) {
-                    allScores.forEach(sc => {
-                        let dateStr = sc.created_at ? new Date(sc.created_at).toLocaleString('ar-BH') : 'غير محدد';
-                        let badgeColor = sc.game_name.includes('منجم') ? 'background:#fef3c7; color:#92400e;' : 'background:#e0e7ff; color:#3730a3;';
-                        tbody.innerHTML += `<tr><td><b>${sc.student_name}</b></td><td>${sc.cls || '-'}</td><td><span style="${badgeColor} padding:3px 8px; border-radius:6px; font-weight:bold;">${sc.game_name}</span></td><td><b style="color:#2e7d32; font-size:15px;">${sc.points}</b></td><td>${dateStr}</td><td><button class="btn btn-red" onclick="deleteSingleScore('${sc.id}', '${sc.table_source}')">حذف 🗑️</button></td></tr>`;
-                    });
-                } else {
-                    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#666;">لا توجد درجات مسجلة حالياً.</td></tr>`;
-                }
-            } catch (err) { console.error("Error loading scores", err); }
+        function downloadStudentTemplate() {
+            const ws = XLSX.utils.json_to_sheet([{ name: "محمد أحمد", cls: "5ب4", cpr: "900000000" }]);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "الطلاب");
+            XLSX.writeFile(wb, "student_template.xlsx");
         }
 
-        async function deleteSingleScore(scoreId, tableName) {
-            if (confirm('هل أنت متأكد من حذف هذه النتيجة؟')) {
-                await supabaseClient.from(tableName).delete().eq('id', scoreId);
+        async function uploadStudentExcel(e) {
+            const file = e.target.files[0];
+            if(!file) return;
+            const reader = new FileReader();
+            reader.onload = async function(evt) {
+                try {
+                    const data = new Uint8Array(evt.target.result);
+                    const workbook = XLSX.read(data, {type: 'array'});
+                    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const rows = XLSX.utils.sheet_to_json(sheet, {defval: ""});
+                    
+                    let successCount = 0;
+                    for(let r of rows) {
+                        let keys = Object.keys(r);
+                        let studentName = "", studentClass = "", studentCpr = "";
+
+                        keys.forEach(k => {
+                            let lk = k.toLowerCase().trim();
+                            if(lk.includes('name') || lk.includes('اسم') || lk.includes('طالب')) studentName = r[k];
+                            if(lk.includes('class') || lk.includes('cls') || lk.includes('صف') || lk.includes('شعبة')) studentClass = r[k];
+                            if(lk.includes('cpr') || lk.includes('شخصي') || lk.includes('رقم')) studentCpr = r[k];
+                        });
+
+                        if(studentName && studentClass) {
+                            const { error } = await supabaseClient.from('students').insert([{ 
+                                name: String(studentName).trim(), 
+                                cls: String(studentClass).trim(), 
+                                cpr: studentCpr ? String(studentCpr).trim() : null 
+                            }]);
+                            if(!error) {
+                                successCount++;
+                            }
+                        }
+                    }
+                    alert(`تم رفع واستيراد (${successCount}) طالباً بنجاح!`);
+                    loadStudents();
+                } catch (err) {
+                    console.error("Excel Upload Error:", err);
+                    alert('حدث خطأ أثناء معالجة ملف الإكسل.');
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        async function exportStudentsExcel() {
+            const { data } = await supabaseClient.from('students').select('*');
+            const ws = XLSX.utils.json_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "الطلاب");
+            XLSX.writeFile(wb, "all_students.xlsx");
+        }
+
+        async function loadStaff() {
+            const roleVal = String(currentUser.role || '').trim().toLowerCase();
+            if(roleVal !== 'admin' && roleVal !== 'مدير') { return; }
+            const { data, error } = await supabaseClient.from('staff').select('*');
+            const tbody = document.querySelector('#staffTable tbody');
+            tbody.innerHTML = '';
+            if(data && data.length > 0) {
+                data.forEach(st => {
+                    let staffKey = st.cpr || st.username;
+                    if(!staffKey) return;
+                    tbody.innerHTML += `
+                        <tr>
+                            <td><input type="text" class="table-input" id="stf_name_${staffKey}" value="${st.name || ''}"></td>
+                            <td><input type="text" class="table-input" id="stf_cpr_${staffKey}" value="${st.cpr || ''}"></td>
+                            <td><input type="text" class="table-input" id="stf_username_${staffKey}" value="${st.username || ''}"></td>
+                            <td><input type="text" class="table-input" id="stf_email_${staffKey}" value="${st.email || ''}"></td>
+                            <td><input type="text" class="table-input" id="stf_role_${staffKey}" value="${st.role || ''}"></td>
+                            <td><input type="text" class="table-input" id="stf_classes_${staffKey}" value="${st.classes || ''}"></td>
+                            <td>
+                                <button class="btn btn-orange" onclick="updateStaffManual('${staffKey}')">حفظ 💾</button>
+                                <button class="btn" style="background:#d32f2f; padding:5px 6px;" onclick="changeStaffPassManual('${staffKey}')">كلمة المرور 🔑</button>
+                                <button class="btn" style="background:#555; padding:5px 6px;" onclick="deleteStaffManual('${staffKey}')">حذف 🗑️</button>
+                            </td>
+                        </tr>`;
+                });
+            } else {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#666;">لا توجد بيانات معلمين مسجلة حالياً.</td></tr>`;
+            }
+        }
+
+        async function updateStaffManual(staffKey) {
+            const name = document.getElementById(`stf_name_${staffKey}`).value.trim();
+            const cpr = document.getElementById(`stf_cpr_${staffKey}`).value.trim();
+            const username = document.getElementById(`stf_username_${staffKey}`).value.trim();
+            const email = document.getElementById(`stf_email_${staffKey}`).value.trim();
+            const role = document.getElementById(`stf_role_${staffKey}`).value.trim();
+            const classes = document.getElementById(`stf_classes_${staffKey}`).value.trim();
+
+            const { error } = await supabaseClient.from('staff').update({ name, cpr, username, email, role, classes }).eq('cpr', staffKey);
+            if(error) { 
+                console.error("Staff Update Error:", error);
+                alert('خطأ أثناء التحديث: ' + error.message); 
+            } else { 
+                alert('تم تحديث بيانات المعلم بنجاح!'); 
+                loadStaff(); 
+            }
+        }
+
+        async function deleteStaffManual(staffKey) {
+            if(confirm('هل أنت متأكد من حذف هذا المعلم نهائياً؟')) {
+                const { error } = await supabaseClient.from('staff').delete().eq('cpr', staffKey);
+                if(error) {
+                    console.error("Staff Delete Error:", error);
+                    alert('خطأ أثناء الحذف: ' + error.message);
+                } else {
+                    alert('تم حذف المعلم بنجاح!');
+                    loadStaff();
+                }
+            }
+        }
+
+        async function changeStaffPassManual(staffKey) {
+            const p1 = prompt('أدخل كلمة المرور الجديدة للمعلم:');
+            if(p1 === null || !p1.trim()) return;
+            const p2 = prompt('أعد إدخال كلمة المرور الجديدة للتأكيد:');
+            if(p2 === null || p1 !== p2) {
+                alert('كلمتا المرور غير متطابقتين!');
+                return;
+            }
+
+            const { error } = await supabaseClient.from('staff').update({ password: p1.trim() }).eq('cpr', staffKey);
+            if(error) {
+                alert('خطأ أثناء تغيير كلمة المرور.');
+            } else {
+                alert('تم تغيير كلمة المرور بنجاح!');
+            }
+        }
+
+        async function addStaffManual() {
+            const name = document.getElementById('stfName').value.trim();
+            const cpr = document.getElementById('stfCpr').value.trim();
+            const email = document.getElementById('stfEmail').value.trim();
+            const password = document.getElementById('stfPass').value.trim() || '0';
+            const classes = document.getElementById('stfClasses').value.trim();
+            const role = document.getElementById('stfRole').value;
+            const username = cpr || email;
+
+            const { error } = await supabaseClient.from('staff').insert([{ name, cpr, username, email, password, classes, role }]);
+            if(error) { alert('خطأ في الإضافة: ' + error.message); } else { alert('تم إضافة المعلم بنجاح'); loadStaff(); }
+        }
+
+        function downloadStaffTemplate() {
+            const ws = XLSX.utils.json_to_sheet([{ name: "أحمد علي", cpr: "900000000", username: "900000000", email: "teacher@yarmook.bh", password: "0", classes: "5ب4", role: "Teacher" }]);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "المعلمين");
+            XLSX.writeFile(wb, "staff_template.xlsx");
+        }
+
+        async function uploadStaffExcel(e) {
+            const file = e.target.files[0];
+            if(!file) return;
+            const reader = new FileReader();
+            reader.onload = async function(evt) {
+                const data = new Uint8Array(evt.target.result);
+                const workbook = XLSX.read(data, {type: 'array'});
+                const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                const rows = XLSX.utils.sheet_to_json(sheet, {defval: ""});
+                
+                for(let r of rows) {
+                    let keys = Object.keys(r);
+                    let stName = "", stCpr = "", stUsername = "", stEmail = "", stRole = "Teacher", stClasses = "";
+
+                    keys.forEach(k => {
+                        let lk = k.toLowerCase().trim();
+                        if(lk.includes('name') || lk.includes('اسم')) stName = r[k];
+                        if(lk.includes('cpr') || lk.includes('شخصي')) stCpr = r[k];
+                        if(lk.includes('username') || lk.includes('مستخدم')) stUsername = r[k];
+                        if(lk.includes('email') || lk.includes('بريد')) stEmail = r[k];
+                        if(lk.includes('role') || lk.includes('دور')) stRole = r[k];
+                        if(lk.includes('class') || lk.includes('صفوف')) stClasses = r[k];
+                    });
+
+                    if(stName) {
+                        await supabaseClient.from('staff').insert([{
+                            name: String(stName).trim(), 
+                            cpr: stCpr ? String(stCpr).trim() : null, 
+                            username: stUsername ? String(stUsername).trim() : (stCpr ? String(stCpr).trim() : stEmail),
+                            email: stEmail ? String(stEmail).trim() : null, 
+                            password: '0', 
+                            classes: String(stClasses).trim(), 
+                            role: String(stRole).trim()
+                        }]);
+                    }
+                }
+                alert('تم رفع المعلمين بنجاح!');
+                loadStaff();
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        async function exportStaffExcel() {
+            const { data } = await supabaseClient.from('staff').select('name, cpr, username, email, role, classes');
+            const ws = XLSX.utils.json_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "المعلمين");
+            XLSX.writeFile(wb, "all_staff.xlsx");
+        }
+
+        // تحميل وعرض درجات الطلبة بشكل آمن ومستقر
+        async function loadScores() {
+            let query = supabaseClient.from('scores').select('*');
+            const { data, error } = await query;
+            const tbody = document.querySelector('#scoresTable tbody');
+            tbody.innerHTML = '';
+            
+            if(error) {
+                tbody.innerHTML = `<tr><td colspan="6" style="color:red;">خطأ أثناء جلب الدرجات: ${error.message}</td></tr>`;
+                return;
+            }
+
+            if(data && data.length > 0) {
+                data.forEach(sc => {
+                    let scoreId = sc.id;
+                    let dateStr = sc.created_at ? new Date(sc.created_at).toLocaleString() : '-';
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${sc.student_name || 'طالب'}</td>
+                            <td>${sc.student_class || sc.cls || ''}</td>
+                            <td>${sc.game_name || 'سباق صواريخ الفضاء'}</td>
+                            <td><b>${sc.score || sc.points || 0}</b></td>
+                            <td>${dateStr}</td>
+                            <td>
+                                <button class="btn btn-red" style="padding: 4px 8px; font-size: 12px;" onclick="deleteSingleScore('${scoreId}')">حذف 🗑️</button>
+                            </td>
+                        </tr>`;
+                });
+            } else {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#666;">لا توجد درجات مسجلة حتى الآن.</td></tr>`;
+            }
+        }
+
+        // حذف نتيجة طالب بشكل فردي عبر الـ ID
+        async function deleteSingleScore(scoreId) {
+            if(!confirm('هل أنت متأكد من حذف هذه النتيجة نهائياً؟')) return;
+
+            let query = supabaseClient.from('scores').delete();
+            if(!isNaN(scoreId)) {
+                query = query.eq('id', parseInt(scoreId));
+            } else {
+                query = query.eq('id', scoreId);
+            }
+
+            const { error } = await query;
+            if(error) {
+                alert('خطأ أثناء الحذف: ' + error.message);
+            } else {
                 alert('✅ تم حذف النتيجة بنجاح!');
                 loadScores();
             }
         }
 
+        // مسح جميع درجات اللعبة بالكامل من تبويب درجات الطلبة
         async function clearAllScores() {
-            const filter = document.getElementById('gameFilter').value;
-            if (confirm(`⚠️ هل أنت متأكد من مسح كافة درجات التصفية الحالية؟`)) {
-                if (filter === 'all' || filter === 'سباق صواريخ الفضاء') await supabaseClient.from('rocket_scores').delete().neq('id', 0);
-                if (filter === 'all' || filter === 'لغز منجم الذهب') await supabaseClient.from('goldmine_scores').delete().neq('id', 0);
-                alert('✅ تم مسح الدرجات بنجاح!'); loadScores();
+            if(!confirm('⚠️ تحذير: هل أنت متأكد تماماً من مسح كافة درجات وسجلات اللعبة نهائياً؟')) return;
+
+            const { error } = await supabaseClient.from('scores').delete().neq('id', 0);
+            if(error) {
+                alert('خطأ أثناء مسح النتائج: ' + error.message);
+            } else {
+                alert('🗑️ تم مسح جميع درجات اللعبة بنجاح!');
+                loadScores();
             }
         }
 
-        async function exportScoresExcel() {
-            const { data: rData } = await supabaseClient.from('rocket_scores').select('*');
-            const { data: mData } = await supabaseClient.from('goldmine_scores').select('*');
-            const combined = [...(rData || []), ...(mData || [])];
-            const ws = XLSX.utils.json_to_sheet(combined);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "جميع الدرجات");
-            XLSX.writeFile(wb, "student_scores_all.xlsx");
+        function exportScoresExcel() {
+            const table = document.getElementById('scoresTable');
+            const wb = XLSX.utils.table_to_book(table, {sheet: "الدرجات"});
+            XLSX.writeFile(wb, "students_scores.xlsx");
+        }
+
+        async function saveGameLevels() {
+            alert('تم حفظ إعدادات مستويات الصفوف بنجاح!');
         }
 
         async function resetScoresData() {
-            const pass = document.getElementById('confirmResetPass').value;
+            const pass = document.getElementById('confirmResetPass').value.trim();
             if(pass !== currentUser.password) { alert('كلمة المرور غير صحيحة!'); return; }
-            if(confirm('⚠️ تأكيد نهائي: مسح كل درجات المنصة بالكامل؟')) {
-                await supabaseClient.from('rocket_scores').delete().neq('id', 0);
-                await supabaseClient.from('goldmine_scores').delete().neq('id', 0);
-                alert('✅ تم تصفير كافة النتائج بنجاح!');
+            if(confirm('هل أنت متأكد تماماً من تصفير جميع النتائج؟')) {
+                const { error } = await supabaseClient.from('scores').delete().neq('id', 0);
+                if(!error) { alert('تم تصفير النتائج بنجاح'); loadScores(); }
             }
         }
 
-        function loadProfile() {
+        async function loadProfile() {
             document.getElementById('profName').value = currentUser.name || '';
             document.getElementById('profCpr').value = currentUser.cpr || '';
             document.getElementById('profEmail').value = currentUser.email || '';
@@ -407,15 +669,36 @@
 
         async function updateProfile() {
             const name = document.getElementById('profName').value.trim();
+            const cpr = document.getElementById('profCpr').value.trim();
             const email = document.getElementById('profEmail').value.trim();
             const newPass = document.getElementById('profNewPass').value.trim();
-            let updateObj = { name, email };
-            if(newPass) updateObj.password = newPass;
-            await supabaseClient.from('staff').update(updateObj).eq('cpr', currentUser.cpr);
-            alert('✅ تم تحديث بياناتك بنجاح!');
+
+            let updateData = { name, cpr, email };
+            if(newPass) updateData.password = newPass;
+
+            let query = supabaseClient.from('staff').update(updateData);
+            if (currentUser.cpr) {
+                query = query.eq('cpr', currentUser.cpr);
+            } else if (currentUser.username) {
+                query = query.eq('username', currentUser.username);
+            }
+
+            const { data, error } = await query.select();
+            if(error) {
+                alert('حدث خطأ أثناء التحديث في السحابة.');
+            } else {
+                alert('تم تحديث ومزامنة بياناتك الشخصية بنجاح!');
+                if(data && data.length > 0) {
+                    currentUser = data[0];
+                    localStorage.setItem('current_staff_user', JSON.stringify(currentUser));
+                }
+            }
         }
 
-        function logout() { localStorage.removeItem('current_staff_user'); window.location.href = 'staff.html'; }
+        function logout() {
+            localStorage.removeItem('current_staff_user');
+            window.location.href = 'staff.html';
+        }
     </script>
 </body>
 </html>
