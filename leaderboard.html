@@ -125,7 +125,7 @@
                 let rocketData = [];
                 let mineData = [];
 
-                // 1. جلب البيانات بناءً على اللعبة المحددة
+                // 1. جلب البيانات من جدول rocket_scores الجديد
                 if (selectedGame === 'all' || selectedGame === 'rocket') {
                     const { data: rData, error: rErr } = await supabaseClient.from('rocket_scores').select('*');
                     if (!rErr && rData) {
@@ -140,6 +140,7 @@
                     }
                 }
 
+                // 2. جلب البيانات من جدول goldmine_scores الجديد
                 if (selectedGame === 'all' || selectedGame === 'mine') {
                     const { data: mData, error: mErr } = await supabaseClient.from('goldmine_scores').select('*');
                     if (!mErr && mData) {
@@ -171,7 +172,7 @@
                     return;
                 }
 
-                // 2. معالجة جدول الصدارة (أعلى نقاط لكل طالب)
+                // 3. معالجة جدول الصدارة (أعلى نقاط لكل طالب)
                 let studentBestScores = {};
                 filteredData.forEach(item => {
                     let key = item.student_name + '_' + item.cls;
@@ -202,7 +203,7 @@
                     topTableBody.appendChild(tr);
                 });
 
-                // 3. معالجة جدول الأكثر نشاطاً (حسب عدد محاولات اللعب بغض النظر عن النتيجة)
+                // 4. معالجة جدول الأكثر نشاطاً (حسب عدد محاولات اللعب بغض النظر عن النتيجة)
                 let studentPlayCounts = {};
                 filteredData.forEach(item => {
                     let key = item.student_name + '_' + item.cls;
@@ -242,8 +243,6 @@
         function populateClassDropdown(data, currentSelected) {
             const classSelect = document.getElementById('classFilter');
             let uniqueClasses = [...new Set(data.map(item => item.cls))].filter(Boolean);
-            
-            // ترتيب تصاعدي منطقي للصفوف (مثل 3ب4، 6ب2...)
             uniqueClasses.sort();
 
             classSelect.innerHTML = '<option value="all">جميع الصفوف النشطة 🏫</option>';
