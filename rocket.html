@@ -10,7 +10,7 @@
     <style>
         body { font-family: 'Cairo', sans-serif; background: radial-gradient(circle, #1a1c29 0%, #0d0e15 100%); color: white; margin: 0; padding: 0; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; }
         .game-container { width: 100%; max-width: 600px; height: 100vh; background: rgba(15, 23, 42, 0.95); position: relative; box-shadow: 0 0 30px rgba(79, 70, 229, 0.4); display: flex; flex-direction: column; justify-content: space-between; border-left: 2px solid #334155; border-right: 2px solid #334155; box-sizing: border-box; overflow: hidden; }
-        .hud { display: flex; justify-content: space-between; padding: 15px 20px; background: rgba(30, 41, 59, 0.95); font-size: 16px; font-weight: bold; border-bottom: 2px solid #4f46e5; z-index: 10; position: relative; }
+        .hud { display: flex; justify-content: space-between; padding: 15px 20px; background: rgba(30, 41, 59, 0.95); font-size: 15px; font-weight: bold; border-bottom: 2px solid #4f46e5; z-index: 10; position: relative; }
         .hud span { color: #f59e0b; }
         
         .bonus-float-msg { position: absolute; top: 65px; left: 50%; transform: translateX(-50%); background: #10b981; color: white; padding: 4px 15px; border-radius: 20px; font-size: 14px; font-weight: bold; box-shadow: 0 0 15px #10b981; pointer-events: none; opacity: 0; transition: 0.3s; z-index: 20; }
@@ -43,7 +43,7 @@
 <body>
 
     <div class="game-container" id="gameContainer">
-        <!-- لوحة التعليمات والقواعد متزامنة سحابياً -->
+        <!-- لوحة التعليمات -->
         <div class="modal" id="instructionsModal">
             <h1>🚀 تعليمات وقواعد سباق الصواريخ</h1>
             <div class="instructions-box">
@@ -51,28 +51,28 @@
                     <li>⏱️ <b>زمن الجولة:</b> لديك <span id="ruleTime" style="color:#f59e0b; font-weight:bold;">--</span> ثانية للإجابة على أكبر عدد من الأسئلة.</li>
                     <li>🎯 <b>طريقة التصويب:</b> انقر في أي مكان بالساحة، وسيطلق صاروخك شعاع ليزر مستقيم نحو الناتج الصحيح للجرم الفضائي.</li>
                     <li>⭐ <b>النقاط:</b> كل إجابة صحيحة تمنحك <span id="rulePoints" style="color:#10b981; font-weight:bold;">--</span> نقطة.</li>
-                    <li>🔥 <b>مكافأة السلسلة:</b> الإجابة على <span id="ruleStreak" style="color:#ec4899; font-weight:bold;">--</span> أسئلة متتالية بشكل صحيح تمنحك وقتاً إضافياً قدره <span id="ruleBonus" style="color:#38bdf8; font-weight:bold;">--</span> ثوانٍ!</li>
+                    <li>🔥 <b>مكافأة السلسلة:</b> الإجابة على <span id="ruleStreak" style="color:#ec4899; font-weight:bold;">--</span> أسئلة متتالية تمنحك وقتًا إضافيًا قدره <span id="ruleBonus" style="color:#38bdf8; font-weight:bold;">--</span> ثوانٍ!</li>
                 </ul>
             </div>
             <button class="btn" onclick="startTheGameSession()">ابدأ التحدي الآن 🎮</button>
         </div>
 
-        <!-- شاشة المعلومات العلوية HUD -->
+        <!-- شاشة المعلومات العلوية HUD مع زر التبديل -->
         <div class="hud">
-            <div>اللاعب: <span id="playerName">بطل</span></div>
+            <div>اللاعب: <span id="playerName">بطل</span> <button onclick="changePlayerQuick()" style="background:#ef4444; color:white; border:none; padding:2px 8px; border-radius:4px; font-size:11px; cursor:pointer; margin-right:8px; font-family:'Cairo';">تبديل 🔄</button></div>
             <div>⏱️ الوقت: <span id="timeLeft">--</span>ث</div>
             <div>🔥 السلسلة: <span id="streakCount">٠</span></div>
             <div>⭐ النقاط: <span id="scoreVal">٠</span></div>
             <div class="bonus-float-msg" id="bonusMsg">+١٠ ثوانٍ! ⏱️</div>
         </div>
 
-        <!-- ساحة اللعب الحركية -->
+        <!-- ساحة اللعب -->
         <div class="arena" id="arenaBox" onclick="handleArenaClick(event)">
             <div class="question-box" id="questionDisplay">؟ × ؟</div>
             <div class="rocket-ship" id="rocketShip">🚀</div>
         </div>
 
-        <!-- شاشة النهاية والنتيجة مع لوحة الصدارة -->
+        <!-- شاشة النهاية والنتيجة -->
         <div class="modal hidden" id="gameOverModal">
             <h1>انتهى السباق! 🏆</h1>
             <p id="finalScoreText">لقد جمعت ٠ نقطة</p>
@@ -91,7 +91,6 @@
     </div>
 
     <script>
-        // التحقق من اختيار الطالب
         let studentData = null;
         try {
             studentData = JSON.parse(localStorage.getItem('current_student'));
@@ -104,6 +103,11 @@
             window.location.href = 'student.html';
         } else {
             document.getElementById('playerName').textContent = studentData.name;
+        }
+
+        function changePlayerQuick() {
+            localStorage.removeItem('current_student');
+            window.location.href = 'student.html';
         }
 
         function playSound(type) {
@@ -149,7 +153,6 @@
             return String(num).replace(/\d/g, (d) => arabicNumbers[d]);
         }
 
-        // جلب الإعدادات المحدثة من سحابة Supabase فوراً عبر الإنترنت
         let customSettings = {
             gameTime: 60,
             correctPoints: 100,
@@ -192,7 +195,7 @@
         let asteroids = [];
 
         async function startTheGameSession() {
-            await loadCloudSettings(); // سحب أحدث الإعدادات السحابية عند بدء التحدي
+            await loadCloudSettings();
             timeLeft = customSettings.gameTime;
             document.getElementById('instructionsModal').classList.add('hidden');
             initGameSettings();
@@ -410,7 +413,7 @@
 
         async function loadLeaderboardInModal() {
             const lbList = document.getElementById('leaderboardList');
-            lbList.innerHTML = 'جاري التحميل...';
+            lbList.innerHTML = 'جاري تحميل الأبطال...';
             try {
                 const { data, error } = await supabaseClient
                     .from('scores')
