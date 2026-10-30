@@ -44,7 +44,6 @@
         });
 
         async function fetchStudents() {
-            // جلب بيانات الطلاب باستخدام عمود cls الصحيح في قاعدة البيانات
             const { data, error } = await supabaseClient.from('students').select('*');
             if(error) {
                 console.error("Error fetching students:", error);
@@ -54,7 +53,6 @@
 
             if(data && data.length > 0) {
                 allStudents = data;
-                // استخراج الصفوف الفريدة وترتيبها
                 let classes = [...new Set(data.map(s => s.cls))].filter(Boolean);
                 const classSelect = document.getElementById('classSelect');
                 classSelect.innerHTML = '<option value="">-- اختر الصف --</option>';
@@ -72,7 +70,6 @@
 
             if(!selectedClass) return;
 
-            // فلترة الطلاب بناءً على الصف المختار باستخدام عمود cls
             const filtered = allStudents.filter(s => s.cls === selectedClass);
             filtered.forEach(s => {
                 studentSelect.innerHTML += `<option value="${s.name}">${s.name}</option>`;
@@ -88,9 +85,9 @@
                 return;
             }
 
-            // حفظ بيانات الطالب في الجلسة للانتقال إلى شاشة اللعب
+            // حفظ بيانات الطالب في الجلسة والانتقال للعبة سباق الصواريخ الجديدة
             localStorage.setItem('current_student', JSON.stringify({ name, cls }));
-            window.location.href = 'game.html'; // أو اسم صفحة اللعبة لديك
+            window.location.href = 'rocket.html';
         }
     </script>
 </body>
