@@ -22,9 +22,6 @@
         .container { max-width: 1000px; margin: 30px auto; padding: 20px; flex: 1; width: 100%; }
         .card { background: var(--card-bg); border-radius: 12px; padding: 25px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin-bottom: 25px; }
         
-        .filters-bar { display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; justify-content: center; align-items: center; }
-        .filters-bar select { padding: 10px 15px; border-radius: 8px; border: 1px solid #cbd5e1; font-family: 'Segoe UI'; font-size: 14px; background: #fff; color: var(--text); cursor: pointer; }
-
         h2 { color: var(--accent); margin-bottom: 15px; text-align: center; font-size: 22px; }
         h3 { color: var(--primary); margin: 20px 0 10px 0; font-size: 18px; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; }
         table { width: 100%; border-collapse: collapse; margin-top: 10px; text-align: center; }
@@ -37,7 +34,6 @@
         
         .back-link { display: inline-block; margin-top: 10px; color: var(--primary); text-decoration: none; font-weight: bold; }
         .back-link:hover { text-decoration: underline; }
-        .hidden { display: none !important; }
     </style>
 </head>
 <body>
@@ -47,43 +43,66 @@
     </header>
 
     <div class="container">
-        <!-- شريط تصفية الألعاب فقط -->
-        <div class="filters-bar">
-            <div>
-                <label style="font-weight: bold; margin-left: 8px;">عرض حسب اللعبة:</label>
-                <select id="gameFilter" onchange="fetchAndRenderLeaderboard()">
-                    <option value="all">جميع الألعاب 🎮</option>
-                    <option value="rocket">سباق صواريخ الفضاء 🚀</option>
-                    <option value="mine">لغز منجم الذهب ⛏️</option>
-                </select>
-            </div>
-        </div>
 
-        <!-- 1. لوحة صدارة النقاط العامة -->
+        <!-- 1. جدول الصدارة المدمج (كل الألعاب) -->
         <div class="card">
-            <h2>👑 أبطال الصدارة والنتيجة الأكبر</h2>
-            <table id="topScoresTable">
+            <h2>👑 أبطال الصدارة العامة (جميع الألعاب مدمجة)</h2>
+            <table id="combinedTopTable">
                 <thead>
                     <tr>
                         <th>المركز 👑</th>
                         <th>اسم الطالب</th>
                         <th>الصف</th>
-                        <th>اللعبة</th>
-                        <th>النقاط العظمى ⭐️</th>
+                        <th>مجموع / أعلى نقاط ⭐️</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr><td colspan="5">جاري جلب ملوك الصدارة...</td></tr>
+                    <tr><td colspan="4">جاري تحميل أبطال الصدارة العامة...</td></tr>
                 </tbody>
             </table>
         </div>
 
-        <!-- 2. لوحة الأكثر تفاعلاً منفصلة لكل صف دراسي ديناميكياً -->
+        <!-- 2. جدول منفصل: صواريخ الفضاء -->
+        <div class="card">
+            <h2>🚀 أبطال صدارة "سباق صواريخ الفضاء"</h2>
+            <table id="rocketTopTable">
+                <thead>
+                    <tr>
+                        <th>المركز 👑</th>
+                        <th>اسم الطالب</th>
+                        <th>الصف</th>
+                        <th>النقاط العظمى ⭐️</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td colspan="4">جاري التحميل...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 3. جدول منفصل: منجم الذهب -->
+        <div class="card">
+            <h2>⛏️ أبطال صدارة "لغز منجم الذهب"</h2>
+            <table id="mineTopTable">
+                <thead>
+                    <tr>
+                        <th>المركز 👑</th>
+                        <th>اسم الطالب</th>
+                        <th>الصف</th>
+                        <th>النقاط العظمى ⭐️</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td colspan="4">جاري التحميل...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 4. لوحات الأكثر تفاعلاً منفصلة لكل صف دراسي ديناميكياً -->
         <div class="card">
             <h2>🔥 لوحة الأكثر تفاعلاً ونشاطاً هذا الأسبوع (حسب الصفوف)</h2>
-            
             <div id="activeTablesContainer">
-                <p style="text-align: center; color: #666;">جاري تحميل لوحات التفاعل...</p>
+                <p style="text-align: center; color: #666;">جاري تحليل الأنشطة الصفية...</p>
             </div>
 
             <div style="text-align: center; margin-top: 25px;">
@@ -94,83 +113,59 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            fetchAndRenderLeaderboard();
+            fetchAllLeaderboards();
         });
 
-        async function fetchAndRenderLeaderboard() {
-            const topTableBody = document.querySelector('#topScoresTable tbody');
+        async function fetchAllLeaderboards() {
+            const combinedTableBody = document.querySelector('#combinedTopTable tbody');
+            const rocketTableBody = document.querySelector('#rocketTopTable tbody');
+            const mineTableBody = document.querySelector('#mineTopTable tbody');
             const container = document.getElementById('activeTablesContainer');
-            const selectedGame = document.getElementById('gameFilter').value;
-
-            topTableBody.innerHTML = '<tr><td colspan="5">جاري التحميل...</td></tr>';
-            container.innerHTML = '<p style="text-align: center; color: #666;">جاري تحليل الأنشطة الصفية...</p>';
 
             try {
-                let rocketData = [];
-                let mineData = [];
+                // جلب بيانات صواريخ الفضاء
+                const { data: rocketData, error: rErr } = await supabaseClient.from('rocket_scores').select('*');
+                let rocketList = (!rErr && rocketData) ? rocketData.map(i => ({ student_name: i.student_name, cls: i.cls || 'غير مصنف', points: i.points || 0, type: 'rocket' })) : [];
 
-                if (selectedGame === 'all' || selectedGame === 'rocket') {
-                    const { data: rData, error: rErr } = await supabaseClient.from('rocket_scores').select('*');
-                    if (!rErr && rData) {
-                        rocketData = rData.map(item => ({
-                            student_name: item.student_name,
-                            cls: item.cls || 'غير مصنف',
-                            points: item.points || 0,
-                            game_name: 'سباق صواريخ الفضاء',
-                            game_type: 'rocket'
-                        }));
-                    }
-                }
+                // جلب بيانات منجم الذهب
+                const { data: mineData, error: mErr } = await supabaseClient.from('goldmine_scores').select('*');
+                let mineList = (!mErr && mineData) ? mineData.map(i => ({ student_name: i.student_name, cls: i.cls || 'غير مصنف', points: i.points || 0, type: 'mine' })) : [];
 
-                if (selectedGame === 'all' || selectedGame === 'mine') {
-                    const { data: mData, error: mErr } = await supabaseClient.from('goldmine_scores').select('*');
-                    if (!mErr && mData) {
-                        mineData = mData.map(item => ({
-                            student_name: item.student_name,
-                            cls: item.cls || 'غير مصنف',
-                            points: item.points || 0,
-                            game_name: 'لغز منجم الذهب',
-                            game_type: 'mine'
-                        }));
-                    }
-                }
+                // --- أ) تعبئة جدول الصدارة المستقل: صواريخ الفضاء ---
+                renderTopTableForGame(rocketList, rocketTableBody);
 
-                let allScoresData = [...rocketData, ...mineData];
+                // --- ب) تعبئة جدول الصدارة المستقل: منجم الذهب ---
+                renderTopTableForGame(mineList, mineTableBody);
 
-                if (allScoresData.length === 0) {
-                    topTableBody.innerHTML = '<tr><td colspan="5">لا توجد نتائج مسجلة حتى الآن.</td></tr>';
-                    container.innerHTML = '<p style="text-align: center; color: #666;">لا توجد سجلات نشاط لعرضها.</p>';
-                    return;
-                }
-
-                // 1. تعبئة جدول الصدارة العامة (أعلى نقاط لكل طالب)
-                let studentBestScores = {};
-                allScoresData.forEach(item => {
+                // --- ج) تعبئة الجدول المدمج العام ---
+                let allCombined = [...rocketList, ...mineList];
+                let combinedBest = {};
+                allCombined.forEach(item => {
                     let key = item.student_name + '_' + item.cls;
-                    if (!studentBestScores[key] || item.points > studentBestScores[key].points) {
-                        studentBestScores[key] = item;
+                    if (!combinedBest[key] || item.points > combinedBest[key].points) {
+                        combinedBest[key] = item;
                     }
                 });
+                let combinedArr = Object.values(combinedBest).sort((a, b) => b.points - a.points).slice(0, 10);
+                
+                combinedTableBody.innerHTML = '';
+                if (combinedArr.length === 0) {
+                    combinedTableBody.innerHTML = '<tr><td colspan="4">لا توجد نتائج مسجلة حتى الآن.</td></tr>';
+                } else {
+                    combinedArr.forEach((row, index) => {
+                        let medal = index === 0 ? '🥇 الأول' : index === 1 ? '🥈 الثاني' : index === 2 ? '🥉 الثالث' : (index + 1);
+                        combinedTableBody.innerHTML += `
+                            <tr>
+                                <td><b>${medal}</b></td>
+                                <td><b>${row.student_name}</b></td>
+                                <td>${row.cls}</td>
+                                <td><b style="color: #2e7d32; font-size: 16px;">${row.points}</b></td>
+                            </tr>
+                        `;
+                    });
+                }
 
-                let topPlayersArray = Object.values(studentBestScores).sort((a, b) => b.points - a.points).slice(0, 10);
-
-                topTableBody.innerHTML = '';
-                topPlayersArray.forEach((row, index) => {
-                    let medal = index === 0 ? '🥇 الأول' : index === 1 ? '🥈 الثاني' : index === 2 ? '🥉 الثالث' : (index + 1);
-                    let badgeClass = row.game_type === 'mine' ? 'badge-mine' : 'badge-game';
-
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td><b>${medal}</b></td>
-                        <td><b>${row.student_name}</b></td>
-                        <td>${row.cls}</td>
-                        <td><span class="${badgeClass}">${row.game_name}</span></td>
-                        <td><b style="color: #2e7d32; font-size: 16px;">${row.points}</b></td>
-                    `;
-                    topTableBody.appendChild(tr);
-                });
-
-                // 2. تصنيف الطلاب حسب المرحلة الدراسية ديناميكياً استناداً إلى رقم الصف (مثل 3، 4، 5، 6...)
+                // --- د) بناء جداول الأكثر تفاعلاً ديناميكياً حسب الصفوف (الثالث، الرابع، الخامس، السادس) ---
                 let gradeGroups = {
                     '3': { title: '⭐️ الصف الثالث الأساسي', students: {} },
                     '4': { title: '⭐️ الصف الرابع الأساسي', students: {} },
@@ -179,10 +174,9 @@
                     'other': { title: '⭐️ صفوف أخرى', students: {} }
                 };
 
-                allScoresData.forEach(item => {
+                allCombined.forEach(item => {
                     let clsStr = String(item.cls).trim();
-                    let firstChar = clsStr.charAt(0); // استخراج الرقم الأول (مثلاً 4 من 4ب1)
-                    
+                    let firstChar = clsStr.charAt(0);
                     let groupKey = gradeGroups[firstChar] ? firstChar : 'other';
                     let studentKey = item.student_name + '_' + clsStr;
 
@@ -196,7 +190,6 @@
                     gradeGroups[groupKey].students[studentKey].count++;
                 });
 
-                // 3. بناء الجداول ديناميكياً للصفوف التي تحتوي على نشاط فقط
                 container.innerHTML = '';
                 let activeGradesFound = false;
 
@@ -204,9 +197,7 @@
                     let group = gradeGroups[key];
                     let studentsArr = Object.values(group.students).sort((a, b) => b.count - a.count);
 
-                    // إذا لم يلعب أحد من هذه المرحلة، يتم تخطي إنشاء الجدول تماماً
                     if (studentsArr.length === 0) return;
-
                     activeGradesFound = true;
 
                     let tableHTML = `
@@ -245,8 +236,38 @@
 
             } catch (err) {
                 console.error("Leaderboard Error:", err);
-                container.innerHTML = '<p style="text-align: center; color: red;">حدث خطأ أثناء تحليل بيانات النشاط.</p>';
             }
+        }
+
+        // دالة مساعدة لتعبئة جداول الصدارة المستقلة لكل لعبة
+        function renderTopTableForGame(list, tableBody) {
+            let bestMap = {};
+            list.forEach(item => {
+                let key = item.student_name + '_' + item.cls;
+                if (!bestMap[key] || item.points > bestMap[key].points) {
+                    bestMap[key] = item;
+                }
+            });
+
+            let sortedArr = Object.values(bestMap).sort((a, b) => b.points - a.points).slice(0, 10);
+            tableBody.innerHTML = '';
+
+            if (sortedArr.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="4">لا توجد نتائج مسجلة لهذه اللعبة حتى الآن.</td></tr>';
+                return;
+            }
+
+            sortedArr.forEach((row, index) => {
+                let medal = index === 0 ? '🥇 الأول' : index === 1 ? '🥈 الثاني' : index === 2 ? '🥉 الثالث' : (index + 1);
+                tableBody.innerHTML += `
+                    <tr>
+                        <td><b>${medal}</b></td>
+                        <td><b>${row.student_name}</b></td>
+                        <td>${row.cls}</td>
+                        <td><b style="color: #2e7d32; font-size: 16px;">${row.points}</b></td>
+                    </tr>
+                `;
+            });
         }
     </script>
 
