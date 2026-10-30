@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>منصة ملك جدول الضرب - لوحة الملوك الكبرى</title>
+    <title>منصة ملك جدول الضرب - لوحة الملوك </title>
     <!-- مكتبة Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="config.js"></script>
@@ -29,9 +29,6 @@
         th { background: var(--accent); color: white; }
         tr:hover { background: #f1f5f9; }
         
-        .badge-game { background: #e0e7ff; color: #3730a3; padding: 3px 8px; border-radius: 6px; font-weight: bold; font-size: 12px; }
-        .badge-mine { background: #fef3c7; color: #92400e; padding: 3px 8px; border-radius: 6px; font-weight: bold; font-size: 12px; }
-        
         .back-link { display: inline-block; margin-top: 10px; color: var(--primary); text-decoration: none; font-weight: bold; }
         .back-link:hover { text-decoration: underline; }
     </style>
@@ -44,7 +41,7 @@
 
     <div class="container">
 
-        <!-- 1. جدول الصدارة المدمج (كل الألعاب) -->
+        <!-- 1. الجدول الأول: الصدارة المدمجة العامة -->
         <div class="card">
             <h2>👑 أبطال الصدارة العامة (جميع الألعاب مدمجة)</h2>
             <table id="combinedTopTable">
@@ -53,7 +50,7 @@
                         <th>المركز 👑</th>
                         <th>اسم الطالب</th>
                         <th>الصف</th>
-                        <th>مجموع / أعلى نقاط ⭐️</th>
+                        <th>النقاط العظمى ⭐️</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -62,7 +59,7 @@
             </table>
         </div>
 
-        <!-- 2. جدول منفصل: صواريخ الفضاء -->
+        <!-- 2. الجدول الثاني: صواريخ الفضاء -->
         <div class="card">
             <h2>🚀 أبطال صدارة "سباق صواريخ الفضاء"</h2>
             <table id="rocketTopTable">
@@ -80,7 +77,7 @@
             </table>
         </div>
 
-        <!-- 3. جدول منفصل: منجم الذهب -->
+        <!-- 3. الجدول الثالث: منجم الذهب -->
         <div class="card">
             <h2>⛏️ أبطال صدارة "لغز منجم الذهب"</h2>
             <table id="mineTopTable">
@@ -98,7 +95,7 @@
             </table>
         </div>
 
-        <!-- 4. لوحات الأكثر تفاعلاً منفصلة لكل صف دراسي ديناميكياً -->
+        <!-- 4. جداول الأكثر تفاعلاً منفصلة ديناميكياً حسب الصفوف -->
         <div class="card">
             <h2>🔥 لوحة الأكثر تفاعلاً ونشاطاً هذا الأسبوع (حسب الصفوف)</h2>
             <div id="activeTablesContainer">
@@ -123,21 +120,21 @@
             const container = document.getElementById('activeTablesContainer');
 
             try {
-                // جلب بيانات صواريخ الفضاء
+                // جلب بيانات صواريخ الفضاء من الجدول المستقل
                 const { data: rocketData, error: rErr } = await supabaseClient.from('rocket_scores').select('*');
-                let rocketList = (!rErr && rocketData) ? rocketData.map(i => ({ student_name: i.student_name, cls: i.cls || 'غير مصنف', points: i.points || 0, type: 'rocket' })) : [];
+                let rocketList = (!rErr && rocketData) ? rocketData.map(i => ({ student_name: i.student_name, cls: i.cls || 'غير مصنف', points: i.points || 0 })) : [];
 
-                // جلب بيانات منجم الذهب
+                // جلب بيانات منجم الذهب من الجدول المستقل
                 const { data: mineData, error: mErr } = await supabaseClient.from('goldmine_scores').select('*');
-                let mineList = (!mErr && mineData) ? mineData.map(i => ({ student_name: i.student_name, cls: i.cls || 'غير مصنف', points: i.points || 0, type: 'mine' })) : [];
+                let mineList = (!mErr && mineData) ? mineData.map(i => ({ student_name: i.student_name, cls: i.cls || 'غير مصنف', points: i.points || 0 })) : [];
 
-                // --- أ) تعبئة جدول الصدارة المستقل: صواريخ الفضاء ---
+                // --- 1. تعبئة الجدول الثاني: صواريخ الفضاء ---
                 renderTopTableForGame(rocketList, rocketTableBody);
 
-                // --- ب) تعبئة جدول الصدارة المستقل: منجم الذهب ---
+                // --- 2. تعبئة الجدول الثالث: منجم الذهب ---
                 renderTopTableForGame(mineList, mineTableBody);
 
-                // --- ج) تعبئة الجدول المدمج العام ---
+                // --- 3. تعبئة الجدول الأول: الصدارة المدمجة العامة ---
                 let allCombined = [...rocketList, ...mineList];
                 let combinedBest = {};
                 allCombined.forEach(item => {
@@ -165,7 +162,7 @@
                     });
                 }
 
-                // --- د) بناء جداول الأكثر تفاعلاً ديناميكياً حسب الصفوف (الثالث، الرابع، الخامس، السادس) ---
+                // --- 4. بناء جداول الأكثر تفاعلاً ديناميكياً حسب الصفوف (الثالث، الرابع، الخامس، السادس) ---
                 let gradeGroups = {
                     '3': { title: '⭐️ الصف الثالث الأساسي', students: {} },
                     '4': { title: '⭐️ الصف الرابع الأساسي', students: {} },
@@ -239,7 +236,6 @@
             }
         }
 
-        // دالة مساعدة لتعبئة جداول الصدارة المستقلة لكل لعبة
         function renderTopTableForGame(list, tableBody) {
             let bestMap = {};
             list.forEach(item => {
