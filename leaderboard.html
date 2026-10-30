@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>منصة ملك جدول الضرب - لوحة الملوك </title>
+    <title>منصة ملك جدول الضرب - لوحة الملوك الكبرى</title>
     <!-- مكتبة Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="config.js"></script>
@@ -31,19 +31,31 @@
         
         .back-link { display: inline-block; margin-top: 10px; color: var(--primary); text-decoration: none; font-weight: bold; }
         .back-link:hover { text-decoration: underline; }
+
+        footer.author-footer {
+            text-align: center;
+            padding: 15px;
+            margin-top: auto;
+            font-size: 14px;
+            color: #475569;
+            border-top: 1px solid #e2e8f0;
+            background: #ffffff;
+            font-weight: bold;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.03);
+        }
     </style>
 </head>
 <body>
 
     <header>
-        <h1>🏆 لوحة الملوك (أبطال جدول الضرب)</h1>
+        <h1>🏆 لوحة الملوك الكبرى (أبطال جدول الضرب)</h1>
     </header>
 
     <div class="container">
 
         <!-- 1. الجدول الأول: الصدارة المدمجة العامة -->
         <div class="card">
-            <h2>👑 أبطال الصدارة العامة (جميع الألعاب)</h2>
+            <h2>👑 أبطال الصدارة العامة (جميع الألعاب مدمجة)</h2>
             <table id="combinedTopTable">
                 <thead>
                     <tr>
@@ -107,6 +119,11 @@
             </div>
         </div>
     </div>
+
+    <!-- تذييل الصفحة (التوقيع الرسمي) -->
+    <footer class="author-footer">
+        إعداد أ. صادق القلعاوي | مدرسة اليرموك الابتدائية للبنين 🏫✨
+    </footer>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
