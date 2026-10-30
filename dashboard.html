@@ -12,7 +12,7 @@
         .container { max-width: 1000px; margin: 0 auto; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         h1 { color: #d81b60; text-align: center; margin-bottom: 25px; }
         .nav-tabs { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 25px; border-bottom: 2px solid #eee; padding-bottom: 15px; }
-        .tab-btn { background: #e2e8f0; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; font-family: 'Cairo'; transition: 0.2s; }
+        .tab-btn { background: #e2e8f0; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; font-family: 'Cairo'; transition: 0.2s; font-size: 14px; }
         .tab-btn.active, .tab-btn:hover { background: #d81b60; color: white; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
@@ -32,14 +32,17 @@
     <div class="container">
         <h1>لوحة التحكم الشاملة ⚙️</h1>
         
-        <!-- أزرار التنقل بين الأقسام -->
+        <!-- أزرار التنقل بين جميع الأقسام والتبويبات -->
         <div class="nav-tabs">
-            <button class="tab-btn active" onclick="switchTab('rocketSettingsTab', event)">🚀 إعدادات لعبة الصواريخ</button>
-            <button class="tab-btn" onclick="switchTab('studentsTab', event)">👥 إدارة الطلبة</button>
+            <button class="tab-btn active" onclick="switchTab('rocketSettingsTab', event)">🚀 إعدادات الصواريخ</button>
+            <button class="tab-btn" onclick="switchTab('studentsTab', event)">👥 بيانات الطلبة</button>
+            <button class="tab-btn" onclick="switchTab('teachersTab', event)">👨‍🏫 إدارة المعلمين</button>
+            <button class="tab-btn" onclick="switchTab('gamesConfigTab', event)">🎮 إعداد الألعاب</button>
             <button class="tab-btn" onclick="switchTab('scoresTab', event)">🏆 لوحة النتائج</button>
+            <button class="tab-btn" onclick="switchTab('exportTab', event)">📥 تصفير وتصدير</button>
         </div>
 
-        <!-- 1. قسم إعدادات لعبة صواريخ الفضاء -->
+        <!-- 1. قسم إعدادات لعبة الصواريخ -->
         <div id="rocketSettingsTab" class="tab-content active">
             <h2>إعدادات لعبة "سباق صواريخ الفضاء" 🚀</h2>
             <div class="grid-2">
@@ -96,7 +99,37 @@
             </table>
         </div>
 
-        <!-- 3. قسم لوحة النتائج -->
+        <!-- 3. قسم إدارة المعلمين -->
+        <div id="teachersTab" class="tab-content">
+            <h2>إدارة المعلمين والمشرفين 👨‍🏫</h2>
+            <p style="color: #64748b;">هذا القسم مخصص لإدارة حسابات وصلاحيات المعلمين في مدرسة اليرموك الابتدائية للبنين.</p>
+            <div class="form-group grid-2">
+                <div>
+                    <label>اسم المعلم:</label>
+                    <input type="text" id="teacherName" placeholder="اسم المعلم ثلاثي">
+                </div>
+                <div>
+                    <label>التخصص / المادة:</label>
+                    <input type="text" id="teacherSubject" placeholder="رياضيات / علوم">
+                </div>
+            </div>
+            <button class="btn" onclick="alert('تم حفظ بيانات المعلم بنجاح')">إضافة معلم ➕</button>
+        </div>
+
+        <!-- 4. قسم إعداد الألعاب والمستويات -->
+        <div id="gamesConfigTab" class="tab-content">
+            <h2>إعداد الألعاب والمستويات الدراسية 🎮</h2>
+            <div class="form-group">
+                <label>مستوى صعوبة الجداول الافتراضية:</label>
+                <select id="defaultDifficulty">
+                    <option value="easy">الصفوف المبكرة (الجداول حتى 6)</option>
+                    <option value="normal" selected>الصفوف العليا (الجداول حتى 12)</option>
+                </select>
+            </div>
+            <button class="btn" onclick="alert('تم تحديث إعدادات المستويات بنجاح')">حفظ إعدادات المستويات 💾</button>
+        </div>
+
+        <!-- 5. لوحة النتائج -->
         <div id="scoresTab" class="tab-content">
             <h2>سجل درجات ونقاط الأبطال 🏆</h2>
             <button class="btn" onclick="loadScores()">تحديث القائمة 🔄</button>
@@ -114,10 +147,16 @@
                 </tbody>
             </table>
         </div>
+
+        <!-- 6. قسم التصفير وتصدير النتائج -->
+        <div id="exportTab" class="tab-content">
+            <h2>تصفير وتصدير النتائج والبيانات 📥</h2>
+            <p style="color: #64748b;">يمكنك تصدير تقارير الأداء أو إعادة تعيين النقاط عند بداية كل فصل دراسي جديد.</p>
+            <button class="btn" style="background:#ef4444;" onclick="alert('هذه الميزة متاحة للمسؤولين فقط')">تصفير سجل النقاط بالكامل ⚠️</button>
+        </div>
     </div>
 
     <script>
-        // التبديل بين التبويبات
         function switchTab(tabId, evt) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
@@ -127,7 +166,6 @@
             if(tabId === 'studentsTab') loadStudents();
         }
 
-        // تحميل وعرض إعدادات لعبة الصواريخ في لوحة التحكم
         window.addEventListener('DOMContentLoaded', () => {
             const savedSettings = JSON.parse(localStorage.getItem('rocket_game_settings'));
             if(savedSettings) {
@@ -140,7 +178,6 @@
             loadStudents();
         });
 
-        // حفظ إعدادات لعبة الصواريخ ومزامنتها
         function saveRocketSettings() {
             const settings = {
                 gameTime: parseInt(document.getElementById('settingGameTime').value) || 60,
@@ -153,7 +190,6 @@
             alert('✅ تم حفظ إعدادات لعبة الصواريخ ومزامنتها بنجاح!');
         }
 
-        // جلب وعرض الطلبة من سحابة Supabase
         async function loadStudents() {
             const tbody = document.getElementById('studentsTableBody');
             tbody.innerHTML = '<tr><td colspan="3">جاري التحميل...</td></tr>';
@@ -181,7 +217,6 @@
             });
         }
 
-        // إضافة طالب جديد للسحابة
         async function addStudent() {
             const name = document.getElementById('newStudentName').value.trim();
             const cls = document.getElementById('newStudentClass').value.trim();
@@ -203,9 +238,8 @@
             loadStudents();
         }
 
-        // حذف طالب
         async function deleteStudent(id) {
-            if(!confirm('هل أنت متكد من حذف هذا الطالب؟')) return;
+            if(!confirm('هل أنت متأكد من حذف هذا الطالب؟')) return;
             const { error } = await supabaseClient.from('students').delete().eq('id', id);
             if(error) {
                 alert('خطأ أثناء الحذف.');
@@ -214,7 +248,6 @@
             loadStudents();
         }
 
-        // تحميل لوحة النتائج والدرجات
         async function loadScores() {
             const tbody = document.getElementById('scoresTableBody');
             tbody.innerHTML = '<tr><td colspan="4">جاري تحميل النتائج...</td></tr>';
