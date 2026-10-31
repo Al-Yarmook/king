@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>الصعود نحو القمة - ملك جدول الضرب</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #d81b60;
+            --primary-hover: #ad1457;
+            --bg: #e0f2fe;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+        }
+        /* منع التكبير والتحديد المزعج باللمس لضمان الانسيابية المطلقة */
+        * { touch-action: manipulation; box-sizing: border-box; margin: 0; padding: 0; font-family: 'Cairo', sans-serif; user-select: none; -webkit-user-select: none; }
+        body { background-color: var(--bg); color: var(--text); margin: 0; padding: 0; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; }
+        
+        .game-container { width: 100%; max-width: 600px; height: 100vh; background: linear-gradient(to bottom, #bae6fd, #e0f2fe, #f0fdf4); position: relative; box-shadow: 0 4px 20px rgba(0,0,0,0.08); display: flex; flex-direction: column; justify-content: space-between; border-left: 2px solid #cbd5e1; border-right: 2px solid #cbd5e1; overflow: hidden; padding-bottom: 10px; }
+        
+        .hud { display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; background: rgba(255,255,255,0.9); font-size: 13px; font-weight: bold; border-bottom: 2px solid var(--primary); z-index: 10; color: var(--text); backdrop-filter: blur(5px); }
+        .hud span { color: var(--primary); }
+        
+        .penalty-float-msg { position: absolute; top: 60px; left: 50%; transform: translateX(-50%); background: #dc2626; color: white; padding: 4px 15px; border-radius: 20px; font-size: 13px; font-weight: bold; pointer-events: none; opacity: 0; transition: 0.3s; z-index: 20; box-shadow: 0 0 10px rgba(220,38,38,0.4); }
+        .penalty-float-msg.show { opacity: 1; transform: translateX(-50%) translateY(-5px); }
+
+        /* منطقة الجبل البصرية والتسلق */
+        .mountain-arena { flex: 1; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 10px; box-sizing: border-box; }
+        
+        .mountain-scene { width: 100%; max-width: 450px; height: 160px; background: linear-gradient(135deg, #475569, #334155, #1e293b); border-radius: 15px; position: relative; overflow: hidden; border: 3px solid #cbd5e1; box-shadow: inset 0 10px 20px rgba(0,0,0,0.3); display: flex; align-items: flex-end; justify-content: center; margin-bottom: 10px; }
+        .mountain-peak { position: absolute; top: 10px; right: 20px; font-size: 28px; z-index: 2; }
+        
+        /* الشخصية المتسلقة */
+        .climber { position: absolute; bottom: 10px; left: 20px; font-size: 40px; transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 5; }
+
+        .question-card { background: rgba(255, 255, 255, 0.95); border: 3px solid var(--primary); padding: 15px; width: 90%; max-width: 420px; text-align: center; border-radius: 15px; box-shadow: 0 6px 20px rgba(0,0,0,0.08); margin-bottom: 10px; }
+        .door-title { color: #334155; font-size: 13px; margin-bottom: 5px; font-weight: bold; }
+        .question-box { font-size: 30px; font-weight: 900; color: var(--primary); letter-spacing: 2px; }
+        
+        /* شبكة الأربعة خيارات */
+        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 90%; max-width: 420px; margin-bottom: 5px; }
+        .opt-btn { background: #ffffff; border: 2px solid var(--primary); color: var(--primary); padding: 14px; border-radius: 12px; font-size: 22px; font-weight: bold; cursor: pointer; transition: 0.2s; font-family: 'Cairo'; box-shadow: 0 3px 10px rgba(0,0,0,0.03); }
+        .opt-btn:hover { background: var(--primary); color: white; transform: translateY(-2px); }
+
+        .modal { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.98); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; text-align: center; padding: 25px; box-sizing: border-box; overflow-y: auto; }
+        .modal h1 { color: var(--primary); font-size: 26px; margin-bottom: 15px; }
+        .instructions-box { background: #f8fafc; padding: 18px; border-radius: 12px; border: 1px solid #cbd5e1; text-align: right; margin-bottom: 20px; width: 100%; max-width: 450px; box-sizing: border-box; }
+        .instructions-box ul { padding-right: 20px; margin: 0; }
+        .instructions-box li { margin-bottom: 10px; font-size: 13px; color: var(--text); line-height: 1.5; }
+
+        .leaderboard-box { background: #f8fafc; border: 2px solid #cbd5e1; border-radius: 10px; padding: 15px; width: 100%; max-width: 400px; margin-bottom: 20px; text-align: right; }
+        .leaderboard-box h3 { color: var(--primary); margin-top: 0; margin-bottom: 10px; text-align: center; font-size: 18px; }
+        .lb-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #cbd5e1; font-size: 14px; color: var(--text); }
+
+        .btn { background: var(--primary); color: white; border: none; padding: 12px 30px; font-size: 16px; font-weight: bold; border-radius: 10px; cursor: pointer; transition: 0.3s; font-family: 'Cairo'; text-decoration: none; display: inline-block; }
+        .btn:hover { background: var(--primary-hover); transform: translateY(-2px); }
+        .btn-green { background: #2e7d32; }
+        .btn-green:hover { background: #1b5e20; }
+        .btn-dark { background: #334155; }
+        .btn-dark:hover { background: #1e293b; }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <div class="game-container" id="gameContainer">
+        <!-- شاشة التعليمات -->
+        <div class="modal" id="instructionsModal">
+            <h1>🧗‍♂️ تعليمات لعبة الصعود نحو القمة</h1>
+            <div class="instructions-box">
+                <ul>
+                    <li>🏔️ <b>المهمة:</b> أجب عن مسائل جدول الضرب واختر الإجابة الصحيحة من بين 4 خيارات لتسلق الجبل نحو القمة!</li>
+                    <li>⏱️ <b>الوقت المحدود:</b> لديك <span id="ruleTime" style="color:var(--primary); font-weight:bold;">٩0</span> ثانية فقط لإنجاز الصعود.</li>
+                    <li>⚠️ <b>عقوبة الخطأ:</b> كل إجابة خاطئة تخصم <span style="color:#dc2626; font-weight:bold;">5 ثوانٍ</span> من وقتك المتبقي!</li>
+                    <li>⭐ <b>النقاط:</b> كل خطوة ناجحة تقربك للقمة وتمنحك نقاطاً مضاعفة.</li>
+                </ul>
+            </div>
+            <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                <button class="btn" onclick="startTheGameSession()">ابدأ الصعود الآن 🧗‍♂️</button>
+                <a href="index.html" class="btn btn-dark">الرئيسية 🏠</a>
+            </div>
+        </div>
+
+        <!-- شريط المعلومات HUD -->
+        <div class="hud">
+            <div>المتسلق: <span id="playerName">بطل</span> <button onclick="changePlayerQuick()" style="background:#ef5350; color:white; border:none; padding:2px 6px; border-radius:4px; font-size:11px; cursor:pointer; margin-right:6px; font-family:'Cairo';">تبديل 🔄</button></div>
+            <div>⏱️ الوقت: <span id="timeLeft">٩0</span>ث</div>
+            <div>🧗 الخطوات: <span id="stepsCount">٠</span></div>
+            <div>⭐ النقاط: <span id="scoreVal">٠</span></div>
+            <div class="penalty-float-msg" id="penaltyMsg">-٥ ثوانٍ! ⚠️</div>
+        </div>
+
+        <!-- ساحة اللعب -->
+        <div class="mountain-arena">
+            <div class="mountain-scene">
+                <div class="mountain-peak">🚩 قمة المجد</div>
+                <div class="climber" id="climberIcon">🧗‍♂️</div>
+            </div>
+
+            <div class="question-card">
+                <div class="door-title">حل المسألة التالية لمتابعة الصعود:</div>
+                <div class="question-box" id="questionDisplay">? × ? = ?</div>
+            </div>
+
+            <div class="options-grid" id="optionsGrid"></div>
+        </div>
+
+        <!-- شاشة النهاية -->
+        <div class="modal hidden" id="gameOverModal">
+            <h1 id="gameOverTitle">انتهت الرحلة! 🏆</h1>
+            <p id="finalScoreText" style="margin-bottom: 12px; font-size: 16px; color: var(--text);">لقد جمعت نقاطاً رائعة</p>
+            <p id="saveStatus" style="color: var(--primary); font-size: 13px; margin-bottom: 10px;"></p>
+            
+            <div class="leaderboard-box">
+                <h3>🏆 أبطال الصعود نحو القمة</h3>
+                <div id="leaderboardList">جاري تحميل الأبطال...</div>
+            </div>
+
+            <div style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center;">
+                <button class="btn" onclick="restartGame()">محاولة جديدة 🔄</button>
+                <a href="index.html" class="btn btn-green">الرئيسية 🏠</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let studentData = null;
+        try { studentData = JSON.parse(localStorage.getItem('current_student')); } catch (e) { studentData = null; }
+
+        if (!studentData || !studentData.name) {
+            alert('الرجاء اختيار اسمك والصف الدراسي أولاً للبدء!');
+            window.location.href = 'student.html';
+        } else {
+            document.getElementById('playerName').textContent = studentData.name;
+        }
+
+        function changePlayerQuick() {
+            localStorage.removeItem('current_student');
+            window.location.href = 'student.html';
+        }
+
+        function playSound(type) {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain); gain.connect(audioCtx.destination);
+
+                if (type === 'step') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.1);
+                    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+                    osc.start(); osc.stop(audioCtx.currentTime + 0.15);
+                } else if (type === 'wrong') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(180, audioCtx.currentTime);
+                    osc.frequency.linearRampToValueAtTime(100, audioCtx.currentTime + 0.2);
+                    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
+                    osc.start(); osc.stop(audioCtx.currentTime + 0.25);
+                }
+            } catch (e) {}
+        }
+
+        function toArabicNum(num) {
+            const arabicNumbers = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+            return String(num).replace(/\d/g, (d) => arabicNumbers[d]);
+        }
+
+        let customSettings = {
+            gameTime: 90,
+            questionType: 'both',
+            correctPoints: 100,
+            penaltySeconds: 5
+        };
+
+        let gradeTablesConfig = { t1: 3, t2: 5, t3: 7, t4: 9, t5: 12, t6: 12 };
+
+        async function loadCloudSettings() {
+            try {
+                const { data } = await supabaseClient.from('game_settings').select('value').eq('key', 'mountain_settings').single();
+                if (data && data.value) customSettings = { ...customSettings, ...data.value };
+
+                const { data: gradeData } = await supabaseClient.from('game_settings').select('value').eq('key', 'grade_tables_settings').single();
+                if (gradeData && gradeData.value) gradeTablesConfig = { ...gradeTablesConfig, ...gradeData.value };
+            } catch (e) {}
+
+            document.getElementById('ruleTime').textContent = toArabicNum(customSettings.gameTime);
+            document.getElementById('timeLeft').textContent = toArabicNum(customSettings.gameTime);
+        }
+
+        loadCloudSettings();
+
+        let score = 0, timeLeft = customSettings.gameTime, steps = 0, currentCorrectAnswer = 0, maxTable = 10;
+        let timerInterval = null;
+
+        async function startTheGameSession() {
+            await loadCloudSettings();
+            document.getElementById('instructionsModal').classList.add('hidden');
+            initGameSettings();
+        }
+
+        function initGameSettings() {
+            const cls = String(studentData.cls || '').trim();
+            const firstDigitMatch = cls.match(/\d/);
+            const gradeNum = firstDigitMatch ? parseInt(firstDigitMatch[0]) : 5;
+
+            switch(gradeNum) {
+                case 1: maxTable = gradeTablesConfig.t1; break;
+                case 2: maxTable = gradeTablesConfig.t2; break;
+                case 3: maxTable = gradeTablesConfig.t3; break;
+                case 4: maxTable = gradeTablesConfig.t4; break;
+                case 5: maxTable = gradeTablesConfig.t5; break;
+                case 6: maxTable = gradeTablesConfig.t6; break;
+                default: maxTable = 12; break;
+            }
+            startGameEngine();
+        }
+
+        function startGameEngine() {
+            score = 0; timeLeft = customSettings.gameTime; steps = 0;
+            updateHUD();
+            updateClimberPosition();
+            document.getElementById('gameOverModal').classList.add('hidden');
+            generateNewPuzzle();
+
+            if (timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                updateHUD();
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    endGame(true);
+                }
+            }, 1000);
+        }
+
+        function updateHUD() {
+            document.getElementById('scoreVal').textContent = toArabicNum(score);
+            document.getElementById('timeLeft').textContent = toArabicNum(timeLeft);
+            document.getElementById('stepsCount').textContent = toArabicNum(steps);
+        }
+
+        function showPenaltyMessage() {
+            const msg = document.getElementById('penaltyMsg');
+            msg.textContent = `-${toArabicNum(customSettings.penaltySeconds)} ثوانٍ! ⚠️`;
+            msg.classList.add('show');
+            setTimeout(() => msg.classList.remove('show'), 1500);
+        }
+
+        function updateClimberPosition() {
+            const climber = document.getElementById('climberIcon');
+            let progress = Math.min(steps / 15, 1);
+            let leftPos = 20 + (progress * 320);
+            let bottomPos = 10 + (progress * 100);
+            climber.style.left = leftPos + 'px';
+            climber.style.bottom = bottomPos + 'px';
+        }
+
+        function generateNewPuzzle() {
+            let num1 = Math.floor(Math.random() * maxTable) + 1;
+            let num2 = Math.floor(Math.random() * 10) + 1;
+            let totalProduct = num1 * num2;
+
+            let qMode = customSettings.questionType || 'both';
+            let isMissingFactor = false;
+            let missingWhich = 1;
+
+            if (qMode === 'missing') {
+                isMissingFactor = true;
+                missingWhich = Math.random() > 0.5 ? 1 : 2;
+            } else if (qMode === 'product') {
+                isMissingFactor = false;
+            } else {
+                let randType = Math.random();
+                if (randType > 0.33) {
+                    isMissingFactor = true;
+                    missingWhich = randType > 0.66 ? 1 : 2;
+                } else {
+                    isMissingFactor = false;
+                }
+            }
+
+            if (isMissingFactor) {
+                if (missingWhich === 1) {
+                    currentCorrectAnswer = num1;
+                    document.getElementById('questionDisplay').textContent = `؟ × ${toArabicNum(num2)} = ${toArabicNum(totalProduct)}`;
+                } else {
+                    currentCorrectAnswer = num2;
+                    document.getElementById('questionDisplay').textContent = `${toArabicNum(num1)} × ؟ = ${toArabicNum(totalProduct)}`;
+                }
+            } else {
+                currentCorrectAnswer = totalProduct;
+                document.getElementById('questionDisplay').textContent = `${toArabicNum(num1)} × ${toArabicNum(num2)} = ؟`;
+            }
+
+            let options = [currentCorrectAnswer];
+            while (options.length < 4) {
+                let wrongShift = (Math.floor(Math.random() * 7) - 3);
+                if (wrongShift === 0) wrongShift = 1;
+                let wrong = currentCorrectAnswer + wrongShift;
+                if (wrong > 0 && !options.includes(wrong)) {
+                    options.push(wrong);
+                }
+            }
+            options.sort(() => Math.random() - 0.5);
+
+            const grid = document.getElementById('optionsGrid');
+            grid.innerHTML = '';
+            options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'opt-btn';
+                btn.textContent = toArabicNum(opt);
+                btn.onclick = () => checkAnswer(opt, currentCorrectAnswer);
+                grid.appendChild(btn);
+            });
+        }
+
+        function checkAnswer(selectedOpt, correctVal) {
+            if (selectedOpt === correctVal) {
+                playSound('step');
+                score += parseInt(customSettings.correctPoints || 100);
+                steps++;
+                updateClimberPosition();
+                updateHUD();
+                generateNewPuzzle();
+            } else {
+                playSound('wrong');
+                timeLeft = Math.max(0, timeLeft - parseInt(customSettings.penaltySeconds || 5));
+                showPenaltyMessage();
+                updateHUD();
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    endGame(false);
+                }
+            }
+        }
+
+        async function endGame(isWin) {
+            clearInterval(timerInterval);
+            const modal = document.getElementById('gameOverModal');
+            modal.classList.remove('hidden');
+            document.getElementById('gameOverTitle').textContent = isWin ? '🎉 مبروك! وصلت القمة بنجاح! 🚩' : 'انتهى الوقت! ⏰';
+            document.getElementById('finalScoreText').textContent = `أحسنت يا ${studentData.name}! جمعت ${toArabicNum(score)} نقطة وتسوقت ${toArabicNum(steps)} خطوات.`;
+            document.getElementById('saveStatus').textContent = 'جاري حفظ النتيجة بالسحابة...';
+
+            try {
+                await supabaseClient.from('mountain_scores').insert([{
+                    student_name: studentData.name, cls: studentData.cls, points: score, weekly_points: score
+                }]);
+                document.getElementById('saveStatus').textContent = '✅ تم الحفظ بنجاح!';
+                loadLeaderboardInModal();
+            } catch (err) {
+                document.getElementById('saveStatus').textContent = '⚠️ تعذر حفظ النتيجة.';
+            }
+        }
+
+        async function loadLeaderboardInModal() {
+            const lbList = document.getElementById('leaderboardList');
+            try {
+                const { data } = await supabaseClient.from('mountain_scores').select('student_name, points').order('points', { ascending: false }).limit(5);
+                if (!data || data.length === 0) { lbList.innerHTML = 'لا توجد نتائج.'; return; }
+                lbList.innerHTML = '';
+                data.forEach((row, index) => {
+                    let medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '⭐';
+                    lbList.innerHTML += `<div class="lb-row"><span>${medal} ${row.student_name}</span><span><b>${toArabicNum(row.points || 0)}</b> نقطة</span></div>`;
+                });
+            } catch (err) { lbList.innerHTML = 'تعذر التحميل.'; }
+        }
+
+        function restartGame() { document.getElementById('instructionsModal').classList.add('hidden'); startGameEngine(); }
+    </script>
+</body>
+</html>
