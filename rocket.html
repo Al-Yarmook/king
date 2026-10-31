@@ -3,42 +3,82 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>سباق صواريخ الفضاء - ملك جدول الضرب</title>
+    <title>لغز منجم الذهب - ملك جدول الضرب</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="config.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Cairo', sans-serif; background: #0b0f19; color: white; margin: 0; padding: 0; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; position: relative; }
-        .game-container { width: 100%; max-width: 600px; height: 100vh; background: radial-gradient(circle at center, #1e1b4b 0%, #090d16 100%); position: relative; box-shadow: 0 0 40px rgba(79, 70, 229, 0.3); display: flex; flex-direction: column; justify-content: space-between; border-left: 2px solid #3730a3; border-right: 2px solid #3730a3; box-sizing: border-box; overflow: hidden; padding-bottom: 25px; }
+        body { font-family: 'Cairo', sans-serif; background: #0f0905; color: white; margin: 0; padding: 0; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; position: relative; }
+        .game-container { width: 100%; max-width: 600px; height: 100vh; background: linear-gradient(to bottom, rgba(20, 10, 5, 0.85), rgba(10, 5, 2, 0.95)), url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="%231a0f08"/><path d="0 0L50 50M100 0L50 50M0 100L50 50M100 100L50 50" stroke="%232d1a0e" stroke-width="2"/><circle cx="20" cy="30" r="3" fill="%233a2212"/><circle cx="80" cy="70" r="4" fill="%233a2212"/></svg>'); background-size: cover; position: relative; box-shadow: 0 0 40px rgba(245, 158, 11, 0.25); display: flex; flex-direction: column; justify-content: space-between; border-left: 3px solid #78350f; border-right: 3px solid #78350f; box-sizing: border-box; overflow: hidden; padding-bottom: 25px; }
+        
+        .hud { display: flex; justify-content: space-between; padding: 12px 18px; background: rgba(35, 18, 8, 0.95); font-size: 15px; font-weight: bold; border-bottom: 2px solid #f59e0b; z-index: 10; position: relative; }
+        .hud span { color: #fbbf24; }
+        
+        .bonus-float-msg { position: absolute; top: 60px; left: 50%; transform: translateX(-50%); background: #10b981; color: white; padding: 4px 15px; border-radius: 20px; font-size: 14px; font-weight: bold; box-shadow: 0 0 15px #10b981; pointer-events: none; opacity: 0; transition: 0.3s; z-index: 20; }
+        .bonus-float-msg.show { opacity: 1; transform: translateX(-50%) translateY(-5px); }
 
-        .hud { display: flex; justify-content: space-between; padding: 12px 18px; background: rgba(15, 23, 42, 0.9); font-size: 15px; font-weight: bold; border-bottom: 2px solid #4f46e5; z-index: 10; position: relative; }
-        .hud span { color: #818cf8; }
+        .mine-arena { flex: 1; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 20px 15px; box-sizing: border-box; }
+        
+        .progress-track { display: flex; gap: 6px; align-items: center; justify-content: center; width: 100%; background: rgba(0,0,0,0.6); padding: 8px; border-radius: 12px; border: 1px solid #78350f; }
+        .step-node { width: 28px; height: 28px; border-radius: 50%; background: #451a03; border: 2px solid #92400e; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; color: #d97706; transition: 0.3s; }
+        .step-node.active { background: #f59e0b; color: #1e140c; border-color: #fef08a; box-shadow: 0 0 10px #f59e0b; transform: scale(1.15); }
+        .step-node.done { background: #10b981; color: white; border-color: #a7f3d0; }
+        
+        .rock-stage { position: relative; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 10px 0; min-height: 220px; }
+        
+        .pickaxe { position: absolute; top: -40px; right: 15%; font-size: 70px; z-index: 15; pointer-events: none; opacity: 0; transform-origin: bottom left; }
+        .pickaxe.swing { animation: axeSwing 0.4s ease-in-out; }
 
-        .space-arena { flex: 1; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 20px 15px; box-sizing: border-box; }
-
-        .rocket-track { position: relative; width: 100%; height: 180px; border-left: 2px dashed rgba(255,255,255,0.2); border-right: 2px dashed rgba(255,255,255,0.2); display: flex; justify-content: center; align-items: flex-end; }
-        .rocket { font-size: 60px; transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); position: absolute; bottom: 10px; }
-        .rocket.launch { animation: rocketBoost 0.4s ease-in-out; }
-
-        @keyframes rocketBoost {
-            0% { transform: translateY(0) scale(1); }
-            50% { transform: translateY(-30px) scale(1.15); }
-            100% { transform: translateY(0) scale(1); }
+        @keyframes axeSwing {
+            0% { opacity: 1; transform: rotate(0deg) translate(0, 0); }
+            40% { transform: rotate(-50deg) translate(-25px, -15px); }
+            75% { transform: rotate(35deg) translate(-20px, 35px); }
+            100% { opacity: 0; transform: rotate(0deg); }
         }
 
-        .question-card { background: rgba(30, 27, 75, 0.85); border: 2px solid #6366f1; border-radius: 15px; padding: 15px 25px; text-align: center; box-shadow: 0 0 20px rgba(99, 102, 241, 0.3); width: 85%; }
-        .question-title { color: #a5b4fc; font-size: 14px; margin-bottom: 5px; }
-        .question-text { font-size: 32px; font-weight: 900; color: #ffffff; letter-spacing: 2px; }
+        .rock-card { 
+            background: radial-gradient(circle at 30% 30%, #68645f 0%, #38322e 60%, #1c1917 100%); 
+            border: 5px solid #8c827a; 
+            padding: 25px 20px; 
+            width: 85%; 
+            text-align: center; 
+            box-shadow: inset -10px -10px 25px rgba(0,0,0,0.9), 0 15px 35px rgba(0,0,0,0.8); 
+            position: relative; 
+            z-index: 5; 
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        
+        .rock-card.break { animation: rockBreakAnim 0.45s ease-in-out; }
 
+        @keyframes rockBreakAnim {
+            0% { transform: scale(1) rotate(0deg); filter: brightness(1); }
+            25% { transform: scale(1.08) rotate(-4deg); filter: brightness(1.4); }
+            50% { transform: scale(0.90) rotate(4deg) skew(5deg); filter: brightness(0.6); }
+            75% { transform: scale(1.04) rotate(-2deg); }
+            100% { transform: scale(0) rotate(10deg); opacity: 0; }
+        }
+
+        .door-title { color: #fef08a; font-size: 15px; margin-bottom: 8px; font-weight: bold; text-shadow: 1px 1px 3px black; }
+        .question-box { background: rgba(0,0,0,0.65); border: 2px dashed #f59e0b; padding: 12px 15px; border-radius: 12px; font-size: 26px; font-weight: 900; color: #ffffff; letter-spacing: 1px; margin: 10px 0; }
+        
         .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; max-width: 450px; }
-        .opt-btn { background: linear-gradient(135deg, #3730a3, #1e1b4b); border: 2px solid #4f46e5; color: #e0e7ff; padding: 14px; border-radius: 12px; font-size: 22px; font-weight: bold; cursor: pointer; transition: 0.2s; font-family: 'Cairo'; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-        .opt-btn:hover { background: #4338ca; color: white; transform: translateY(-2px); }
+        .opt-btn { background: linear-gradient(135deg, #78350f, #451a03); border: 2px solid #d97706; color: #fef08a; padding: 14px; border-radius: 12px; font-size: 22px; font-weight: bold; cursor: pointer; transition: 0.2s; font-family: 'Cairo'; box-shadow: 0 4px 10px rgba(0,0,0,0.4); }
+        .opt-btn:hover { background: #b45309; color: white; transform: translateY(-2px); }
 
-        .modal { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(9, 13, 22, 0.97); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; text-align: center; padding: 25px; box-sizing: border-box; }
-        .modal h1 { color: #818cf8; font-size: 28px; margin-bottom: 15px; }
+        .hint-box { background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; color: #fca5a5; padding: 8px 12px; border-radius: 8px; font-size: 13px; margin-top: 8px; display: none; }
 
-        .btn { background: #4f46e5; color: white; border: none; padding: 12px 35px; font-size: 18px; font-weight: bold; border-radius: 10px; cursor: pointer; transition: 0.3s; font-family: 'Cairo'; }
-        .btn:hover { background: #4338ca; transform: translateY(-2px); }
+        .modal { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 8, 3, 0.97); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; text-align: center; padding: 25px; box-sizing: border-box; }
+        .modal h1 { color: #f59e0b; font-size: 28px; margin-bottom: 15px; }
+        .instructions-box { background: rgba(35, 18, 8, 0.95); padding: 18px; border-radius: 12px; border: 1px solid #b45309; text-align: right; margin-bottom: 20px; width: 100%; max-width: 480px; box-sizing: border-box; }
+        .instructions-box ul { padding-right: 20px; margin: 0; }
+        .instructions-box li { margin-bottom: 10px; font-size: 14px; color: #fef08a; line-height: 1.5; }
+
+        .leaderboard-box { background: rgba(25, 12, 5, 0.95); border: 2px solid #f59e0b; border-radius: 10px; padding: 15px; width: 100%; max-width: 400px; margin-bottom: 20px; text-align: right; }
+        .leaderboard-box h3 { color: #f59e0b; margin-top: 0; margin-bottom: 10px; text-align: center; font-size: 18px; }
+        .lb-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #78350f; font-size: 14px; }
+
+        .btn { background: #d97706; color: white; border: none; padding: 12px 35px; font-size: 18px; font-weight: bold; border-radius: 10px; cursor: pointer; transition: 0.3s; font-family: 'Cairo'; }
+        .btn:hover { background: #b45309; transform: translateY(-2px); }
         .hidden { display: none !important; }
 
         /* تنسيق التوقيع في الأسفل */
@@ -49,8 +89,8 @@
             width: 100%;
             text-align: center;
             font-size: 12px;
-            color: #818cf8;
-            background: rgba(11, 15, 25, 0.85);
+            color: #d97706;
+            background: rgba(15, 9, 5, 0.8);
             pointer-events: none;
             z-index: 100;
             font-weight: bold;
@@ -60,33 +100,55 @@
 </head>
 <body>
 
-    <div class="game-container">
-        <div class="hud">
-            <div>الطيار: <span id="playerName">بطل</span></div>
-            <div>⏱️ الوقت: <span id="timerVal">٦٠</span>ث</div>
-            <div>🚀 النقاط: <span id="scoreVal">٠</span></div>
+    <div class="game-container" id="gameContainer">
+        <div class="modal" id="instructionsModal">
+            <h1>⛏️ تعليمات لغز منجم الذهب</h1>
+            <div class="instructions-box">
+                <ul>
+                    <li>🪨 <b>المهمة:</b> اكسر الحجارة المتنوعة الحاملة للألغاز وافتح طريقك لصندوق الذهب!</li>
+                    <li>⛏️ <b>المحاولات:</b> لديك <span id="ruleLives" style="color:#ef4444; font-weight:bold;">--</span> محاولات تنقيب.</li>
+                    <li>💰 <b>القطع الذهبية:</b> كل حجر تكسره بنجاح يمنحك <span id="rulePoints" style="color:#f59e0b; font-weight:bold;">--</span> قطعة ذهب.</li>
+                    <li>🎯 <b>الأسئلة:</b> تتكون هذه الجولة من <span id="ruleQuestions" style="color:#38bdf8; font-weight:bold;">--</span> حجرة.</li>
+                </ul>
+            </div>
+            <button class="btn" onclick="startTheGameSession()">ابدأ التكسير والتنقيب 🪙</button>
         </div>
 
-        <div class="space-arena">
-            <div class="rocket-track">
-                <div class="rocket" id="rocketIcon">🚀</div>
-            </div>
+        <div class="hud">
+            <div>المستكشف: <span id="playerName">بطل</span> <button onclick="changePlayerQuick()" style="background:#ef4444; color:white; border:none; padding:2px 8px; border-radius:4px; font-size:11px; cursor:pointer; margin-right:8px; font-family:'Cairo';">تبديل 🔄</button></div>
+            <div>⛏️ الفأس: <span id="livesCount">--</span></div>
+            <div>🔥 السلسلة: <span id="streakCount">٠</span></div>
+            <div>🪙 الذهب: <span id="scoreVal">٠</span></div>
+            <div class="bonus-float-msg" id="bonusMsg">+٥٠ ذهب! 💰</div>
+        </div>
 
-            <div class="question-card">
-                <div class="question-title">حساب سرعة الانطلاق</div>
-                <div class="question-text" id="questionDisplay">؟ × ؟ = ؟</div>
+        <div class="mine-arena" id="arenaBox">
+            <div class="progress-track" id="progressTrack"></div>
+
+            <div class="rock-stage">
+                <div class="pickaxe" id="pickAxeIcon">🪓</div>
+                <div class="rock-card" id="rockCard">
+                    <div class="door-title">🪨 الحجرة رقم <span id="currentRoomNum">١</span></div>
+                    <div class="question-box" id="questionDisplay">؟ × ؟ = ؟</div>
+                    <div class="hint-box" id="hintBox">💡 تلميح: فكر في المضاعفات</div>
+                </div>
             </div>
 
             <div class="options-grid" id="optionsGrid"></div>
         </div>
 
         <div class="modal hidden" id="gameOverModal">
-            <h1>انتهت الرحلة الفضائية! 🌌</h1>
-            <p id="finalScoreText" style="font-size: 20px; margin-bottom: 20px;">جمعت ٠ نقطة</p>
-            <p id="saveStatus" style="color: #38bdf8; font-size: 14px; margin-bottom: 20px;"></p>
+            <h1 id="gameOverTitle">انتهت الرحلة! 🏆</h1>
+            <p id="finalScoreText">لقد جمعت ٠ قطعة ذهبية</p>
+            <p id="saveStatus" style="color: #38bdf8; font-size: 14px; margin-bottom: 10px;"></p>
+            
+            <div class="leaderboard-box">
+                <h3>🏆 أبطال تنقيب الذهب (منجم الذهب)</h3>
+                <div id="leaderboardList">جاري تحميل الأبطال...</div>
+            </div>
 
             <div style="display: flex; gap: 15px;">
-                <button class="btn" onclick="restartGame()">محاولة جديدة 🚀</button>
+                <button class="btn" onclick="restartGame()">محاولة جديدة 🔄</button>
                 <button class="btn" style="background: #059669;" onclick="goToMain()">الرئيسية 🏠</button>
             </div>
         </div>
@@ -102,10 +164,47 @@
         try { studentData = JSON.parse(localStorage.getItem('current_student')); } catch (e) { studentData = null; }
 
         if (!studentData || !studentData.name) {
-            alert('الرجاء اختيار اسمك أولاً للبدء!');
+            alert('الرجاء اختيار اسمك والصف الدراسي أولاً للبدء!');
             window.location.href = 'student.html';
         } else {
             document.getElementById('playerName').textContent = studentData.name;
+        }
+
+        function changePlayerQuick() {
+            localStorage.removeItem('current_student');
+            window.location.href = 'student.html';
+        }
+
+        function playSound(type) {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+                osc.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                if (type === 'correct') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(700, audioCtx.currentTime + 0.2);
+                    gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
+                    osc.start(); osc.stop(audioCtx.currentTime + 0.25);
+                } else if (type === 'wrong') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+                    osc.frequency.linearRampToValueAtTime(80, audioCtx.currentTime + 0.25);
+                    gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                    osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+                } else if (type === 'break') {
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(120, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 0.2);
+                    gainNode.gain.setValueAtTime(0.4, audioCtx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
+                    osc.start(); osc.stop(audioCtx.currentTime + 0.25);
+                }
+            } catch (e) { console.log("Audio error", e); }
         }
 
         function toArabicNum(num) {
@@ -113,51 +212,124 @@
             return String(num).replace(/\d/g, (d) => arabicNumbers[d]);
         }
 
-        let score = 0;
-        let timeLeft = 60;
-        let timerInterval = null;
-        let currentCorrectAnswer = 0;
-        let maxTable = 10;
+        let customSettings = {
+            maxLives: 3,
+            goldPerDoor: 100,
+            wrongPenaltyLives: 1,
+            streakBonusGold: 50,
+            totalRooms: 5,
+            enableMissingFactor: true,
+            enableProduct: true
+        };
 
-        function initSettings() {
+        async function loadCloudSettings() {
+            try {
+                const { data } = await supabaseClient.from('game_settings').select('value').eq('key', 'gold_mine_settings').single();
+                if (data && data.value) customSettings = { ...customSettings, ...data.value };
+            } catch (e) { console.log("Settings fallback"); }
+
+            document.getElementById('ruleLives').textContent = toArabicNum(customSettings.maxLives);
+            document.getElementById('rulePoints').textContent = toArabicNum(customSettings.goldPerDoor);
+            document.getElementById('ruleQuestions').textContent = toArabicNum(customSettings.totalRooms);
+            document.getElementById('livesCount').textContent = toArabicNum(customSettings.maxLives);
+        }
+
+        loadCloudSettings();
+
+        let score = 0, lives = customSettings.maxLives, currentRoom = 0, streak = 0, currentCorrectAnswer = 0, currentHint = '', maxTable = 10;
+
+        async function startTheGameSession() {
+            await loadCloudSettings();
+            document.getElementById('instructionsModal').classList.add('hidden');
+            initGameSettings();
+        }
+
+        function initGameSettings() {
             const cls = String(studentData.cls || '').trim();
             if (cls.includes('٤') || cls.includes('4') || cls.startsWith('4')) maxTable = 6;
             else if (cls.includes('٥') || cls.includes('5') || cls.includes('٦') || cls.includes('6')) maxTable = 12;
             else maxTable = 10;
-
-            startGame();
+            
+            buildProgressTrack();
+            startGameEngine();
         }
 
-        function startGame() {
-            score = 0;
-            timeLeft = 60;
-            document.getElementById('scoreVal').textContent = toArabicNum(0);
-            document.getElementById('timerVal').textContent = toArabicNum(60);
+        function buildProgressTrack() {
+            const track = document.getElementById('progressTrack');
+            track.innerHTML = '';
+            for(let i = 0; i < customSettings.totalRooms; i++) {
+                track.innerHTML += `<div class="step-node" id="node-${i}">${toArabicNum(i+1)}</div>`;
+            }
+            track.innerHTML += `<div class="step-node" id="node-${customSettings.totalRooms}">🎁</div>`;
+        }
+
+        function startGameEngine() {
+            score = 0; lives = customSettings.maxLives; currentRoom = 0; streak = 0;
+            updateHUD();
             document.getElementById('gameOverModal').classList.add('hidden');
-
-            generatePuzzle();
-
-            clearInterval(timerInterval);
-            timerInterval = setInterval(() => {
-                timeLeft--;
-                document.getElementById('timerVal').textContent = toArabicNum(timeLeft);
-                if (timeLeft <= 0) {
-                    clearInterval(timerInterval);
-                    endGame();
-                }
-            }, 1000);
+            generateNewPuzzle();
         }
 
-        function generatePuzzle() {
+        function updateHUD() {
+            document.getElementById('scoreVal').textContent = toArabicNum(score);
+            document.getElementById('livesCount').textContent = toArabicNum(lives);
+            document.getElementById('streakCount').textContent = toArabicNum(streak);
+            document.getElementById('currentRoomNum').textContent = toArabicNum(currentRoom + 1);
+            
+            for (let i = 0; i <= customSettings.totalRooms; i++) {
+                const node = document.getElementById(`node-${i}`);
+                if (!node) continue;
+                node.className = 'step-node';
+                if (i < currentRoom) node.classList.add('done');
+                else if (i === currentRoom) node.classList.add('active');
+            }
+        }
+
+        function showBonusMessage(gold) {
+            const msg = document.getElementById('bonusMsg');
+            msg.textContent = `+${toArabicNum(gold)} ذهب إضافي! 💰`;
+            msg.classList.add('show');
+            setTimeout(() => msg.classList.remove('show'), 2000);
+        }
+
+        function applyRandomRockShape() {
+            const rock = document.getElementById('rockCard');
+            const r1 = Math.floor(Math.random() * 25) + 15, r2 = Math.floor(Math.random() * 25) + 15;
+            const r3 = Math.floor(Math.random() * 25) + 15, r4 = Math.floor(Math.random() * 25) + 15;
+            const r5 = Math.floor(Math.random() * 25) + 65, r6 = Math.floor(Math.random() * 25) + 65;
+            const r7 = Math.floor(Math.random() * 25) + 65, r8 = Math.floor(Math.random() * 25) + 65;
+            rock.style.borderRadius = `${r1}% ${r5}% ${r3}% ${r7}% / ${r8}% ${r2}% ${r6}% ${r4}%`;
+            rock.style.width = `${Math.floor(Math.random() * 12) + 80}%`;
+        }
+
+        function generateNewPuzzle() {
+            document.getElementById('hintBox').style.display = 'none';
+            applyRandomRockShape();
+
             let num1 = Math.floor(Math.random() * (maxTable - 1)) + 2;
             let num2 = Math.floor(Math.random() * 10) + 1;
             currentCorrectAnswer = num1 * num2;
 
-            document.getElementById('questionDisplay').textContent = `${toArabicNum(num1)} × ${toArabicNum(num2)}`;
+            let mode = 'product';
+            if (customSettings.enableMissingFactor && customSettings.enableProduct) {
+                mode = Math.random() > 0.5 ? 'missing' : 'product';
+            } else if (customSettings.enableMissingFactor) {
+                mode = 'missing';
+            }
 
-            let options = [currentCorrectAnswer];
+            if (mode === 'missing') {
+                document.getElementById('questionDisplay').textContent = `${toArabicNum(num1)} × ؟ = ${toArabicNum(currentCorrectAnswer)}`;
+                currentHint = `💡 تلميح: ما هو العدد الذي إذا ضربته في ${toArabicNum(num1)} يعطيك ${toArabicNum(currentCorrectAnswer)}؟`;
+            } else {
+                document.getElementById('questionDisplay').textContent = `جد حاصل ضرب: ${toArabicNum(num1)} × ${toArabicNum(num2)}`;
+                currentHint = `💡 تلميح: اجمع العدد ${toArabicNum(num1)} مع نفسه ${toArabicNum(num2)} مرات.`;
+            }
+
+            let correctOptionVal = (mode === 'missing') ? num2 : currentCorrectAnswer;
+            let options = [correctOptionVal];
+
             while (options.length < 4) {
-                let wrong = currentCorrectAnswer + (Math.floor(Math.random() * 11) - 5);
+                let wrong = correctOptionVal + (Math.floor(Math.random() * 9) - 4);
                 if (wrong > 0 && !options.includes(wrong)) options.push(wrong);
             }
             options.sort(() => Math.random() - 0.5);
@@ -168,49 +340,77 @@
                 const btn = document.createElement('button');
                 btn.className = 'opt-btn';
                 btn.textContent = toArabicNum(opt);
-                btn.onclick = () => checkAnswer(opt);
+                btn.onclick = () => checkAnswer(opt, correctOptionVal);
                 grid.appendChild(btn);
             });
         }
 
-        function checkAnswer(selectedOpt) {
-            const rocket = document.getElementById('rocketIcon');
-            if (selectedOpt === currentCorrectAnswer) {
-                score += 100;
-                document.getElementById('scoreVal').textContent = toArabicNum(score);
-                rocket.classList.add('launch');
-                setTimeout(() => rocket.classList.remove('launch'), 400);
+        function checkAnswer(selectedOpt, correctVal) {
+            if (selectedOpt === correctVal) {
+                playSound('break'); playSound('correct');
+                const axe = document.getElementById('pickAxeIcon');
+                const rock = document.getElementById('rockCard');
+                axe.classList.add('swing'); rock.classList.add('break');
+
+                setTimeout(() => {
+                    axe.classList.remove('swing'); rock.classList.remove('break');
+                    score += customSettings.goldPerDoor;
+                    streak++;
+                    if (streak > 0 && streak % 3 === 0) {
+                        let bonus = customSettings.streakBonusGold;
+                        score += bonus; showBonusMessage(bonus);
+                    }
+                    currentRoom++;
+                    updateHUD();
+                    if (currentRoom >= customSettings.totalRooms) endGame(true);
+                    else generateNewPuzzle();
+                }, 450);
             } else {
-                score = Math.max(0, score - 30);
-                document.getElementById('scoreVal').textContent = toArabicNum(score);
+                playSound('wrong');
+                lives -= customSettings.wrongPenaltyLives;
+                streak = 0;
+                const hintEl = document.getElementById('hintBox');
+                hintEl.textContent = currentHint; hintEl.style.display = 'block';
+                updateHUD();
+                if (lives <= 0) setTimeout(() => endGame(false), 400);
             }
-            generatePuzzle();
         }
 
-        async function endGame() {
-            document.getElementById('gameOverModal').classList.remove('hidden');
-            document.getElementById('finalScoreText').textContent = `أحسنت يا ${studentData.name}! جمعت ${toArabicNum(score)} نقطة.`;
-            document.getElementById('saveStatus').textContent = 'جاري حفظ النتيجة في الجدول الجديد rocket_scores...';
+        async function endGame(isWin) {
+            const modal = document.getElementById('gameOverModal');
+            modal.classList.remove('hidden');
+            document.getElementById('gameOverTitle').textContent = isWin ? '🎉 مبروك! فتحت صندوق الذهب الأكبر! 👑' : 'انتهت محاولات التنقيب! ⛏️';
+            document.getElementById('finalScoreText').textContent = `أحسنت يا ${studentData.name}! لقد جمعت ${toArabicNum(score)} قطعة ذهب.`;
+            document.getElementById('saveStatus').textContent = 'جاري حفظ رصيد الذهب بالسحابة...';
 
             try {
-                const { error } = await supabaseClient.from('rocket_scores').insert([{
-                    student_name: studentData.name,
-                    cls: studentData.cls,
-                    points: score,
-                    weekly_points: score
+                const { error } = await supabaseClient.from('goldmine_scores').insert([{
+                    student_name: studentData.name, cls: studentData.cls, points: score, weekly_points: score
                 }]);
-
                 if (error) throw error;
-                document.getElementById('saveStatus').textContent = '✅ تم حفظ النتيجة بنجاح في السحابة!';
+                document.getElementById('saveStatus').textContent = '✅ تم إيداع الذهب بنجاح في السحابة!';
+                loadLeaderboardInModal();
             } catch (err) {
                 document.getElementById('saveStatus').textContent = '⚠️ تعذر حفظ النتيجة بالسحابة.';
             }
         }
 
-        function restartGame() { startGame(); }
-        function goToMain() { window.location.href = 'student.html'; }
+        async function loadLeaderboardInModal() {
+            const lbList = document.getElementById('leaderboardList');
+            lbList.innerHTML = 'جاري تحضير الأبطال...';
+            try {
+                const { data } = await supabaseClient.from('goldmine_scores').select('student_name, points').order('points', { ascending: false }).limit(5);
+                if (!data || data.length === 0) { lbList.innerHTML = 'لا توجد نتائج مسجلة بعد.'; return; }
+                lbList.innerHTML = '';
+                data.forEach((row, index) => {
+                    let medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '⭐';
+                    lbList.innerHTML += `<div class="lb-row"><span>${medal} ${row.student_name}</span><span><b>${toArabicNum(row.points || 0)}</b> 🪙</span></div>`;
+                });
+            } catch (err) { lbList.innerHTML = 'تعذر تحميل قائمة المتصدرين.'; }
+        }
 
-        initSettings();
+        function restartGame() { document.getElementById('instructionsModal').classList.add('hidden'); startGameEngine(); }
+        function goToMain() { window.location.href = 'student.html'; }
     </script>
 </body>
 </html>
