@@ -29,9 +29,13 @@
         .arena { flex: 1; position: relative; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; cursor: crosshair; background: radial-gradient(circle, #f8fafc 0%, #f1f5f9 100%); }
         .question-box { background: #ffffff; border: 3px solid var(--primary); padding: 10px 30px; border-radius: 15px; font-size: 32px; font-weight: 900; margin-top: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); color: var(--primary); letter-spacing: 2px; z-index: 5; }
         
-        .falling-asteroid { position: absolute; background: linear-gradient(135deg, #e2e8f0, #cbd5e1, #94a3b8); border: 2px solid #64748b; color: #1e293b; border-radius: 35% 65% 50% 50% / 40% 45% 55% 60%; width: 75px; height: 75px; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: bold; cursor: pointer; box-shadow: inset -5px -5px 15px rgba(0,0,0,0.1), 0 4px 15px rgba(0,0,0,0.1); user-select: none; }
-        .rocket-ship { position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); font-size: 55px; user-select: none; z-index: 5; }
-        .laser-beam { position: absolute; bottom: 70px; width: 4px; background: linear-gradient(to top, var(--primary), #f43f5e, #fb7185); transform-origin: bottom center; z-index: 4; box-shadow: 0 0 10px var(--primary); border-radius: 2px; pointer-events: none; }
+        .falling-asteroid { position: absolute; background: linear-gradient(135deg, #e2e8f0, #cbd5e1, #94a3b8); border: 2px solid #64748b; color: #1e293b; border-radius: 35% 65% 50% 50% / 40% 45% 55% 60%; width: 75px; height: 75px; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: bold; cursor: pointer; box-shadow: inset -5px -5px 15px rgba(0,0,0,0.1), 0 4px 15px rgba(0,0,0,0.1); user-select: none; z-index: 10; }
+        
+        /* الصاروخ المتحرك بزاوية 180 درجة */
+        .rocket-ship { position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); font-size: 55px; user-select: none; z-index: 15; transform-origin: bottom center; transition: transform 0.05s linear; }
+        
+        /* شعاع الليزر الواضح */
+        .laser-beam { position: absolute; bottom: 65px; width: 5px; background: linear-gradient(to top, var(--primary), #f43f5e, #fb7185); transform-origin: bottom center; z-index: 12; box-shadow: 0 0 12px var(--primary); border-radius: 3px; pointer-events: none; }
 
         .modal { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.97); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; text-align: center; padding: 25px; box-sizing: border-box; }
         .modal h1 { color: var(--primary); font-size: 26px; margin-bottom: 15px; }
@@ -63,9 +67,9 @@
             <div class="instructions-box">
                 <ul>
                     <li>⏱️ <b>زمن الجولة:</b> لديك <span id="ruleTime" style="color:var(--primary); font-weight:bold;">--</span> ثانية للإجابة على أكبر عدد من الأسئلة.</li>
-                    <li>🎯 <b>طريقة التصويب:</b> انقر على النيزك الذي يحمل الناتج الصحيح لتصويب الليزر وتحطيمه.</li>
+                    <li>🎯 <b>طريقة التصويب:</b> حرك الماوس أو انقر على النيزك الذي يحمل الناتج الصحيح لإطلاق الليزر.</li>
                     <li>⭐ <b>النقاط:</b> كل إجابة صحيحة تمنحك <span id="rulePoints" style="color:#2e7d32; font-weight:bold;">--</span> نقطة.</li>
-                    <li>🔥 <b>مكافأة السلسلة:</b> الإجابة على <span id="ruleStreak" style="color:var(--primary); font-weight:bold;">--</span> أسئلة متتالية تمنحك وقتاً إضافياً قدره <span id="ruleBonus" style="color:#2e7d32; font-weight:bold;">--</span> ثوانٍ!</li>
+                    <li>🔥 <b>مكافأة السلسلة:</b> الإجابة على <span id="ruleStreak" style="color:var(--primary); font-weight:bold;">--</span> أسئلة متتالية تمنحك وقتاً إضافياً!</li>
                 </ul>
             </div>
             <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
@@ -84,7 +88,7 @@
         </div>
 
         <!-- ساحة اللعب -->
-        <div class="arena" id="arenaBox" onclick="handleArenaClick(event)">
+        <div class="arena" id="arenaBox" onmousemove="handleArenaMove(event)" onclick="handleArenaClick(event)">
             <div class="question-box" id="questionDisplay">؟ × ؟</div>
             <div class="rocket-ship" id="rocketShip">🚀</div>
         </div>
@@ -308,6 +312,25 @@
             });
         }
 
+        // جعل الصاروخ يتحرك ويدور بحدود 180 درجة مع حركة الماوس
+        function handleArenaMove(e) {
+            const arena = document.getElementById('arenaBox');
+            const rect = arena.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            const rocketShip = document.getElementById('rocketShip');
+            const rocketRect = rocketShip.getBoundingClientRect();
+            const startX = (rocketRect.left + rocketRect.right) / 2 - rect.left;
+            const startY = arena.clientHeight - 30;
+
+            let angle = Math.atan2(mouseX - startX, startY - mouseY) * (180 / Math.PI);
+            // تحديد زاوية الدوران بحدود 180 درجة (-90 إلى 90 درجة)
+            angle = Math.max(-90, Math.min(90, angle));
+
+            rocketShip.style.transform = `translateX(-50%) rotate(${angle}deg)`;
+        }
+
         function handleArenaClick(e) {
             playSound('laser');
             const arena = document.getElementById('arenaBox');
@@ -318,6 +341,7 @@
             const rocketShip = document.getElementById('rocketShip');
             const rocketRect = rocketShip.getBoundingClientRect();
             const startX = (rocketRect.left + rocketRect.right) / 2 - rect.left;
+            const startY = arena.clientHeight - 30;
 
             let targetAst = null;
             let minDistance = 9999;
@@ -332,18 +356,22 @@
             let endX = targetAst ? (targetAst.x + 37) : clickX;
             let endY = targetAst ? (targetAst.y + 37) : clickY;
 
-            const length = Math.hypot(endX - startX, endY - startY);
-            const angle = Math.atan2(endX - startX, startY - endY) * (180 / Math.PI);
+            let angle = Math.atan2(endX - startX, startY - endY) * (180 / Math.PI);
+            angle = Math.max(-90, Math.min(90, angle));
+            rocketShip.style.transform = `translateX(-50%) rotate(${angle}deg)`;
 
+            const length = Math.hypot(endX - startX, endY - startY);
+
+            // إنشاء وتفعيل شعاع الليزر بوضوح
             const laser = document.createElement('div');
             laser.className = 'laser-beam';
             laser.style.height = length + 'px';
             laser.style.left = startX + 'px';
-            laser.style.bottom = '40px';
+            laser.style.bottom = '45px';
             laser.style.transform = `rotate(${angle}deg)`;
             
             arena.appendChild(laser);
-            setTimeout(() => laser.remove(), 150);
+            setTimeout(() => laser.remove(), 200);
 
             if (targetAst) checkAnswer(targetAst.value);
         }
@@ -373,7 +401,6 @@
             document.getElementById('saveStatus').textContent = 'جاري حفظ النتيجة في السحابة...';
 
             try {
-                // حفظ النتيجة في جدول rocket_scores الجديد كما طلبت
                 const { error } = await supabaseClient.from('rocket_scores').insert([{
                     student_name: studentData.name,
                     cls: studentData.cls,
