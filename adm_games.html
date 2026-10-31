@@ -133,6 +133,32 @@
                 <button class="btn" onclick="saveGoldMineSettings()">حفظ إعدادات المنجم 💾</button>
             </div>
 
+            <!-- 4. إعدادات لعبة الصعود نحو القمة الجديدة -->
+            <div class="game-sub-section">
+                <h3>🧗‍♂️ إعدادات لعبة "الصعود نحو القمة"</h3>
+                <div class="form-row">
+                    <div class="form-group"><label>وقت الجولة (بالثواني):</label><input type="number" id="mountTime" value="90" min="30"></div>
+                    <div class="form-group"><label>نقاط الخطوة الصحيحة:</label><input type="number" id="mountPoints" value="100" min="10"></div>
+                    <div class="form-group"><label>عقوبة الخطأ (خصم ثوانٍ):</label><input type="number" id="mountPenalty" value="5" min="0"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group" style="flex: 2;">
+                        <label>أنواع الأسئلة المعتمدة في اللعبة:</label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-item">
+                                <input type="checkbox" id="chkMountProd" checked>
+                                إيجاد الناتج
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" id="chkMountMiss" checked>
+                                إيجاد العامل المفقود
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <button class="btn" onclick="saveMountainSettings()">حفظ إعدادات القمة 💾</button>
+            </div>
+
         </div>
     </div>
 
@@ -202,7 +228,6 @@
                     document.getElementById('goldPoints').value = settings.goldPerDoor || 100;
                     document.getElementById('goldRooms').value = settings.totalRooms || 5;
                     
-                    // تحويل خيار نوع الأسئلة المرتجع إلى المربعات Checkbox
                     const qType = settings.questionType || 'both';
                     document.getElementById('chkProduct').checked = (qType === 'both' || qType === 'product');
                     document.getElementById('chkMissing').checked = (qType === 'both' || qType === 'missing');
@@ -210,6 +235,21 @@
                     document.getElementById('goldStreakTarget').value = settings.streakTarget || 3;
                     document.getElementById('goldSpeedLimit').value = settings.speedLimitTime || 1.5;
                     document.getElementById('goldBonusPoints').value = settings.bonusSpeedPoints || 50;
+                }
+            } catch (e) {}
+
+            // 4. جلب إعدادات الصعود نحو القمة
+            try {
+                const { data } = await supabaseClient.from('game_settings').select('value').eq('key', 'mountain_settings').single();
+                if(data && data.value) {
+                    const settings = data.value;
+                    document.getElementById('mountTime').value = settings.gameTime || 90;
+                    document.getElementById('mountPoints').value = settings.correctPoints || 100;
+                    document.getElementById('mountPenalty').value = settings.penaltySeconds || 5;
+
+                    const qType = settings.questionType || 'both';
+                    document.getElementById('chkMountProd').checked = (qType === 'both' || qType === 'product');
+                    document.getElementById('chkMountMiss').checked = (qType === 'both' || qType === 'missing');
                 }
             } catch (e) {}
         }
@@ -269,6 +309,31 @@
             const { error } = await supabaseClient.from('game_settings').upsert([{ key: 'gold_mine_settings', value: settings }]);
             if(error) alert('خطأ أثناء الحفظ بالسحابة: ' + error.message);
             else alert('✅ تم حفظ إعدادات لغز منجم الذهب بنجاح!');
+        }
+
+        async function saveMountainSettings() {
+            const isProd = document.getElementById('chkMountProd').checked;
+            const isMiss = document.getElementById('chkMountMiss').checked;
+
+            if(!isProd && !isMiss) {
+                alert('⚠️ يرجى اختيار نوع واحد على الأقل من أنواع الأسئلة.');
+                return;
+            }
+
+            let qTypeStr = 'both';
+            if(isProd && !isMiss) qTypeStr = 'product';
+            if(!isProd && isMiss) qTypeStr = 'missing';
+
+            const settings = {
+                gameTime: parseInt(document.getElementById('mountTime').value) || 90,
+                correctPoints: parseInt(document.getElementById('mountPoints').value) || 100,
+                penaltySeconds: parseInt(document.getElementById('mountPenalty').value) || 5,
+                questionType: qTypeStr
+            };
+
+            const { error } = await supabaseClient.from('game_settings').upsert([{ key: 'mountain_settings', value: settings }]);
+            if(error) alert('خطأ أثناء الحفظ بالسحابة: ' + error.message);
+            else alert('✅ تم حفظ إعدادات لعبة الصعود نحو القمة بنجاح!');
         }
 
         function logout() {
