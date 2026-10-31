@@ -29,8 +29,8 @@
 
         .mine-arena { flex: 1; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 15px 15px; box-sizing: border-box; }
         
-        .progress-track { display: flex; gap: 5px; align-items: center; justify-content: center; width: 100%; background: #f1f5f9; padding: 8px; border-radius: 12px; border: 1px solid #cbd5e1; }
-        .step-node { width: 26px; height: 26px; border-radius: 50%; background: #e2e8f0; border: 2px solid #cbd5e1; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; color: #64748b; transition: 0.3s; }
+        .progress-track { display: flex; gap: 5px; align-items: center; justify-content: center; width: 100%; background: #f1f5f9; padding: 8px; border-radius: 12px; border: 1px solid #cbd5e1; overflow-x: auto; }
+        .step-node { width: 26px; height: 26px; border-radius: 50%; background: #e2e8f0; border: 2px solid #cbd5e1; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; color: #64748b; transition: 0.3s; flex-shrink: 0; }
         .step-node.active { background: var(--primary); color: white; border-color: var(--primary-hover); box-shadow: 0 0 10px rgba(216,27,96,0.3); transform: scale(1.15); }
         .step-node.done { background: #2e7d32; color: white; border-color: #1b5e20; }
         
@@ -45,7 +45,6 @@
             100% { opacity: 0; transform: rotate(0deg); }
         }
 
-        /* شكل الحجرة الطبيعي مع الثيم الموحد */
         .rock-card { 
             background: linear-gradient(135deg, #e2e8f0, #cbd5e1, #94a3b8); 
             border: 3px solid #64748b; 
@@ -102,7 +101,7 @@
             <div class="instructions-box">
                 <ul>
                     <li>🪨 <b>المهمة:</b> اكسر الحجارة المتنوعة وحل مسائل جدول الضرب لفتح صندوق الذهب!</li>
-                    <li>⏱️ <b>سلسلة السرعة:</b> الإجابة المتتالية بفارق أقل من 1.5 ثانية تمنحك نقاطاً ذهبية إضافية!</li>
+                    <li>⏱️ <b>سلسلة السرعة:</b> الإجابة المتتالية بفارق أقل من <span id="ruleSpeedTime">١.٥</span> ثانية تمنحك نقاطاً ذهبية إضافية!</li>
                     <li>⛏️ <b>المحاولات:</b> لديك <span id="ruleLives" style="color:var(--primary); font-weight:bold;">--</span> محاولات خاطئة مسموحة.</li>
                     <li>🪙 <b>القطع الذهبية:</b> كل حجر تكسره يمنحك <span id="rulePoints" style="color:#2e7d32; font-weight:bold;">--</span> نقطة أساسية.</li>
                 </ul>
@@ -119,7 +118,7 @@
             <div>⛏️ القلوب: <span id="livesCount">--</span></div>
             <div>🔥 السلسلة: <span id="streakCount">٠</span></div>
             <div>🪙 النقاط: <span id="scoreVal">٠</span></div>
-            <div class="bonus-float-msg" id="bonusMsg">+٥٠ نقطة سرعة! ⚡</div>
+            <div class="bonus-float-msg" id="bonusMsg">+<span id="bonusValDisplay">٥٠</span> نقطة سرعة! ⚡</div>
         </div>
 
         <!-- ساحة اللعب -->
@@ -171,13 +170,10 @@
             window.location.href = 'student.html';
         }
 
-        // إحداث صوت طرق معدني واقعي بالفأس
         function playSound(type) {
             try {
                 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                
                 if (type === 'metal_clang') {
-                    // صوت طنين وطرق معدني مركب
                     const osc = audioCtx.createOscillator();
                     const gain = audioCtx.createGain();
                     osc.type = 'sine';
@@ -185,19 +181,17 @@
                     osc.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 0.12);
                     gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
                     gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
-                    osc.connect(gain);
-                    gain.connect(audioCtx.destination);
+                    osc.connect(gain); gain.connect(audioCtx.destination);
                     osc.start(); osc.stop(audioCtx.currentTime + 0.15);
                 } else if (type === 'correct') {
                     const osc = audioCtx.createOscillator();
                     const gain = audioCtx.createGain();
                     osc.type = 'triangle';
-                    osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
-                    osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.1); // E5
+                    osc.frequency.setValueAtTime(523.25, audioCtx.currentTime);
+                    osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.1);
                     gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
                     gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
-                    osc.connect(gain);
-                    gain.connect(audioCtx.destination);
+                    osc.connect(gain); gain.connect(audioCtx.destination);
                     osc.start(); osc.stop(audioCtx.currentTime + 0.25);
                 } else if (type === 'wrong') {
                     const osc = audioCtx.createOscillator();
@@ -207,8 +201,7 @@
                     osc.frequency.linearRampToValueAtTime(100, audioCtx.currentTime + 0.2);
                     gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
                     gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
-                    osc.connect(gain);
-                    gain.connect(audioCtx.destination);
+                    osc.connect(gain); gain.connect(audioCtx.destination);
                     osc.start(); osc.stop(audioCtx.currentTime + 0.25);
                 }
             } catch (e) {}
@@ -219,17 +212,33 @@
             return String(num).replace(/\d/g, (d) => arabicNumbers[d]);
         }
 
-        let customSettings = { maxLives: 3, goldPerDoor: 100, wrongPenaltyLives: 1, totalRooms: 5, questionType: 'both' };
+        // إعدادات منجم الذهب الافتراضية المحدثة لتشمل كافة خيارات لوحة التحكم
+        let customSettings = {
+            maxLives: 3,
+            goldPerDoor: 100,
+            totalRooms: 5,
+            questionType: 'both',
+            streakTarget: 3,
+            speedLimitTime: 1.5,
+            bonusSpeedPoints: 50
+        };
+
+        let gradeTablesConfig = { t1: 3, t2: 5, t3: 7, t4: 9, t5: 12, t6: 12 };
 
         async function loadCloudSettings() {
             try {
                 const { data } = await supabaseClient.from('game_settings').select('value').eq('key', 'gold_mine_settings').single();
                 if (data && data.value) customSettings = { ...customSettings, ...data.value };
+
+                const { data: gradeData } = await supabaseClient.from('game_settings').select('value').eq('key', 'grade_tables_settings').single();
+                if (gradeData && gradeData.value) gradeTablesConfig = { ...gradeTablesConfig, ...gradeData.value };
             } catch (e) {}
 
             document.getElementById('ruleLives').textContent = toArabicNum(customSettings.maxLives);
             document.getElementById('rulePoints').textContent = toArabicNum(customSettings.goldPerDoor);
             document.getElementById('livesCount').textContent = toArabicNum(customSettings.maxLives);
+            document.getElementById('ruleSpeedTime').textContent = toArabicNum(customSettings.speedLimitTime);
+            document.getElementById('bonusValDisplay').textContent = toArabicNum(customSettings.bonusSpeedPoints);
         }
 
         loadCloudSettings();
@@ -245,10 +254,20 @@
 
         function initGameSettings() {
             const cls = String(studentData.cls || '').trim();
-            if (cls.includes('٤') || cls.includes('4')) maxTable = 6;
-            else if (cls.includes('٥') || cls.includes('5') || cls.includes('٦') || cls.includes('6')) maxTable = 12;
-            else maxTable = 10;
+            const firstDigitMatch = cls.match(/\d/);
+            const gradeNum = firstDigitMatch ? parseInt(firstDigitMatch[0]) : 5;
+
+            switch(gradeNum) {
+                case 1: maxTable = gradeTablesConfig.t1; break;
+                case 2: maxTable = gradeTablesConfig.t2; break;
+                case 3: maxTable = gradeTablesConfig.t3; break;
+                case 4: maxTable = gradeTablesConfig.t4; break;
+                case 5: maxTable = gradeTablesConfig.t5; break;
+                case 6: maxTable = gradeTablesConfig.t6; break;
+                default: maxTable = 12; break;
+            }
             
+            lives = customSettings.maxLives;
             buildProgressTrack();
             startGameEngine();
         }
@@ -286,12 +305,13 @@
 
         function showBonusMessage() {
             const msg = document.getElementById('bonusMsg');
+            msg.textContent = `+${toArabicNum(customSettings.bonusSpeedPoints)} نقطة سرعة! ⚡`;
             msg.classList.add('show');
             setTimeout(() => msg.classList.remove('show'), 1500);
         }
 
         function generateNewPuzzle() {
-            let num1 = Math.floor(Math.random() * (maxTable - 1)) + 2;
+            let num1 = Math.floor(Math.random() * maxTable) + 1;
             let num2 = Math.floor(Math.random() * 10) + 1;
             let totalProduct = num1 * num2;
 
@@ -314,7 +334,6 @@
                 }
             }
 
-            // تحديد الإجابة الصحيحة وصياغة السؤال بدقة
             if (isMissingFactor) {
                 if (missingWhich === 1) {
                     currentCorrectAnswer = num1;
@@ -328,13 +347,11 @@
                 document.getElementById('questionDisplay').textContent = `${toArabicNum(num1)} × ${toArabicNum(num2)} = ؟`;
             }
 
-            // تنويع أشكال الحجارة
             const rockCard = document.getElementById('rockCard');
             const randomRadius1 = Math.floor(Math.random() * 20) + 35;
             const randomRadius2 = Math.floor(Math.random() * 20) + 40;
             rockCard.style.borderRadius = `${randomRadius1}% ${100 - randomRadius1}% ${randomRadius2}% ${100 - randomRadius2}% / 40% 50% 50% 60%`;
 
-            // توليد الخيارات الخاطئة بناءً على قيمة الإجابة الصحيحة الفعلية (وليس الناتج الكلي)
             let options = [currentCorrectAnswer];
             while (options.length < 4) {
                 let wrongShift = (Math.floor(Math.random() * 7) - 3);
@@ -371,8 +388,10 @@
                 axe.classList.add('swing'); rock.classList.add('break');
 
                 let earnedPoints = customSettings.goldPerDoor;
-                if (timeDiff <= 1.5) {
-                    earnedPoints += 50;
+                
+                // تفعيل احتساب السرعة الإضافية مقارنة بالوقت المحدد في الداشبورد
+                if (timeDiff <= parseFloat(customSettings.speedLimitTime || 1.5)) {
+                    earnedPoints += parseInt(customSettings.bonusSpeedPoints || 50);
                     showBonusMessage();
                 }
 
