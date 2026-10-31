@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>درجات الطلاب ولوحات الشرف - ملك جدول الضرب</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="config.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #d81b60;
+            --primary-hover: #ad1457;
+            --bg: #f4f7f6;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+        }
+        * { box-sizing: border-box; }
+        body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        header { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-top: 4px solid var(--primary); }
+        h1 { color: var(--primary); margin: 0; font-size: 24px; font-weight: 900; }
+        .nav-tabs { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .tab-btn { background: white; border: 2px solid var(--primary); color: var(--primary); padding: 10px 18px; border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.3s; font-family: 'Cairo'; text-decoration: none; display: inline-block; font-size: 14px; }
+        .tab-btn.active, .tab-btn:hover { background: var(--primary); color: white; }
+        .section-card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { border: 1px solid #e2e8f0; padding: 10px; text-align: center; font-size: 13px; }
+        th { background: var(--primary); color: white; font-weight: bold; }
+        .btn { background: var(--primary); color: white; border: none; padding: 8px 16px; border-radius: 8px; font-weight: bold; cursor: pointer; font-family: 'Cairo'; transition: 0.3s; text-decoration: none; display: inline-block; }
+        .btn:hover { background: var(--primary-hover); }
+        .btn-green { background: #2e7d32; }
+        .btn-green:hover { background: #1b5e20; }
+        .btn-blue { background: #1565c0; }
+        .btn-blue:hover { background: #0d47a1; }
+        .btn-red { background: #d32f2f; }
+        .btn-red:hover { background: #b71c1c; }
+        .form-row { display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap; align-items: center; justify-content: space-between; }
+        select { width: 100%; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-family: 'Cairo'; max-width: 250px; }
+        .hidden { display: none !important; }
+        footer.author-footer { text-align: center; padding: 15px; color: #64748b; font-weight: bold; margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1 id="welcomeTitle">درجات الطلاب ولوحات الشرف</h1>
+            <button class="btn btn-red" onclick="logout()">تسجيل الخروج 🚪</button>
+        </header>
+
+        <!-- شريط التبويبات الموحد -->
+        <div class="nav-tabs" id="navTabs">
+            <a href="adm_students.html" class="tab-btn role-admin-sup">👥 بيانات الطلاب</a>
+            <a href="adm_teachers.html" class="tab-btn role-admin-sup">👨‍🏫 إدارة المعلمين</a>
+            <a href="adm_games.html" class="tab-btn role-admin-sup">🎮 إعدادات الألعاب</a>
+            <a href="adm_scores.html" class="tab-btn active">📊 درجات الطلاب</a>
+            <a href="adm_reset.html" class="tab-btn admin-only-tab">⚙️ تصفير النتائج</a>
+            <a href="adm_profile.html" class="tab-btn">👤 بياناتي الشخصية</a>
+        </div>
+
+        <div class="section-card">
+            <h2>سجل درجات الطلاب ولوحة الصدارة 📊</h2>
+            
+            <div class="form-row">
+                <div style="display: flex; gap: 10px; align-items: center; flex: 1; flex-wrap: wrap;">
+                    <label style="margin:0; font-weight:600;">اختر اللعبة:</label>
+                    <select id="gameFilter" onchange="loadScores()">
+                        <option value="rocket">سباق صواريخ الفضاء</option>
+                        <option value="goldmine">لغز منجم الذهب</option>
+                    </select>
+
+                    <label style="margin:0; font-weight:600; margin-right: 15px;">عرض:</label>
+                    <select id="viewLimitFilter" onchange="loadScores()">
+                        <option value="all">جميع الطلاب</option>
+                        <option value="10">أفضل 10 طلاب (أعلى النقاط)</option>
+                    </select>
+                </div>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button class="btn btn-green" onclick="exportScoresExcel()">📊 تحميل ملف إكسل للدرجات</button>
+                </div>
+            </div>
+
+            <p id="filterNotice" style="color: #d81b60; font-weight: bold; font-size: 13px; margin-top: 5px;"></p>
+
+            <table id="scoresTable">
+                <thead>
+                    <tr>
+                        <th>المركز / الترتيب</th>
+                        <th>اسم الطالب</th>
+                        <th>الصف</th>
+                        <th>النتيجة / النقاط</th>
+                        <th>الوقت والتاريخ</th>
+                        <th class="admin-sup-col">الإجراء</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <footer class="author-footer">
+        إعداد أ. صادق القلعاوي | مدرسة اليرموك الابتدائية للبنين 🏫✨
+    </footer>
+
+    <script>
+        let currentUser = JSON.parse(localStorage.getItem('current_staff_user'));
+
+        if(!currentUser) { 
+            window.location.href = 'staff.html'; 
+        } else {
+            const roleVal = String(currentUser.role || 'Teacher').trim().toLowerCase();
+            const roleName = (roleVal === 'admin' || roleVal === 'مدير') ? 'مدير النظام' : (roleVal === 'supervisor' || roleVal === 'مشرف') ? 'مشرف' : 'معلم';
+            document.getElementById('welcomeTitle').textContent = `درجات الطلاب (${currentUser.name || 'مستخدم'} - ${roleName})`;
+
+            // إذا كان المستخدم معلماً، نخفي تبويبات الإدارة ونضبط إشعار الصفوف
+            if(roleVal === 'teacher' || roleVal === 'معلم') {
+                document.querySelectorAll('.role-admin-sup').forEach(el => el.classList.add('hidden'));
+                document.querySelectorAll('.admin-only-tab').forEach(el => el.classList.add('hidden'));
+                document.querySelectorAll('.admin-sup-col').forEach(el => el.classList.add('hidden'));
+                
+                if(currentUser.classes) {
+                    document.getElementById('filterNotice').textContent = `* تظهر لك درجات طلاب صفوفك فقط: (${currentUser.classes})`;
+                } else {
+                    document.getElementById('filterNotice').textContent = `* لم يتم تحديد صفوف لحسابك بعد. يرجى مراجعة الإدارة.`;
+                }
+            } else {
+                document.getElementById('filterNotice').textContent = `* عرض درجات جميع طلاب المدرسة (صلاحية إدارية / إشرافية).`;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadScores();
+        });
+
+        async function loadScores() {
+            const selectedGame = document.getElementById('gameFilter').value;
+            const tableName = selectedGame === 'goldmine' ? 'goldmine_scores' : 'rocket_scores';
+            const limitVal = document.getElementById('viewLimitFilter').value;
+
+            let query = supabaseClient.from(tableName).select('*').order('points', { ascending: false });
+            
+            if(limitVal !== 'all') {
+                query = query.limit(parseInt(limitVal));
+            }
+
+            const { data, error } = await query;
+            const tbody = document.querySelector('#scoresTable tbody');
+            tbody.innerHTML = '';
+            
+            if(error) {
+                tbody.innerHTML = `<tr><td colspan="6" style="color:red;">لا توجد نتائج مسجلة حتى الآن أو تعذر الاتصال بالسحابة.</td></tr>`;
+                return;
+            }
+
+            const roleVal = String(currentUser.role || '').trim().toLowerCase();
+            const isTeacher = (roleVal === 'teacher' || roleVal === 'معلم');
+            let teacherClasses = isTeacher && currentUser.classes ? currentUser.classes.split(',').map(c => c.trim()) : [];
+
+            if(data && data.length > 0) {
+                let rank = 1;
+                let displayedCount = 0;
+
+                data.forEach(sc => {
+                    // فلترة صفوف المعلم إذا كان الحساب معلماً
+                    if(isTeacher && teacherClasses.length > 0) {
+                        if(!sc.cls || !teacherClasses.includes(sc.cls.trim())) {
+                            return; // تخطي الطالب إذا لم يكن من صفوف المعلم
+                        }
+                    }
+
+                    displayedCount++;
+                    let scoreId = sc.id;
+                    let dateStr = sc.created_at ? new Date(sc.created_at).toLocaleString() : '-';
+                    
+                    let actionCell = isTeacher ? '' : `<td><button class="btn btn-red" style="padding: 4px 8px; font-size: 12px;" onclick="deleteSingleScore('${scoreId}', '${tableName}')">حذف 🗑️</button></td>`;
+
+                    tbody.innerHTML += `
+                        <tr>
+                            <td><b>#${rank++}</b></td>
+                            <td>${sc.student_name || 'طالب'}</td>
+                            <td>${sc.cls || '-'}</td>
+                            <td><b style="color: var(--primary); font-size: 15px;">${sc.points || 0}</b></td>
+                            <td>${dateStr}</td>
+                            ${isTeacher ? '' : actionCell}
+                        </tr>`;
+                });
+
+                if(displayedCount === 0) {
+                    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#666;">لا توجد درجات مسجلة لصفوفك حالياً.</td></tr>`;
+                }
+            } else {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#666;">لا توجد درجات مسجلة لهذه اللعبة حتى الآن.</td></tr>`;
+            }
+        }
+
+        async function deleteSingleScore(scoreId, tableName) {
+            const roleVal = String(currentUser.role || '').trim().toLowerCase();
+            if(roleVal === 'teacher' || roleVal === 'معلم') {
+                alert('عذراً، لا تملك صلاحية حذف الدرجات.');
+                return;
+            }
+            if(!confirm('هل أنت متأكد من حذف هذه النتيجة نهائياً؟')) return;
+            const { error } = await supabaseClient.from(tableName).delete().eq('id', scoreId);
+            if(error) alert('خطأ أثناء الحذف: ' + error.message);
+            else { alert('✅ تم حذف النتيجة بنجاح!'); loadScores(); }
+        }
+
+        function exportScoresExcel() {
+            const table = document.getElementById('scoresTable');
+            const wb = XLSX.utils.table_to_book(table, {sheet: "درجات الطلاب"});
+            XLSX.writeFile(wb, "students_scores_report.xlsx");
+        }
+
+        function logout() {
+            localStorage.removeItem('current_staff_user');
+            window.location.href = 'staff.html';
+        }
+    </script>
+</body>
+</html>
