@@ -33,9 +33,9 @@
         
         .rocket-ship { position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); font-size: 55px; user-select: none; z-index: 15; transform-origin: bottom center; transition: transform 0.05s linear; }
         
-        .laser-beam { position: absolute; bottom: 65px; width: 5px; background: linear-gradient(to top, var(--primary), #f43f5e, #fb7185); transform-origin: bottom center; z-index: 12; box-shadow: 0 0 12px var(--primary); border-radius: 3px; pointer-events: none; }
+        /* شعاع الليزر الذي يمتد بطول الشاشة */
+        .laser-beam { position: absolute; bottom: 65px; width: 6px; background: linear-gradient(to top, var(--primary), #f43f5e, #fb7185); transform-origin: bottom center; z-index: 12; box-shadow: 0 0 15px var(--primary); border-radius: 3px; pointer-events: none; }
 
-        /* تعديل طبقة النافذة والزر لضمان الاستجابة التامة */
         .modal { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.97); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 999; text-align: center; padding: 25px; box-sizing: border-box; pointer-events: auto; }
         .modal h1 { color: var(--primary); font-size: 26px; margin-bottom: 15px; }
         .modal p { font-size: 16px; margin-bottom: 12px; color: var(--text); line-height: 1.6; }
@@ -60,13 +60,13 @@
 <body>
 
     <div class="game-container" id="gameContainer">
-        <!-- شاشة التعليمات مع ضمان تفاعل الأزرار -->
+        <!-- شاشة التعليمات -->
         <div class="modal" id="instructionsModal">
             <h1>🚀 تعليمات وقواعد سباق الصواريخ</h1>
             <div class="instructions-box">
                 <ul>
                     <li>⏱️ <b>زمن الجولة:</b> لديك <span id="ruleTime" style="color:var(--primary); font-weight:bold;">--</span> ثانية للإجابة على أكبر عدد من الأسئلة.</li>
-                    <li>🎯 <b>طريقة التصويب:</b> انقر بدقة مباشرة على النيزك الذي يحمل الناتج الصحيح!</li>
+                    <li>🎯 <b>طريقة التصويب:</b> انقر نحو النيزك الصحيح ليمتد الليزر ويصيبه بدقة!</li>
                     <li>⭐ <b>النقاط:</b> كل إجابة صحيحة تمنحك <span id="rulePoints" style="color:#2e7d32; font-weight:bold;">--</span> نقطة.</li>
                     <li>🔥 <b>مكافأة السلسلة:</b> الإجابة على <span id="ruleStreak" style="color:var(--primary); font-weight:bold;">--</span> أسئلة متتالية تمنحك وقتاً إضافياً!</li>
                 </ul>
@@ -325,6 +325,28 @@
             rocketShip.style.transform = `translateX(-50%) rotate(${angle}deg)`;
         }
 
+        // دالة حساب مسافة النقطة إلى خط شعاع الليزر
+        function getDistanceFromPointToLineSegment(px, py, x1, y1, x2, y2) {
+            let A = px - x1;
+            let B = py - y1;
+            let C = x2 - x1;
+            let D = y2 - y1;
+
+            let dot = A * C + B * D;
+            let lenSq = C * C + D * D;
+            let param = -1;
+            if (lenSq !== 0) param = dot / lenSq;
+
+            let xx, yy;
+            if (param < 0) { xx = x1; yy = y1; }
+            else if (param > 1) { xx = x2; yy = y2; }
+            else { xx = x1 + param * C; yy = y1 + param * D; }
+
+            let dx = px - xx;
+            let dy = py - yy;
+            return Math.sqrt(dx * dx + dy * dy);
+        }
+
         function handleArenaClick(e) {
             playSound('laser');
             const arena = document.getElementById('arenaBox');
@@ -337,11 +359,56 @@
             const startX = (rocketRect.left + rocketRect.right) / 2 - rect.left;
             const startY = arena.clientHeight - 30;
 
-            let angle = Math.atan2(clickX - startX, startY - clickY) * (180 / Math.PI);
+            // التحقق أولاً هل نقر اللاعب مباشرة فوق نيزك معين
+            let clickedAst = null;
+            asteroids.forEach(ast => {
+                let astCenterX = ast.x + 37.5;
+                let astCenterY = ast.y + 37.5;
+                let dist = Math.hypot(clickX - astCenterX, clickY - astCenterY);
+                if (dist <= 40) {
+                    clickedAst = ast;
+                }
+            });
+
+            let targetAst = clickedAst;
+
+            // إذا لم ينقر مباشرة فوق نيزك، نبحث عن أول نيزك يتقاطع مع مسار شعاع الليزر المنطلق نحو مكان النقر
+            if (!targetAst) {
+                let minDistanceToRocket = 99999;
+                asteroids.forEach(ast => {
+                    let astCenterX = ast.x + 37.5;
+                    let astCenterY = ast.y + 37.5;
+                    // حساب مسافة النيزك عن خط الليزر
+                    let distToBeam = getDistanceFromPointToLineSegment(astCenterX, astCenterY, startX, startY, clickX, clickY);
+                    if (distToBeam <= 40) {
+                        // إذا كان يقع على مسار الشعاع، نختار الأقرب للصاروخ
+                        let distToRocket = Math.hypot(astCenterX - startX, astCenterY - startY);
+                        if (distToRocket < minDistanceToRocket) {
+                            minDistanceToRocket = distToRocket;
+                            targetAst = ast;
+                        }
+                    }
+                });
+            }
+
+            // تحديد اتجاه وطول شعاع الليزر (يمتد بطول الشاشة أو حتى الاصطدام بالنيزك المستهدف)
+            let endX = clickX;
+            let endY = clickY;
+            if (targetAst) {
+                endX = targetAst.x + 37.5;
+                endY = targetAst.y + 37.5;
+            } else {
+                // تمديد الشعاع حتى يخرج من الشاشة في نفس اتجاه النقر
+                let angleRad = Math.atan2(clickX - startX, startY - clickY);
+                endX = startX + Math.sin(angleRad) * 1000;
+                endY = startY - Math.cos(angleRad) * 1000;
+            }
+
+            let angle = Math.atan2(endX - startX, startY - endY) * (180 / Math.PI);
             angle = Math.max(-90, Math.min(90, angle));
             rocketShip.style.transform = `translateX(-50%) rotate(${angle}deg)`;
 
-            const length = Math.hypot(clickX - startX, clickY - startY);
+            const length = Math.hypot(endX - startX, endY - startY);
 
             const laser = document.createElement('div');
             laser.className = 'laser-beam';
@@ -353,22 +420,10 @@
             arena.appendChild(laser);
             setTimeout(() => laser.remove(), 200);
 
-            let hitAst = null;
-            asteroids.forEach(ast => {
-                let astCenterX = ast.x + 37.5;
-                let astCenterY = ast.y + 37.5;
-                let dist = Math.hypot(clickX - astCenterX, clickY - astCenterY);
-                if (dist <= 45) {
-                    hitAst = ast;
-                }
-            });
-
-            if (hitAst) {
-                checkAnswer(hitAst.value);
+            if (targetAst) {
+                checkAnswer(targetAst.value);
             } else {
-                playSound('wrong');
-                score = Math.max(0, score - customSettings.wrongPenalty);
-                streak = 0;
+                // إذا لم يصطدم بأي نيزك، لا يتم خصم نقاط ولا سلسلة!
                 updateHUD();
             }
         }
