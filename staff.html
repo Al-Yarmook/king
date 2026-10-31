@@ -28,7 +28,6 @@
         input { width: 100%; padding: 12px; padding-left: 45px; border: 1px solid #cbd5e1; border-radius: 8px; font-family: 'Cairo'; font-size: 14px; background: #fff; }
         input:focus { border-color: var(--primary); outline: none; }
 
-        /* زر معاينة كلمة المرور */
         .toggle-password { position: absolute; left: 12px; background: none; border: none; cursor: pointer; font-size: 18px; color: #64748b; }
 
         .btn { background: var(--primary); color: white; border: none; padding: 12px; width: 100%; font-size: 16px; font-weight: bold; border-radius: 8px; cursor: pointer; transition: 0.3s; font-family: 'Cairo'; margin-top: 10px; text-decoration: none; display: inline-block; }
@@ -55,7 +54,7 @@
 
         <div class="form-group">
             <label>الرقم الشخصي أو اسم المستخدم:</label>
-            <input type="text" id="username" placeholder="أدخل اسم المستخدم (Admin)">
+            <input type="text" id="username" placeholder="أدخل اسم المستخدم">
         </div>
 
         <div class="form-group">
@@ -91,12 +90,12 @@
             const user = document.getElementById('username').value.trim();
             const pass = document.getElementById('password').value.trim();
 
-            // التحقق من بيانات دخول المدير بشكل صحيح وسلس
-            if (user === 'Admin' && pass === '123456') {
+            // قبول الدخول سواء تم إدخال اسم المستخدم بحروف كبيرة أو صغيرة
+            if ((user.toLowerCase() === 'admin') && pass === '123456') {
                 localStorage.setItem('is_admin', 'true');
                 window.location.href = 'dashboard.html';
             } else {
-                alert('اسم المستخدم أو كلمة المرور غير صحيحة! (تأكد من كتابة Admin و 123456)');
+                alert('اسم المستخدم أو كلمة المرور غير صحيحة!');
             }
         }
     </script>
