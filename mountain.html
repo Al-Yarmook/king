@@ -26,15 +26,15 @@
         .penalty-float-msg { position: absolute; top: 50px; left: 50%; transform: translateX(-50%); background: #dc2626; color: white; padding: 4px 15px; border-radius: 20px; font-size: 13px; font-weight: bold; pointer-events: none; opacity: 0; transition: 0.3s; z-index: 20; box-shadow: 0 0 10px rgba(220,38,38,0.4); }
         .penalty-float-msg.show { opacity: 1; transform: translateX(-50%) translateY(-5px); }
 
-        /* منطقة اللعب الرئيسية (تصميم عمودي متناسق) */
         .main-layout { display: flex; gap: 12px; flex: 1; align-items: center; justify-content: center; padding: 5px 0; overflow: hidden; }
 
-        /* الجبل العمودي الطويل كما في صورتك */
+        /* الجبل العمودي المتناسق */
         .mountain-scene { width: 140px; height: 100%; max-height: 320px; background: linear-gradient(135deg, #475569, #334155, #1e293b); border-radius: 14px; position: relative; overflow: hidden; border: 3px solid #cbd5e1; box-shadow: inset 0 0 20px rgba(0,0,0,0.5); display: flex; flex-direction: column; align-items: center; justify-content: space-between; }
         .mountain-peak { background: #b91c1c; color: white; padding: 4px 15px; border-radius: 8px; font-size: 14px; font-weight: 900; z-index: 2; margin-top: 8px; box-shadow: 0 3px 8px rgba(0,0,0,0.3); }
-        .climber { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); font-size: 38px; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 5; }
+        
+        /* تكبير حجم المتسلق ليصبح واضحاً وبارزاً */
+        .climber { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); font-size: 55px; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 5; }
 
-        /* القسم اليميني (السؤال ولوحة الأرقام) */
         .right-panel { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 8px; max-width: 360px; }
 
         .question-card { background: rgba(255, 255, 255, 0.95); border: 2px solid var(--primary); padding: 8px; width: 100%; text-align: center; border-radius: 10px; box-shadow: 0 3px 10px rgba(0,0,0,0.05); }
@@ -43,7 +43,6 @@
         
         .answer-display-box { background: #f8fafc; border: 2px solid #cbd5e1; border-radius: 8px; padding: 4px 10px; font-size: 20px; font-weight: bold; color: #1e293b; min-height: 38px; width: 100%; max-width: 220px; display: inline-flex; align-items: center; justify-content: center; letter-spacing: 2px; }
 
-        /* لوحة الأرقام المطابقة للصورة (5 أسرار في الصف) */
         .keypad-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; width: 100%; }
         .key-btn { background: #ffffff; border: 2px solid #cbd5e1; color: var(--text); padding: 8px 0; border-radius: 8px; font-size: 17px; font-weight: bold; cursor: pointer; transition: 0.15s; font-family: 'Cairo'; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
         .key-btn:hover, .key-btn:active { background: #e2e8f0; border-color: var(--primary); color: var(--primary); }
@@ -86,7 +85,7 @@
             <h1>🧗‍♂️ تعليمات لعبة الصعود نحو القمة</h1>
             <div class="instructions-box">
                 <ul>
-                    <li>🧗 <b>المهمة:</b> اكتب إجابة مسائل جدول الضرب باستخدام لوحة الأرقام للتسلق عمودياً نحو القمة!</li>
+                    <li>🧗 <b>المهمة:</b> اكتب إجابة مسائل جدول الضرب (بالكيبورد أو لوحة الأرقام بالشاشة) للتسلق عمودياً نحو القمة!</li>
                     <li>⏱️ <b>الوقت المحدود:</b> لديك <span id="ruleTime" style="color:var(--primary); font-weight:bold;">٩0</span> ثانية فقط.</li>
                     <li>⚠️ <b>عقوبة الخطأ:</b> كل إجابة خاطئة تخصم <span style="color:#dc2626; font-weight:bold;">5 ثوانٍ</span> من وقتك المتبقي!</li>
                     <li>💡 <b>مساعدة إظهار الخيارات:</b> متاح لك استخدام زر المساعدة <b>مرتان فقط</b> في الجولة (يتم خصم نصف نقاط السؤال).</li>
@@ -107,9 +106,9 @@
             <div class="penalty-float-msg" id="penaltyMsg">-٥ ثوانٍ! ⚠️</div>
         </div>
 
-        <!-- التوزيع المطلوب (الجبل على اليسار والأسئلة ولوحة الأرقام على اليمين) -->
+        <!-- التوزيع المطلوب -->
         <div class="main-layout">
-            <!-- الجبل العمودي -->
+            <!-- الجبل العمودي (مع تكبير المتسلق) -->
             <div class="mountain-scene">
                 <div class="mountain-peak">القمة 🚩</div>
                 <div class="climber" id="climberIcon">🧗‍♂️</div>
@@ -130,21 +129,21 @@
                         <button class="help-btn" id="helpBtn" onclick="useHelpOption()">💡 مساعدة: إظهار الخيارات (<span id="helpCount">٢</span> متاحة)</button>
                     </div>
                     
-                    <!-- لوحة الأرقام (5 أزرار في الصف كما في صورتك) -->
+                    <!-- لوحة الأرقام بالشاشة -->
                     <div class="keypad-grid">
-                        <button class="key-btn" onclick="appendKey(1)">١</button>
-                        <button class="key-btn" onclick="appendKey(2)">٢</button>
-                        <button class="key-btn" onclick="appendKey(3)">٣</button>
-                        <button class="key-btn" onclick="appendKey(4)">٤</button>
-                        <button class="key-btn" onclick="appendKey(5)">٥</button>
-                        <button class="key-btn" onclick="appendKey(6)">٦</button>
-                        <button class="key-btn" onclick="appendKey(7)">٧</button>
-                        <button class="key-btn" onclick="appendKey(8)">٨</button>
-                        <button class="key-btn" onclick="appendKey(9)">٩</button>
-                        <button class="key-btn" onclick="appendKey(0)">٠</button>
+                        <button class="key-btn" onclick="appendKey('1')">١</button>
+                        <button class="key-btn" onclick="appendKey('2')">٢</button>
+                        <button class="key-btn" onclick="appendKey('3')">٣</button>
+                        <button class="key-btn" onclick="appendKey('4')">٤</button>
+                        <button class="key-btn" onclick="appendKey('5')">٥</button>
+                        <button class="key-btn" onclick="appendKey('6')">٦</button>
+                        <button class="key-btn" onclick="appendKey('7')">٧</button>
+                        <button class="key-btn" onclick="appendKey('8')">٨</button>
+                        <button class="key-btn" onclick="appendKey('9')">٩</button>
+                        <button class="key-btn" onclick="appendKey('0')">٠</button>
                     </div>
 
-                    <!-- أزرار التحكم (حذف، مسح، وتأكيد) -->
+                    <!-- أزرار التحكم -->
                     <div class="action-row">
                         <button class="key-btn action-clear" onclick="clearKey()">⌫ حذف</button>
                         <button class="key-btn action-reset" onclick="resetKey()">C مسح</button>
@@ -255,7 +254,7 @@
         loadCloudSettings();
 
         let score = 0, timeLeft = customSettings.gameTime, steps = 0, currentCorrectAnswer = 0, maxTable = 10;
-        let currentInput = '', helpRemaining = 2, isUsingOptions = false;
+        let currentInput = '', helpRemaining = 2, isUsingOptions = false, gameActive = false;
         let timerInterval = null;
 
         async function startTheGameSession() {
@@ -284,6 +283,7 @@
         function startGameEngine() {
             score = 0; timeLeft = customSettings.gameTime; steps = 0;
             helpRemaining = 2;
+            gameActive = true;
             updateHelpButtonState();
             updateHUD();
             updateClimberPosition();
@@ -296,6 +296,7 @@
                 updateHUD();
                 if (timeLeft <= 0) {
                     clearInterval(timerInterval);
+                    gameActive = false;
                     endGame(true);
                 }
             }, 1000);
@@ -317,7 +318,7 @@
         function updateClimberPosition() {
             const climber = document.getElementById('climberIcon');
             let progress = Math.min(steps / 15, 1);
-            let bottomPos = 10 + (progress * 220); 
+            let bottomPos = 10 + (progress * 190); 
             climber.style.bottom = bottomPos + 'px';
         }
 
@@ -365,14 +366,16 @@
             }
         }
 
-        function appendKey(num) {
+        function appendKey(numStr) {
+            if (!gameActive) return;
             if (currentInput.length < 3) {
-                currentInput += num;
+                currentInput += numStr;
                 document.getElementById('answerDisplayBox').textContent = toArabicNum(currentInput);
             }
         }
 
         function clearKey() {
+            if (!gameActive) return;
             if (currentInput.length > 0) {
                 currentInput = currentInput.slice(0, -1);
             }
@@ -380,18 +383,35 @@
         }
 
         function resetKey() {
+            if (!gameActive) return;
             currentInput = '';
             document.getElementById('answerDisplayBox').textContent = '_';
         }
 
         function submitManualAnswer() {
-            if (currentInput === '') return;
+            if (!gameActive || currentInput === '') return;
             let userVal = parseInt(toEnglishNum(currentInput));
             checkAnswer(userVal, currentCorrectAnswer, false);
         }
 
+        // تفعيل الاستماع للكيبورد (لوحة مفاتيح الحاسوب)
+        document.addEventListener('keydown', (e) => {
+            if (!gameActive) return;
+            if (isUsingOptions) return; // إذا كانت الخيارات ظاهرة لا نعمل إدخال رقمي مباشر
+
+            if (e.key >= '0' && e.key <= '9') {
+                appendKey(e.key);
+            } else if (e.key === 'Backspace') {
+                clearKey();
+            } else if (e.key === 'Enter') {
+                submitManualAnswer();
+            } else if (e.key.toLowerCase() === 'c') {
+                resetKey();
+            }
+        });
+
         function useHelpOption() {
-            if (helpRemaining <= 0) return;
+            if (!gameActive || helpRemaining <= 0) return;
             helpRemaining--;
             isUsingOptions = true;
             updateHelpButtonState();
@@ -431,6 +451,7 @@
         }
 
         function checkAnswer(selectedOpt, correctVal, usedHelp) {
+            if (!gameActive) return;
             if (selectedOpt === correctVal) {
                 playSound('step');
                 let pointsEarned = parseInt(customSettings.correctPoints || 100);
@@ -449,17 +470,19 @@
                 resetKey();
                 if (timeLeft <= 0) {
                     clearInterval(timerInterval);
+                    gameActive = false;
                     endGame(false);
                 }
             }
         }
 
         async function endGame(isWin) {
+            gameActive = false;
             clearInterval(timerInterval);
             const modal = document.getElementById('gameOverModal');
             modal.classList.remove('hidden');
             document.getElementById('gameOverTitle').textContent = isWin ? '🎉 مبروك! وصلت القمة بنجاح! 🚩' : 'انتهى الوقت! ⏰';
-            document.getElementById('finalScoreText').textContent = `أحسنت يا ${studentData.name}! جمعت ${toArabicNum(score)} نقطة وتسقت ${toArabicNum(steps)} خطوات.`;
+            document.getElementById('finalScoreText').textContent = `أحسنت يا ${studentData.name}! جمعت ${toArabicNum(score)} نقطة وتسوقت ${toArabicNum(steps)} خطوات.`;
             document.getElementById('saveStatus').textContent = 'جاري حفظ النتيجة بالسحابة...';
 
             try {
