@@ -39,7 +39,7 @@
             flex-direction: column; 
             align-items: center; 
             justify-content: space-between; 
-            cursor: pointer; /* تجعل المربع كاملاً ينبض بأنه قابل للنقر */
+            cursor: pointer; 
             user-select: none;
         }
         .portal-card:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(0,0,0,0.08); border-color: var(--primary); }
@@ -47,7 +47,7 @@
         .portal-card h3 { color: var(--text); font-size: 19px; margin-bottom: 8px; font-weight: 700; }
         .portal-card p { color: #64748b; font-size: 13px; margin-bottom: 20px; line-height: 1.5; }
 
-        .btn { background: var(--primary); color: white; border: none; padding: 10px 20px; font-size: 15px; font-weight: bold; border-radius: 10px; cursor: pointer; transition: 0.3s; text-decoration: none; display: inline-block; font-family: 'Cairo'; width: 100%; pointer-events: none; /* يتكفل المربع بالنقر المباشر */ }
+        .btn { background: var(--primary); color: white; border: none; padding: 10px 20px; font-size: 15px; font-weight: bold; border-radius: 10px; cursor: pointer; transition: 0.3s; text-decoration: none; display: inline-block; font-family: 'Cairo'; width: 100%; pointer-events: none; }
         .portal-card:hover .btn, .game-card:hover .btn { transform: translateY(-2px); filter: brightness(0.95); }
         
         .btn-green { background: #2e7d32; }
@@ -68,7 +68,7 @@
             flex-direction: column; 
             align-items: center; 
             justify-content: space-between; 
-            cursor: pointer; /* كرت اللعبة بالكامل قابل للنقر */
+            cursor: pointer; 
             user-select: none;
         }
         .game-card:hover { border-color: var(--primary); transform: translateY(-5px); box-shadow: 0 8px 20px rgba(216,27,96,0.12); }
@@ -76,7 +76,7 @@
         .game-card p { color: #64748b; font-size: 13px; margin-bottom: 15px; }
 
         .student-nav-actions { display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; margin-top: 20px; border-top: 1px dashed #cbd5e1; padding-top: 20px; }
-        .student-nav-actions .btn { pointer-events: auto; } /* تفعيل النقر للأزرار الخارجية المعزولة */
+        .student-nav-actions .btn { pointer-events: auto; }
 
         footer.author-footer {
             text-align: center;
@@ -147,18 +147,32 @@
             <div class="games-grid">
                 <!-- لعبة صواريخ الفضاء -->
                 <div class="game-card" onclick="window.location.href='rocket.html'">
-                    <div style="font-size: 40px;">🚀</div>
-                    <h3>سباق صواريخ الفضاء</h3>
-                    <p>أجب بسرعة وأطلق صاروخك نحو الفضاء واكسب النقاط!</p>
+                    <div>
+                        <div style="font-size: 40px;">🚀</div>
+                        <h3>سباق صواريخ الفضاء</h3>
+                        <p>أجب بسرعة وأطلق صاروخك نحو الفضاء واكسب النقاط!</p>
+                    </div>
                     <span class="btn">العب الان 🚀</span>
                 </div>
 
                 <!-- لعبة منجم الذهب -->
                 <div class="game-card" onclick="window.location.href='goldmine.html'">
-                    <div style="font-size: 40px;">⛏️</div>
-                    <h3>لغز منجم الذهب</h3>
-                    <p>اكسر الصخور، حل لغز الضرب، وافتح صندوق الذهب!</p>
+                    <div>
+                        <div style="font-size: 40px;">⛏️</div>
+                        <h3>لغز منجم الذهب</h3>
+                        <p>اكسر الصخور، حل لغز الضرب، وافتح صندوق الذهب!</p>
+                    </div>
                     <span class="btn" style="background: #d97706;">التنقيب عن الذهب 🪙</span>
+                </div>
+
+                <!-- لعبة الصعود نحو القمة الجديد -->
+                <div class="game-card" onclick="window.location.href='mountain.html'">
+                    <div>
+                        <div style="font-size: 40px;">🧗‍♂️</div>
+                        <h3>الصعود نحو القمة</h3>
+                        <p>أجب عن المسائل وتسلق الجبل نحو قمة المجد!</p>
+                    </div>
+                    <span class="btn" style="background: #0284c7;">ابدأ الصعود 🧗‍♂️</span>
                 </div>
             </div>
 
@@ -188,7 +202,7 @@
 
             // إخفاء خيارات الدخول العامة
             document.getElementById('publicPortalGrid').classList.add('hidden');
-            document.getElementById('headerSubtext').textContent = 'جاهز للتحدي والمنافسة؟ اختر لعبتك المفضل!';
+            document.getElementById('headerSubtext').textContent = 'جاهز للتحدي والمنافسة؟ اختر لعبتك المفضلة!';
         }
 
         // تغيير الطالب (يذهب لصفحة الاختيار)
