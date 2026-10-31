@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إعدادات الألعاب والمستويات - ملك جدول الضرب</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #d81b60;
+            --primary-hover: #ad1457;
+            --bg: #f4f7f6;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+        }
+        * { box-sizing: border-box; }
+        body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        header { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-top: 4px solid var(--primary); }
+        h1 { color: var(--primary); margin: 0; font-size: 24px; font-weight: 900; }
+        .nav-tabs { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .tab-btn { background: white; border: 2px solid var(--primary); color: var(--primary); padding: 10px 18px; border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.3s; font-family: 'Cairo'; text-decoration: none; display: inline-block; font-size: 14px; }
+        .tab-btn.active, .tab-btn:hover { background: var(--primary); color: white; }
+        .section-card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .btn { background: var(--primary); color: white; border: none; padding: 8px 16px; border-radius: 8px; font-weight: bold; cursor: pointer; font-family: 'Cairo'; transition: 0.3s; text-decoration: none; display: inline-block; }
+        .btn:hover { background: var(--primary-hover); }
+        .form-row { display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap; }
+        .form-group { flex: 1; min-width: 220px; text-align: right; }
+        label { display: block; margin-bottom: 5px; font-weight: 600; color: #333; }
+        input, select { width: 100%; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-family: 'Cairo'; }
+        .game-sub-section { border: 1px solid #e2e8f0; background: #f8fafc; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
+        .game-sub-section h3 { margin-top: 0; color: var(--primary); border-bottom: 2px solid #cbd5e1; padding-bottom: 8px; font-size: 18px; }
+        .hidden { display: none !important; }
+        footer.author-footer { text-align: center; padding: 15px; color: #64748b; font-weight: bold; margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1 id="welcomeTitle">إعدادات الألعاب والمستويات</h1>
+            <button class="btn btn-red" onclick="logout()">تسجيل الخروج 🚪</button>
+        </header>
+
+        <!-- شريط التبويبات الموحد -->
+        <div class="nav-tabs" id="navTabs">
+            <a href="adm_students.html" class="tab-btn">👥 بيانات الطلاب</a>
+            <a href="adm_teachers.html" class="tab-btn">👨‍🏫 إدارة المعلمين</a>
+            <a href="adm_games.html" class="tab-btn active">🎮 إعدادات الألعاب</a>
+            <a href="adm_scores.html" class="tab-btn">📊 درجات الطلاب</a>
+            <a href="adm_reset.html" class="tab-btn admin-only-tab">⚙️ تصفير النتائج</a>
+            <a href="adm_profile.html" class="tab-btn">👤 بياناتي الشخصية</a>
+        </div>
+
+        <div class="section-card">
+            <h2>إعدادات الألعاب ومستويات جداول الضرب 🎮</h2>
+            <p style="color: #646f79; margin-bottom: 20px;">من هنا يمكنك التحكم في مستويات صعوبة الأسئلة، نطاق جداول الضرب لكل مرحلة صفية، وأوقات الألعاب ونقاطها.</p>
+
+            <!-- 1. إعدادات نطاق الجداول لكل مرحلة صفية -->
+            <div class="game-sub-section">
+                <h3>📚 أقصى جدول ضرب مسموح لكل مرحلة دراسية</h3>
+                <p style="font-size: 13px; color: #555;">الرقم يدل على المرحلة (مثال: الصف الأول 1، الثاني 2 ... حتى السادس 6). يتم توليد الأسئلة للطالب تلقائياً بما يتناسب مع صفه.</p>
+                <div class="form-row">
+                    <div class="form-group"><label>الصف الأول (أقصى رقم للضرب):</label><input type="number" id="maxTable1" value="3" min="1" max="12"></div>
+                    <div class="form-group"><label>الصف الثاني (أقصى رقم للضرب):</label><input type="number" id="maxTable2" value="5" min="1" max="12"></div>
+                    <div class="form-group"><label>الصف الثالث (أقصى رقم للضرب):</label><input type="number" id="maxTable3" value="7" min="1" max="12"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>الصف الرابع (أقصى رقم للضرب):</label><input type="number" id="maxTable4" value="9" min="1" max="12"></div>
+                    <div class="form-group"><label>الصف الخامس (أقصى رقم للضرب):</label><input type="number" id="maxTable5" value="12" min="1" max="12"></div>
+                    <div class="form-group"><label>الصف السادس (أقصى رقم للضرب):</label><input type="number" id="maxTable6" value="12" min="1" max="12"></div>
+                </div>
+                <button class="btn" onclick="saveGradeLevelsSettings()">حفظ مستويات الصفوف والجداول 💾</button>
+            </div>
+
+            <!-- 2. إعدادات لعبة الصواريخ -->
+            <div class="game-sub-section">
+                <h3>🚀 إعدادات لعبة "سباق صواريخ الفضاء"</h3>
+                <div class="form-row">
+                    <div class="form-group"><label>وقت الجولة الافتراضي (بالثواني):</label><input type="number" id="settingGameTime" value="60"></div>
+                    <div class="form-group"><label>نقاط الإجابة الصحيحة:</label><input type="number" id="settingCorrectPoints" value="100"></div>
+                    <div class="form-group"><label>نقاط الخصم للإجابة الخاطئة:</label><input type="number" id="settingWrongPenalty" value="30"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>عدد الإجابات المتتالية للمكافأة (Streak):</label><input type="number" id="settingStreakCount" value="5"></div>
+                    <div class="form-group"><label>الوقت الإضافي للمكافأة (بالثواني):</label><input type="number" id="settingBonusTime" value="10"></div>
+                </div>
+                <button class="btn" onclick="saveRocketSettings()">حفظ إعدادات الصواريخ 💾</button>
+            </div>
+
+            <!-- 3. إعدادات لعبة منجم الذهب -->
+            <div class="game-sub-section">
+                <h3>⛏️ إعدادات "لغز منجم الذهب"</h3>
+                <div class="form-row">
+                    <div class="form-group"><label>عدد المحاولات (القلوب):</label><input type="number" id="goldLives" value="3" min="1" max="10"></div>
+                    <div class="form-group"><label>النقاط لكل حجرة:</label><input type="number" id="goldPoints" value="100" min="10"></div>
+                    <div class="form-group"><label>عدد الحجارة (الغرف):</label><input type="number" id="goldRooms" value="5" min="3" max="20"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>نوع الأسئلة المعتمد:</label>
+                        <select id="goldQuestionType">
+                            <option value="both">تنوع بين الناتج والعامل المفقود (موصى به)</option>
+                            <option value="product">إيجاد الناتج فقط (× = ؟)</option>
+                            <option value="missing">إيجاد العامل المفقود فقط (؟ × =)</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="btn" onclick="saveGoldMineSettings()">حفظ إعدادات المنجم 💾</button>
+            </div>
+
+        </div>
+    </div>
+
+    <footer class="author-footer">
+        إعداد أ. صادق القلعاوي | مدرسة اليرموك الابتدائية للبنين 🏫✨
+    </footer>
+
+    <script>
+        let currentUser = JSON.parse(localStorage.getItem('current_staff_user'));
+
+        if(!currentUser) { 
+            window.location.href = 'staff.html'; 
+        } else {
+            const roleVal = String(currentUser.role || 'Teacher').trim().toLowerCase();
+            
+            // المعلم ممنوع من دخول هذه الصفحة (مخصصة للمدير والمشرف فقط)
+            if(roleVal === 'teacher' || roleVal === 'معلم') {
+                alert('عذراً، إعدادات الألعاب والمستويات مخصصة للمدير والمشرفين فقط.');
+                window.location.href = 'adm_scores.html';
+            }
+
+            const roleName = (roleVal === 'admin' || roleVal === 'مدير') ? 'مدير النظام' : 'مشرف';
+            document.getElementById('welcomeTitle').textContent = `إعدادات الألعاب (${currentUser.name || 'مستخدم'} - ${roleName})`;
+
+            // إذا كان المستخدم مشرفاً نخفي تبويب التصفير الخاص بالمدير
+            if(roleVal === 'supervisor' || roleVal === 'مشرف') {
+                document.querySelectorAll('.admin-only-tab').forEach(el => el.classList.add('hidden'));
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadAllGameSettings();
+        });
+
+        async function loadAllGameSettings() {
+            // 1. جلب إعدادات مستويات الجداول للصفوف
+            try {
+                const { data } = await supabaseClient.from('game_settings').select('value').eq('key', 'grade_tables_settings').single();
+                if(data && data.value) {
+                    const cfg = data.value;
+                    document.getElementById('maxTable1').value = cfg.t1 || 3;
+                    document.getElementById('maxTable2').value = cfg.t2 || 5;
+                    document.getElementById('maxTable3').value = cfg.t3 || 7;
+                    document.getElementById('maxTable4').value = cfg.t4 || 9;
+                    document.getElementById('maxTable5').value = cfg.t5 || 12;
+                    document.getElementById('maxTable6').value = cfg.t6 || 12;
+                }
+            } catch (e) {}
+
+            // 2. جلب إعدادات الصواريخ
+            try {
+                const { data } = await supabaseClient.from('game_settings').select('value').eq('key', 'rocket_settings').single();
+                if(data && data.value) {
+                    const settings = data.value;
+                    document.getElementById('settingGameTime').value = settings.gameTime || 60;
+                    document.getElementById('settingCorrectPoints').value = settings.correctPoints || 100;
+                    document.getElementById('settingWrongPenalty').value = settings.wrongPenalty || 30;
+                    document.getElementById('settingStreakCount').value = settings.streakCount || 5;
+                    document.getElementById('settingBonusTime').value = settings.bonusTime || 10;
+                }
+            } catch (e) {}
+
+            // 3. جلب إعدادات المنجم
+            try {
+                const { data } = await supabaseClient.from('game_settings').select('value').eq('key', 'gold_mine_settings').single();
+                if(data && data.value) {
+                    const settings = data.value;
+                    document.getElementById('goldLives').value = settings.maxLives || 3;
+                    document.getElementById('goldPoints').value = settings.goldPerDoor || 100;
+                    document.getElementById('goldRooms').value = settings.totalRooms || 5;
+                    document.getElementById('goldQuestionType').value = settings.questionType || 'both';
+                }
+            } catch (e) {}
+        }
+
+        async function saveGradeLevelsSettings() {
+            const config = {
+                t1: parseInt(document.getElementById('maxTable1').value) || 3,
+                t2: parseInt(document.getElementById('maxTable2').value) || 5,
+                t3: parseInt(document.getElementById('maxTable3').value) || 7,
+                t4: parseInt(document.getElementById('maxTable4').value) || 9,
+                t5: parseInt(document.getElementById('maxTable5').value) || 12,
+                t6: parseInt(document.getElementById('maxTable6').value) || 12
+            };
+
+            const { error } = await supabaseClient.from('game_settings').upsert([{ key: 'grade_tables_settings', value: config }]);
+            if(error) alert('خطأ أثناء الحفظ بالسحابة: ' + error.message);
+            else alert('✅ تم حفظ مستويات جداول الضرب لكل صف بنجاح!');
+        }
+
+        async function saveRocketSettings() {
+            const settings = {
+                gameTime: parseInt(document.getElementById('settingGameTime').value) || 60,
+                correctPoints: parseInt(document.getElementById('settingCorrectPoints').value) || 100,
+                wrongPenalty: parseInt(document.getElementById('settingWrongPenalty').value) || 30,
+                streakCount: parseInt(document.getElementById('settingStreakCount').value) || 5,
+                bonusTime: parseInt(document.getElementById('settingBonusTime').value) || 10
+            };
+
+            const { error } = await supabaseClient.from('game_settings').upsert([{ key: 'rocket_settings', value: settings }]);
+            if(error) alert('خطأ أثناء الحفظ بالسحابة: ' + error.message);
+            else alert('✅ تم حفظ إعدادات لعبة الصواريخ بنجاح!');
+        }
+
+        async function saveGoldMineSettings() {
+            const settings = {
+                maxLives: parseInt(document.getElementById('goldLives').value) || 3,
+                goldPerDoor: parseInt(document.getElementById('goldPoints').value) || 100,
+                totalRooms: parseInt(document.getElementById('goldRooms').value) || 5,
+                questionType: document.getElementById('goldQuestionType').value || 'both'
+            };
+
+            const { error } = await supabaseClient.from('game_settings').upsert([{ key: 'gold_mine_settings', value: settings }]);
+            if(error) alert('خطأ أثناء الحفظ بالسحابة: ' + error.message);
+            else alert('✅ تم حفظ إعدادات لغز منجم الذهب بنجاح!');
+        }
+
+        function logout() {
+            localStorage.removeItem('current_staff_user');
+            window.location.href = 'staff.html';
+        }
+    </script>
+</body>
+</html>
