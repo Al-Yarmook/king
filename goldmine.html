@@ -12,27 +12,27 @@
             --primary: #d81b60;
             --primary-hover: #ad1457;
             --accent: #f59e0b;
-            --bg: #111827;
-            --card-bg: #1f2937;
-            --text: #f9fafb;
+            --bg: #f4f7f6;
+            --card-bg: #ffffff;
+            --text: #1e293b;
         }
         * { touch-action: manipulation; box-sizing: border-box; margin: 0; padding: 0; font-family: 'Cairo', sans-serif; }
         body { background-color: var(--bg); color: var(--text); margin: 0; padding: 0; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; }
         
-        .game-container { width: 100%; max-width: 600px; height: 100vh; background: #0f172a; position: relative; box-shadow: 0 4px 20px rgba(0,0,0,0.5); display: flex; flex-direction: column; justify-content: space-between; border-left: 2px solid #334155; border-right: 2px solid #334155; overflow: hidden; padding-bottom: 20px; }
+        .game-container { width: 100%; max-width: 600px; height: 100vh; background: #ffffff; position: relative; box-shadow: 0 4px 20px rgba(0,0,0,0.08); display: flex; flex-direction: column; justify-content: space-between; border-left: 2px solid #e2e8f0; border-right: 2px solid #e2e8f0; overflow: hidden; padding-bottom: 20px; }
         
-        .hud { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; background: #1e293b; font-size: 14px; font-weight: bold; border-bottom: 2px solid var(--primary); z-index: 10; color: #f8fafc; }
-        .hud span { color: var(--accent); }
+        .hud { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; background: #f8fafc; font-size: 14px; font-weight: bold; border-bottom: 2px solid var(--primary); z-index: 10; color: var(--text); }
+        .hud span { color: var(--primary); }
         
-        .bonus-float-msg { position: absolute; top: 60px; left: 50%; transform: translateX(-50%); background: #10b981; color: white; padding: 4px 15px; border-radius: 20px; font-size: 13px; font-weight: bold; pointer-events: none; opacity: 0; transition: 0.3s; z-index: 20; box-shadow: 0 0 10px #10b981; }
+        .bonus-float-msg { position: absolute; top: 60px; left: 50%; transform: translateX(-50%); background: #2e7d32; color: white; padding: 4px 15px; border-radius: 20px; font-size: 13px; font-weight: bold; pointer-events: none; opacity: 0; transition: 0.3s; z-index: 20; box-shadow: 0 0 10px rgba(46,125,50,0.3); }
         .bonus-float-msg.show { opacity: 1; transform: translateX(-50%) translateY(-5px); }
 
         .mine-arena { flex: 1; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 15px 15px; box-sizing: border-box; }
         
-        .progress-track { display: flex; gap: 5px; align-items: center; justify-content: center; width: 100%; background: #1e293b; padding: 8px; border-radius: 12px; border: 1px solid #334155; }
-        .step-node { width: 26px; height: 26px; border-radius: 50%; background: #334155; border: 2px solid #475569; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; color: #94a3b8; transition: 0.3s; }
-        .step-node.active { background: var(--primary); color: white; border-color: #f43f5e; box-shadow: 0 0 10px var(--primary); transform: scale(1.15); }
-        .step-node.done { background: #10b981; color: white; border-color: #059669; }
+        .progress-track { display: flex; gap: 5px; align-items: center; justify-content: center; width: 100%; background: #f1f5f9; padding: 8px; border-radius: 12px; border: 1px solid #cbd5e1; }
+        .step-node { width: 26px; height: 26px; border-radius: 50%; background: #e2e8f0; border: 2px solid #cbd5e1; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; color: #64748b; transition: 0.3s; }
+        .step-node.active { background: var(--primary); color: white; border-color: var(--primary-hover); box-shadow: 0 0 10px rgba(216,27,96,0.3); transform: scale(1.15); }
+        .step-node.done { background: #2e7d32; color: white; border-color: #1b5e20; }
         
         .rock-stage { position: relative; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 10px 0; }
         .pickaxe { position: absolute; top: -40px; right: 20%; font-size: 65px; z-index: 15; pointer-events: none; opacity: 0; transform-origin: bottom left; }
@@ -45,15 +45,15 @@
             100% { opacity: 0; transform: rotate(0deg); }
         }
 
-        /* شكل الحجرة الطبيعي الواقعي مع تدرجات وتفاوت في الأحجام */
+        /* شكل الحجرة الطبيعي مع الثيم الموحد */
         .rock-card { 
-            background: linear-gradient(135deg, #475569, #334155, #1e293b); 
+            background: linear-gradient(135deg, #e2e8f0, #cbd5e1, #94a3b8); 
             border: 3px solid #64748b; 
             padding: 25px 20px; 
             width: 90%; 
             max-width: 420px;
             text-align: center; 
-            box-shadow: inset -8px -8px 20px rgba(0,0,0,0.6), 0 8px 25px rgba(0,0,0,0.4); 
+            box-shadow: inset -6px -6px 15px rgba(0,0,0,0.15), 0 6px 20px rgba(0,0,0,0.08); 
             position: relative; 
             z-index: 5; 
             border-radius: 45% 55% 50% 50% / 40% 45% 55% 60%;
@@ -63,31 +63,31 @@
 
         @keyframes rockBreakAnim {
             0% { transform: scale(1) rotate(0deg); filter: brightness(1); }
-            50% { transform: scale(0.85) rotate(6deg); filter: brightness(0.4); }
+            50% { transform: scale(0.85) rotate(6deg); filter: brightness(0.6); }
             100% { transform: scale(0) rotate(15deg); opacity: 0; }
         }
 
-        .door-title { color: #cbd5e1; font-size: 14px; margin-bottom: 8px; font-weight: bold; }
-        .question-box { background: rgba(15, 23, 42, 0.85); border: 2px dashed #94a3b8; padding: 12px; border-radius: 15px; font-size: 28px; font-weight: 900; color: #f59e0b; margin: 8px 0; letter-spacing: 2px; }
+        .door-title { color: #334155; font-size: 14px; margin-bottom: 8px; font-weight: bold; }
+        .question-box { background: #ffffff; border: 2px dashed var(--primary); padding: 12px; border-radius: 15px; font-size: 28px; font-weight: 900; color: var(--primary); margin: 8px 0; letter-spacing: 2px; }
         
         .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; max-width: 450px; margin-top: 10px; }
-        .opt-btn { background: #1e293b; border: 2px solid #475569; color: #f8fafc; padding: 14px; border-radius: 12px; font-size: 22px; font-weight: bold; cursor: pointer; transition: 0.2s; font-family: 'Cairo'; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-        .opt-btn:hover { background: var(--primary); border-color: #f43f5e; color: white; transform: translateY(-2px); }
+        .opt-btn { background: #ffffff; border: 2px solid var(--primary); color: var(--primary); padding: 14px; border-radius: 12px; font-size: 22px; font-weight: bold; cursor: pointer; transition: 0.2s; font-family: 'Cairo'; box-shadow: 0 3px 10px rgba(0,0,0,0.03); }
+        .opt-btn:hover { background: var(--primary); color: white; transform: translateY(-2px); }
 
-        .modal { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.96); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; text-align: center; padding: 25px; box-sizing: border-box; overflow-y: auto; }
-        .modal h1 { color: var(--accent); font-size: 26px; margin-bottom: 15px; }
-        .instructions-box { background: #1e293b; padding: 18px; border-radius: 12px; border: 1px solid #334155; text-align: right; margin-bottom: 20px; width: 100%; max-width: 450px; box-sizing: border-box; }
+        .modal { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.98); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; text-align: center; padding: 25px; box-sizing: border-box; overflow-y: auto; }
+        .modal h1 { color: var(--primary); font-size: 26px; margin-bottom: 15px; }
+        .instructions-box { background: #f8fafc; padding: 18px; border-radius: 12px; border: 1px solid #cbd5e1; text-align: right; margin-bottom: 20px; width: 100%; max-width: 450px; box-sizing: border-box; }
         .instructions-box ul { padding-right: 20px; margin: 0; }
-        .instructions-box li { margin-bottom: 10px; font-size: 13px; color: #cbd5e1; line-height: 1.5; }
+        .instructions-box li { margin-bottom: 10px; font-size: 13px; color: var(--text); line-height: 1.5; }
 
-        .leaderboard-box { background: #1e293b; border: 2px solid #334155; border-radius: 10px; padding: 15px; width: 100%; max-width: 400px; margin-bottom: 20px; text-align: right; }
-        .leaderboard-box h3 { color: var(--accent); margin-top: 0; margin-bottom: 10px; text-align: center; font-size: 18px; }
-        .lb-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #334155; font-size: 14px; color: #e2e8f0; }
+        .leaderboard-box { background: #f8fafc; border: 2px solid #cbd5e1; border-radius: 10px; padding: 15px; width: 100%; max-width: 400px; margin-bottom: 20px; text-align: right; }
+        .leaderboard-box h3 { color: var(--primary); margin-top: 0; margin-bottom: 10px; text-align: center; font-size: 18px; }
+        .lb-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #cbd5e1; font-size: 14px; color: var(--text); }
 
         .btn { background: var(--primary); color: white; border: none; padding: 12px 30px; font-size: 16px; font-weight: bold; border-radius: 10px; cursor: pointer; transition: 0.3s; font-family: 'Cairo'; text-decoration: none; display: inline-block; }
         .btn:hover { background: var(--primary-hover); transform: translateY(-2px); }
-        .btn-green { background: #059669; }
-        .btn-green:hover { background: #047857; }
+        .btn-green { background: #2e7d32; }
+        .btn-green:hover { background: #1b5e20; }
         .btn-dark { background: #334155; }
         .btn-dark:hover { background: #1e293b; }
         .hidden { display: none !important; }
@@ -103,8 +103,8 @@
                 <ul>
                     <li>🪨 <b>المهمة:</b> اكسر الحجارة المتنوعة وحل مسائل جدول الضرب لفتح صندوق الذهب!</li>
                     <li>⏱️ <b>سلسلة السرعة:</b> الإجابة المتتالية بفارق أقل من 1.5 ثانية تمنحك نقاطاً ذهبية إضافية!</li>
-                    <li>⛏️ <b>المحاولات:</b> لديك <span id="ruleLives" style="color:var(--accent); font-weight:bold;">--</span> محاولات خاطئة مسموحة.</li>
-                    <li>🪙 <b>القطع الذهبية:</b> كل حجر تكسره يمنحك <span id="rulePoints" style="color:#10b981; font-weight:bold;">--</span> نقطة أساسية.</li>
+                    <li>⛏️ <b>المحاولات:</b> لديك <span id="ruleLives" style="color:var(--primary); font-weight:bold;">--</span> محاولات خاطئة مسموحة.</li>
+                    <li>🪙 <b>القطع الذهبية:</b> كل حجر تكسره يمنحك <span id="rulePoints" style="color:#2e7d32; font-weight:bold;">--</span> نقطة أساسية.</li>
                 </ul>
             </div>
             <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
@@ -140,8 +140,8 @@
         <!-- شاشة النهاية -->
         <div class="modal hidden" id="gameOverModal">
             <h1 id="gameOverTitle">انتهت الرحلة! 🏆</h1>
-            <p id="finalScoreText" style="margin-bottom: 12px; font-size: 16px; color: #cbd5e1;">لقد جمعت نقاطاً رائعة</p>
-            <p id="saveStatus" style="color: var(--accent); font-size: 13px; margin-bottom: 10px;"></p>
+            <p id="finalScoreText" style="margin-bottom: 12px; font-size: 16px; color: var(--text);">لقد جمعت نقاطاً رائعة</p>
+            <p id="saveStatus" style="color: var(--primary); font-size: 13px; margin-bottom: 10px;"></p>
             
             <div class="leaderboard-box">
                 <h3>🏆 أبطال منجم الذهب</h3>
@@ -171,34 +171,44 @@
             window.location.href = 'student.html';
         }
 
+        // إحداث صوت طرق معدني واقعي بالفأس
         function playSound(type) {
             try {
                 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                const osc = audioCtx.createOscillator();
-                const gainNode = audioCtx.createGain();
-                osc.connect(gainNode);
-                gainNode.connect(audioCtx.destination);
-
-                if (type === 'hit') {
-                    osc.type = 'triangle';
-                    osc.frequency.setValueAtTime(150, audioCtx.currentTime);
-                    osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.15);
-                    gainNode.gain.setValueAtTime(0.4, audioCtx.currentTime);
-                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
-                    osc.start(); osc.stop(audioCtx.currentTime + 0.2);
-                } else if (type === 'correct') {
+                
+                if (type === 'metal_clang') {
+                    // صوت طنين وطرق معدني مركب
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
                     osc.type = 'sine';
-                    osc.frequency.setValueAtTime(400, audioCtx.currentTime);
-                    osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.15);
-                    gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
-                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
-                    osc.start(); osc.stop(audioCtx.currentTime + 0.2);
+                    osc.frequency.setValueAtTime(1200, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 0.12);
+                    gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(); osc.stop(audioCtx.currentTime + 0.15);
+                } else if (type === 'correct') {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
+                    osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.1); // E5
+                    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(); osc.stop(audioCtx.currentTime + 0.25);
                 } else if (type === 'wrong') {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
                     osc.type = 'sawtooth';
                     osc.frequency.setValueAtTime(180, audioCtx.currentTime);
                     osc.frequency.linearRampToValueAtTime(100, audioCtx.currentTime + 0.2);
-                    gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
-                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
+                    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
                     osc.start(); osc.stop(audioCtx.currentTime + 0.25);
                 }
             } catch (e) {}
@@ -283,41 +293,56 @@
         function generateNewPuzzle() {
             let num1 = Math.floor(Math.random() * (maxTable - 1)) + 2;
             let num2 = Math.floor(Math.random() * 10) + 1;
-            currentCorrectAnswer = num1 * num2;
+            let totalProduct = num1 * num2;
 
-            // تحديد نوع السؤال (ناتج، عامل مفقود، أو عشوائي بينهما حسب إعدادات المدير)
             let qMode = customSettings.questionType || 'both';
+            let isMissingFactor = false;
+            let missingWhich = 1;
+
             if (qMode === 'missing') {
-                // عامل مفقود عشوائي
-                if (Math.random() > 0.5) {
-                    document.getElementById('questionDisplay').textContent = `؟ × ${toArabicNum(num2)} = ${toArabicNum(currentCorrectAnswer)}`;
-                } else {
-                    document.getElementById('questionDisplay').textContent = `${toArabicNum(num1)} × ؟ = ${toArabicNum(currentCorrectAnswer)}`;
-                }
+                isMissingFactor = true;
+                missingWhich = Math.random() > 0.5 ? 1 : 2;
             } else if (qMode === 'product') {
-                document.getElementById('questionDisplay').textContent = `${toArabicNum(num1)} × ${toArabicNum(num2)} = ؟`;
+                isMissingFactor = false;
             } else {
-                // الوضع الافتراضي (Both): تنويع بين الناتج والعامل المفقود
                 let randType = Math.random();
-                if (randType < 0.33) {
-                    document.getElementById('questionDisplay').textContent = `${toArabicNum(num1)} × ${toArabicNum(num2)} = ؟`;
-                } else if (randType < 0.66) {
-                    document.getElementById('questionDisplay').textContent = `؟ × ${toArabicNum(num2)} = ${toArabicNum(currentCorrectAnswer)}`;
+                if (randType > 0.33) {
+                    isMissingFactor = true;
+                    missingWhich = randType > 0.66 ? 1 : 2;
                 } else {
-                    document.getElementById('questionDisplay').textContent = `${toArabicNum(num1)} × ؟ = ${toArabicNum(currentCorrectAnswer)}`;
+                    isMissingFactor = false;
                 }
             }
 
-            // تنويع عشوائي لأحجام وأشكال الحجارة لكل سؤال
+            // تحديد الإجابة الصحيحة وصياغة السؤال بدقة
+            if (isMissingFactor) {
+                if (missingWhich === 1) {
+                    currentCorrectAnswer = num1;
+                    document.getElementById('questionDisplay').textContent = `؟ × ${toArabicNum(num2)} = ${toArabicNum(totalProduct)}`;
+                } else {
+                    currentCorrectAnswer = num2;
+                    document.getElementById('questionDisplay').textContent = `${toArabicNum(num1)} × ؟ = ${toArabicNum(totalProduct)}`;
+                }
+            } else {
+                currentCorrectAnswer = totalProduct;
+                document.getElementById('questionDisplay').textContent = `${toArabicNum(num1)} × ${toArabicNum(num2)} = ؟`;
+            }
+
+            // تنويع أشكال الحجارة
             const rockCard = document.getElementById('rockCard');
             const randomRadius1 = Math.floor(Math.random() * 20) + 35;
             const randomRadius2 = Math.floor(Math.random() * 20) + 40;
             rockCard.style.borderRadius = `${randomRadius1}% ${100 - randomRadius1}% ${randomRadius2}% ${100 - randomRadius2}% / 40% 50% 50% 60%`;
 
+            // توليد الخيارات الخاطئة بناءً على قيمة الإجابة الصحيحة الفعلية (وليس الناتج الكلي)
             let options = [currentCorrectAnswer];
             while (options.length < 4) {
-                let wrong = currentCorrectAnswer + (Math.floor(Math.random() * 11) - 5);
-                if (wrong > 0 && !options.includes(wrong)) options.push(wrong);
+                let wrongShift = (Math.floor(Math.random() * 7) - 3);
+                if (wrongShift === 0) wrongShift = 1;
+                let wrong = currentCorrectAnswer + wrongShift;
+                if (wrong > 0 && !options.includes(wrong)) {
+                    options.push(wrong);
+                }
             }
             options.sort(() => Math.random() - 0.5);
 
@@ -334,19 +359,18 @@
 
         function checkAnswer(selectedOpt, correctVal) {
             const now = Date.now();
-            const timeDiff = (now - lastAnswerTime) / 1000; // الفارق بالثواني
+            const timeDiff = (now - lastAnswerTime) / 1000;
             lastAnswerTime = now;
 
             if (selectedOpt === correctVal) {
-                playSound('hit');
-                setTimeout(() => playSound('correct'), 200);
+                playSound('metal_clang');
+                setTimeout(() => playSound('correct'), 180);
 
                 const axe = document.getElementById('pickAxeIcon');
                 const rock = document.getElementById('rockCard');
                 axe.classList.add('swing'); rock.classList.add('break');
 
                 let earnedPoints = customSettings.goldPerDoor;
-                // إذا أجاب بسرعة خلال أقل من 1.5 ثانية
                 if (timeDiff <= 1.5) {
                     earnedPoints += 50;
                     showBonusMessage();
