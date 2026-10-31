@@ -31,10 +31,9 @@
         
         .falling-asteroid { position: absolute; background: linear-gradient(135deg, #e2e8f0, #cbd5e1, #94a3b8); border: 2px solid #64748b; color: #1e293b; border-radius: 35% 65% 50% 50% / 40% 45% 55% 60%; width: 75px; height: 75px; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: bold; cursor: pointer; box-shadow: inset -5px -5px 15px rgba(0,0,0,0.1), 0 4px 15px rgba(0,0,0,0.1); user-select: none; z-index: 10; }
         
-        /* الصاروخ المتحرك بزاوية 180 درجة */
         .rocket-ship { position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); font-size: 55px; user-select: none; z-index: 15; transform-origin: bottom center; transition: transform 0.05s linear; }
         
-        /* شعاع الليزر الواضح */
+        /* شعاع الليزر الواضح المستقيم */
         .laser-beam { position: absolute; bottom: 65px; width: 5px; background: linear-gradient(to top, var(--primary), #f43f5e, #fb7185); transform-origin: bottom center; z-index: 12; box-shadow: 0 0 12px var(--primary); border-radius: 3px; pointer-events: none; }
 
         .modal { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.97); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; text-align: center; padding: 25px; box-sizing: border-box; }
@@ -49,7 +48,7 @@
         .leaderboard-box h3 { color: var(--primary); margin-top: 0; margin-bottom: 10px; text-align: center; font-size: 18px; }
         .lb-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px dashed #cbd5e1; font-size: 14px; }
 
-        .btn { background: var(--primary); color: white; border: none; padding: 10px 25px; font-size: 16px; font-weight: bold; border-radius: 10px; cursor: pointer; transition: 0.3s; font-family: 'Cairo'; text-decoration: none; display: inline-block; }
+        .btn { background: var(--primary); color: white; border: none; padding: 12px 30px; font-size: 17px; font-weight: bold; border-radius: 10px; cursor: pointer; transition: 0.3s; font-family: 'Cairo'; text-decoration: none; display: inline-block; z-index: 101; }
         .btn:hover { background: var(--primary-hover); transform: translateY(-2px); }
         .btn-green { background: #2e7d32; }
         .btn-green:hover { background: #1b5e20; }
@@ -67,7 +66,7 @@
             <div class="instructions-box">
                 <ul>
                     <li>⏱️ <b>زمن الجولة:</b> لديك <span id="ruleTime" style="color:var(--primary); font-weight:bold;">--</span> ثانية للإجابة على أكبر عدد من الأسئلة.</li>
-                    <li>🎯 <b>طريقة التصويب:</b> حرك الماوس أو انقر على النيزك الذي يحمل الناتج الصحيح لإطلاق الليزر.</li>
+                    <li>🎯 <b>طريقة التصويب:</b> انقر بدقة مباشرة على النيزك الذي يحمل الناتج الصحيح!</li>
                     <li>⭐ <b>النقاط:</b> كل إجابة صحيحة تمنحك <span id="rulePoints" style="color:#2e7d32; font-weight:bold;">--</span> نقطة.</li>
                     <li>🔥 <b>مكافأة السلسلة:</b> الإجابة على <span id="ruleStreak" style="color:var(--primary); font-weight:bold;">--</span> أسئلة متتالية تمنحك وقتاً إضافياً!</li>
                 </ul>
@@ -312,7 +311,6 @@
             });
         }
 
-        // جعل الصاروخ يتحرك ويدور بحدود 180 درجة مع حركة الماوس
         function handleArenaMove(e) {
             const arena = document.getElementById('arenaBox');
             const rect = arena.getBoundingClientRect();
@@ -325,12 +323,11 @@
             const startY = arena.clientHeight - 30;
 
             let angle = Math.atan2(mouseX - startX, startY - mouseY) * (180 / Math.PI);
-            // تحديد زاوية الدوران بحدود 180 درجة (-90 إلى 90 درجة)
             angle = Math.max(-90, Math.min(90, angle));
-
             rocketShip.style.transform = `translateX(-50%) rotate(${angle}deg)`;
         }
 
+        // التصويب على مكان النقر المباشر دون توجيه تلقائي
         function handleArenaClick(e) {
             playSound('laser');
             const arena = document.getElementById('arenaBox');
@@ -343,26 +340,13 @@
             const startX = (rocketRect.left + rocketRect.right) / 2 - rect.left;
             const startY = arena.clientHeight - 30;
 
-            let targetAst = null;
-            let minDistance = 9999;
-
-            asteroids.forEach(ast => {
-                let astCenterX = ast.x + 37;
-                let astCenterY = ast.y + 37;
-                let dist = Math.hypot(clickX - astCenterX, clickY - astCenterY);
-                if (dist < minDistance) { minDistance = dist; targetAst = ast; }
-            });
-
-            let endX = targetAst ? (targetAst.x + 37) : clickX;
-            let endY = targetAst ? (targetAst.y + 37) : clickY;
-
-            let angle = Math.atan2(endX - startX, startY - endY) * (180 / Math.PI);
+            let angle = Math.atan2(clickX - startX, startY - clickY) * (180 / Math.PI);
             angle = Math.max(-90, Math.min(90, angle));
             rocketShip.style.transform = `translateX(-50%) rotate(${angle}deg)`;
 
-            const length = Math.hypot(endX - startX, endY - startY);
+            const length = Math.hypot(clickX - startX, clickY - startY);
 
-            // إنشاء وتفعيل شعاع الليزر بوضوح
+            // إطلاق الليزر مباشرة نحو إحداثيات النقر بدقة
             const laser = document.createElement('div');
             laser.className = 'laser-beam';
             laser.style.height = length + 'px';
@@ -373,7 +357,26 @@
             arena.appendChild(laser);
             setTimeout(() => laser.remove(), 200);
 
-            if (targetAst) checkAnswer(targetAst.value);
+            // التحقق هل وقع النقر على أحد النيازك بدقة
+            let hitAst = null;
+            asteroids.forEach(ast => {
+                let astCenterX = ast.x + 37.5;
+                let astCenterY = ast.y + 37.5;
+                let dist = Math.hypot(clickX - astCenterX, clickY - astCenterY);
+                if (dist <= 45) { // ضمن نطاق الحجرة/النيزك
+                    hitAst = ast;
+                }
+            });
+
+            if (hitAst) {
+                checkAnswer(hitAst.value);
+            } else {
+                // إذا أخطأ التصويب ولم يصب أي نيزك
+                playSound('wrong');
+                score = Math.max(0, score - customSettings.wrongPenalty);
+                streak = 0;
+                updateHUD();
+            }
         }
 
         function checkAnswer(selectedOpt) {
