@@ -3,133 +3,95 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>منصة ملك جدول الضرب - لوحة الملوك الكبرى</title>
-    <!-- مكتبة Supabase -->
+    <title>منصة ملك جدول الضرب - لوحة الملوك </title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="config.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --primary: #4f46e5;
-            --secondary: #ec4899;
-            --accent: #f59e0b;
-            --bg: #f8fafc;
-            --card-bg: #ffffff;
-            --text: #1e293b;
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background-color: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
-        header { background: linear-gradient(135deg, var(--accent), var(--primary)); color: white; padding: 20px; text-align: center; }
-        .container { max-width: 1000px; margin: 30px auto; padding: 20px; flex: 1; width: 100%; }
-        .card { background: var(--card-bg); border-radius: 12px; padding: 25px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin-bottom: 25px; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Cairo', sans-serif; }
+        body { background-color: #f4f7f6; color: #333; min-height: 100vh; display: flex; flex-direction: column; }
         
-        h2 { color: var(--accent); margin-bottom: 15px; text-align: center; font-size: 22px; }
-        h3 { color: var(--primary); margin: 20px 0 10px 0; font-size: 18px; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; }
+        header { background: white; padding: 25px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        header h1 { color: #d81b60; font-size: 26px; }
+
+        .container { max-width: 1000px; margin: 25px auto; padding: 20px; flex: 1; width: 100%; }
+        .card { background: white; border-radius: 15px; padding: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 25px; border: 1px solid #e0e0e0; }
+        
+        h2 { color: #d81b60; margin-bottom: 15px; text-align: center; font-size: 20px; }
+        h3 { color: #1565c0; margin: 20px 0 10px 0; font-size: 17px; border-bottom: 2px solid #e0e0e0; padding-bottom: 8px; }
+        
         table { width: 100%; border-collapse: collapse; margin-top: 10px; text-align: center; }
-        th, td { padding: 12px; border-bottom: 1px solid #e2e8f0; font-size: 14px; }
-        th { background: var(--accent); color: white; }
-        tr:hover { background: #f1f5f9; }
+        th, td { padding: 12px; border: 1px solid #e0e0e0; font-size: 14px; }
+        th { background: #d81b60; color: white; }
+        tr:hover { background: #fdf2f8; }
         
-        .back-link { display: inline-block; margin-top: 10px; color: var(--primary); text-decoration: none; font-weight: bold; }
+        .back-link { display: inline-block; margin-top: 15px; color: #d81b60; text-decoration: none; font-weight: bold; }
         .back-link:hover { text-decoration: underline; }
 
         footer.author-footer {
             text-align: center;
             padding: 15px;
-            margin-top: auto;
             font-size: 14px;
             color: #475569;
             border-top: 1px solid #e2e8f0;
             background: #ffffff;
             font-weight: bold;
-            box-shadow: 0 -2px 10px rgba(0,0,0,0.03);
+            box-shadow: 0 -4px 15px rgba(0,0,0,0.05);
         }
     </style>
 </head>
 <body>
 
     <header>
-        <h1>🏆 لوحة الملوك الكبرى (أبطال جدول الضرب)</h1>
+        <h1>🏆 لوحة الملوك (أبطال جدول الضرب)</h1>
     </header>
 
     <div class="container">
-
-        <!-- 1. الجدول الأول: الصدارة المدمجة العامة -->
         <div class="card">
             <h2>👑 أبطال الصدارة العامة (جميع الألعاب مدمجة)</h2>
             <table id="combinedTopTable">
                 <thead>
-                    <tr>
-                        <th>المركز 👑</th>
-                        <th>اسم الطالب</th>
-                        <th>الصف</th>
-                        <th>النقاط العظمى ⭐️</th>
-                    </tr>
+                    <tr><th>المركز 👑</th><th>اسم الطالب</th><th>الصف</th><th>النقاط العظمى ⭐️</th></tr>
                 </thead>
-                <tbody>
-                    <tr><td colspan="4">جاري تحميل أبطال الصدارة العامة...</td></tr>
-                </tbody>
+                <tbody><tr><td colspan="4">جاري تحميل أبطال الصدارة العامة...</td></tr></tbody>
             </table>
         </div>
 
-        <!-- 2. الجدول الثاني: صواريخ الفضاء -->
         <div class="card">
             <h2>🚀 أبطال صدارة "سباق صواريخ الفضاء"</h2>
             <table id="rocketTopTable">
                 <thead>
-                    <tr>
-                        <th>المركز 👑</th>
-                        <th>اسم الطالب</th>
-                        <th>الصف</th>
-                        <th>النقاط العظمى ⭐️</th>
-                    </tr>
+                    <tr><th>المركز 👑</th><th>اسم الطالب</th><th>الصف</th><th>النقاط العظمى ⭐️</th></tr>
                 </thead>
-                <tbody>
-                    <tr><td colspan="4">جاري التحميل...</td></tr>
-                </tbody>
+                <tbody><tr><td colspan="4">جاري التحميل...</td></tr></tbody>
             </table>
         </div>
 
-        <!-- 3. الجدول الثالث: منجم الذهب -->
         <div class="card">
             <h2>⛏️ أبطال صدارة "لغز منجم الذهب"</h2>
             <table id="mineTopTable">
                 <thead>
-                    <tr>
-                        <th>المركز 👑</th>
-                        <th>اسم الطالب</th>
-                        <th>الصف</th>
-                        <th>النقاط العظمى ⭐️</th>
-                    </tr>
+                    <tr><th>المركز 👑</th><th>اسم الطالب</th><th>الصف</th><th>النقاط العظمى ⭐️</th></tr>
                 </thead>
-                <tbody>
-                    <tr><td colspan="4">جاري التحميل...</td></tr>
-                </tbody>
+                <tbody><tr><td colspan="4">جاري التحميل...</td></tr></tbody>
             </table>
         </div>
 
-        <!-- 4. جداول الأكثر تفاعلاً منفصلة ديناميكياً حسب الصفوف -->
         <div class="card">
-            <h2>🔥 لوحة الأكثر تفاعلاً ونشاطاً هذا الأسبوع (حسب الصفوف)</h2>
-            <div id="activeTablesContainer">
-                <p style="text-align: center; color: #666;">جاري تحليل الأنشطة الصفية...</p>
-            </div>
-
-            <div style="text-align: center; margin-top: 25px;">
+            <h2>🔥 لوحة الأكثر تفاعلاً ونشاطاً (حسب الصفوف)</h2>
+            <div id="activeTablesContainer"><p style="text-align: center; color: #666;">جاري تحليل الأنشطة...</p></div>
+            <div style="text-align: center; margin-top: 20px;">
                 <a href="index.html" class="back-link">← العودة للرئيسية</a>
             </div>
         </div>
     </div>
 
-    <!-- تذييل الصفحة (التوقيع الرسمي) -->
     <footer class="author-footer">
         إعداد أ. صادق القلعاوي | مدرسة اليرموك الابتدائية للبنين 🏫✨
     </footer>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            fetchAllLeaderboards();
-        });
-
+        document.addEventListener('DOMContentLoaded', () => { fetchAllLeaderboards(); });
         async function fetchAllLeaderboards() {
             const combinedTableBody = document.querySelector('#combinedTopTable tbody');
             const rocketTableBody = document.querySelector('#rocketTopTable tbody');
@@ -137,152 +99,66 @@
             const container = document.getElementById('activeTablesContainer');
 
             try {
-                // جلب بيانات صواريخ الفضاء من الجدول المستقل
-                const { data: rocketData, error: rErr } = await supabaseClient.from('rocket_scores').select('*');
-                let rocketList = (!rErr && rocketData) ? rocketData.map(i => ({ student_name: i.student_name, cls: i.cls || 'غير مصنف', points: i.points || 0 })) : [];
+                const { data: rocketData } = await supabaseClient.from('rocket_scores').select('*');
+                let rocketList = rocketData ? rocketData.map(i => ({ student_name: i.student_name, cls: i.cls || 'غير مصنف', points: i.points || 0 })) : [];
 
-                // جلب بيانات منجم الذهب من الجدول المستقل
-                const { data: mineData, error: mErr } = await supabaseClient.from('goldmine_scores').select('*');
-                let mineList = (!mErr && mineData) ? mineData.map(i => ({ student_name: i.student_name, cls: i.cls || 'غير مصنف', points: i.points || 0 })) : [];
+                const { data: mineData } = await supabaseClient.from('goldmine_scores').select('*');
+                let mineList = mineData ? mineData.map(i => ({ student_name: i.student_name, cls: i.cls || 'غير مصنف', points: i.points || 0 })) : [];
 
-                // --- 1. تعبئة الجدول الثاني: صواريخ الفضاء ---
                 renderTopTableForGame(rocketList, rocketTableBody);
-
-                // --- 2. تعبئة الجدول الثالث: منجم الذهب ---
                 renderTopTableForGame(mineList, mineTableBody);
 
-                // --- 3. تعبئة الجدول الأول: الصدارة المدمجة العامة ---
                 let allCombined = [...rocketList, ...mineList];
                 let combinedBest = {};
                 allCombined.forEach(item => {
                     let key = item.student_name + '_' + item.cls;
-                    if (!combinedBest[key] || item.points > combinedBest[key].points) {
-                        combinedBest[key] = item;
-                    }
+                    if (!combinedBest[key] || item.points > combinedBest[key].points) combinedBest[key] = item;
                 });
                 let combinedArr = Object.values(combinedBest).sort((a, b) => b.points - a.points).slice(0, 10);
                 
-                combinedTableBody.innerHTML = '';
-                if (combinedArr.length === 0) {
-                    combinedTableBody.innerHTML = '<tr><td colspan="4">لا توجد نتائج مسجلة حتى الآن.</td></tr>';
-                } else {
-                    combinedArr.forEach((row, index) => {
-                        let medal = index === 0 ? '🥇 الأول' : index === 1 ? '🥈 الثاني' : index === 2 ? '🥉 الثالث' : (index + 1);
-                        combinedTableBody.innerHTML += `
-                            <tr>
-                                <td><b>${medal}</b></td>
-                                <td><b>${row.student_name}</b></td>
-                                <td>${row.cls}</td>
-                                <td><b style="color: #2e7d32; font-size: 16px;">${row.points}</b></td>
-                            </tr>
-                        `;
-                    });
-                }
+                combinedTableBody.innerHTML = combinedArr.length === 0 ? '<tr><td colspan="4">لا توجد نتائج مسجلة.</td></tr>' : '';
+                combinedArr.forEach((row, index) => {
+                    let medal = index === 0 ? '🥇 الأول' : index === 1 ? '🥈 الثاني' : index === 2 ? '🥉 الثالث' : (index + 1);
+                    combinedTableBody.innerHTML += `<tr><td><b>${medal}</b></td><td><b>${row.student_name}</b></td><td>${row.cls}</td><td><b style="color: #2e7d32;">${row.points}</b></td></tr>`;
+                });
 
-                // --- 4. بناء جداول الأكثر تفاعلاً ديناميكياً حسب الصفوف (الثالث، الرابع، الخامس، السادس) ---
-                let gradeGroups = {
-                    '3': { title: '⭐️ الصف الثالث الأساسي', students: {} },
-                    '4': { title: '⭐️ الصف الرابع الأساسي', students: {} },
-                    '5': { title: '⭐️ الصف الخامس الأساسي', students: {} },
-                    '6': { title: '⭐️ الصف السادس الأساسي', students: {} },
-                    'other': { title: '⭐️ صفوف أخرى', students: {} }
-                };
-
+                let gradeGroups = { '3': { title: '⭐️ الصف الثالث', students: {} }, '4': { title: '⭐️ الصف الرابع', students: {} }, '5': { title: '⭐️ الصف الخامس', students: {} }, '6': { title: '⭐️ الصف السادس', students: {} }, 'other': { title: '⭐️ صفوف أخرى', students: {} } };
                 allCombined.forEach(item => {
                     let clsStr = String(item.cls).trim();
-                    let firstChar = clsStr.charAt(0);
-                    let groupKey = gradeGroups[firstChar] ? firstChar : 'other';
+                    let groupKey = gradeGroups[clsStr.charAt(0)] ? clsStr.charAt(0) : 'other';
                     let studentKey = item.student_name + '_' + clsStr;
-
-                    if (!gradeGroups[groupKey].students[studentKey]) {
-                        gradeGroups[groupKey].students[studentKey] = {
-                            student_name: item.student_name,
-                            cls: clsStr,
-                            count: 0
-                        };
-                    }
+                    if (!gradeGroups[groupKey].students[studentKey]) gradeGroups[groupKey].students[studentKey] = { student_name: item.student_name, cls: clsStr, count: 0 };
                     gradeGroups[groupKey].students[studentKey].count++;
                 });
 
                 container.innerHTML = '';
-                let activeGradesFound = false;
-
                 ['3', '4', '5', '6', 'other'].forEach(key => {
                     let group = gradeGroups[key];
                     let studentsArr = Object.values(group.students).sort((a, b) => b.count - a.count);
-
                     if (studentsArr.length === 0) return;
-                    activeGradesFound = true;
-
-                    let tableHTML = `
-                        <h3>${group.title}</h3>
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>المركز ⭐️</th>
-                                    <th>اسم الطالب</th>
-                                    <th>الصف</th>
-                                    <th>عدد محاولات اللعب 🔄</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                    `;
-
+                    let tableHTML = `<h3>${group.title}</h3><table><thead><tr><th>المركز ⭐️</th><th>اسم الطالب</th><th>الصف</th><th>عدد المحاولات 🔄</th></tr></thead><tbody>`;
                     studentsArr.slice(0, 10).forEach((st, idx) => {
                         let rank = idx === 0 ? '👑 الأكثر تفاعلاً' : (idx + 1);
-                        tableHTML += `
-                            <tr>
-                                <td><b>${rank}</b></td>
-                                <td><b>${st.student_name}</b></td>
-                                <td>${st.cls}</td>
-                                <td><b style="color: var(--primary); font-size: 15px;">${st.count} مرات</b></td>
-                            </tr>
-                        `;
+                        tableHTML += `<tr><td><b>${rank}</b></td><td><b>${st.student_name}</b></td><td>${st.cls}</td><td><b style="color: #d81b60;">${st.count} مرات</b></td></tr>`;
                     });
-
-                    tableHTML += `</tbody></table><br>`;
-                    container.innerHTML += tableHTML;
+                    container.innerHTML += tableHTML + `</tbody></table><br>`;
                 });
-
-                if (!activeGradesFound) {
-                    container.innerHTML = '<p style="text-align: center; color: #666;">لا توجد سجلات تفاعل مسجلة حتى الآن.</p>';
-                }
-
-            } catch (err) {
-                console.error("Leaderboard Error:", err);
-            }
+            } catch (err) { console.error("Error:", err); }
         }
 
         function renderTopTableForGame(list, tableBody) {
             let bestMap = {};
             list.forEach(item => {
                 let key = item.student_name + '_' + item.cls;
-                if (!bestMap[key] || item.points > bestMap[key].points) {
-                    bestMap[key] = item;
-                }
+                if (!bestMap[key] || item.points > bestMap[key].points) bestMap[key] = item;
             });
-
             let sortedArr = Object.values(bestMap).sort((a, b) => b.points - a.points).slice(0, 10);
-            tableBody.innerHTML = '';
-
-            if (sortedArr.length === 0) {
-                tableBody.innerHTML = '<tr><td colspan="4">لا توجد نتائج مسجلة لهذه اللعبة حتى الآن.</td></tr>';
-                return;
-            }
-
+            tableBody.innerHTML = sortedArr.length === 0 ? '<tr><td colspan="4">لا توجد نتائج مسجلة.</td></tr>' : '';
             sortedArr.forEach((row, index) => {
                 let medal = index === 0 ? '🥇 الأول' : index === 1 ? '🥈 الثاني' : index === 2 ? '🥉 الثالث' : (index + 1);
-                tableBody.innerHTML += `
-                    <tr>
-                        <td><b>${medal}</b></td>
-                        <td><b>${row.student_name}</b></td>
-                        <td>${row.cls}</td>
-                        <td><b style="color: #2e7d32; font-size: 16px;">${row.points}</b></td>
-                    </tr>
-                `;
+                tableBody.innerHTML += `<tr><td><b>${medal}</b></td><td><b>${row.student_name}</b></td><td>${row.cls}</td><td><b style="color: #2e7d32;">${row.points}</b></td></tr>`;
             });
         }
     </script>
-
 </body>
 </html>
