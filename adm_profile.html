@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>بياناتي الشخصية والمزامنة - ملك جدول الضرب</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #d81b60;
+            --primary-hover: #ad1457;
+            --bg: #f4f7f6;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+        }
+        * { box-sizing: border-box; }
+        body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        header { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-top: 4px solid var(--primary); }
+        h1 { color: var(--primary); margin: 0; font-size: 24px; font-weight: 900; }
+        .nav-tabs { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .tab-btn { background: white; border: 2px solid var(--primary); color: var(--primary); padding: 10px 18px; border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.3s; font-family: 'Cairo'; text-decoration: none; display: inline-block; font-size: 14px; }
+        .tab-btn.active, .tab-btn:hover { background: var(--primary); color: white; }
+        .section-card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .btn { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; font-family: 'Cairo'; transition: 0.3s; text-decoration: none; display: inline-block; }
+        .btn:hover { background: var(--primary-hover); }
+        .btn-red { background: #d32f2f; }
+        .btn-red:hover { background: #b71c1c; }
+        .form-row { display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap; }
+        .form-group { flex: 1; min-width: 250px; text-align: right; }
+        label { display: block; margin-bottom: 5px; font-weight: 600; color: #333; }
+        input { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-family: 'Cairo'; }
+        .hidden { display: none !important; }
+        footer.author-footer { text-align: center; padding: 15px; color: #64748b; font-weight: bold; margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1 id="welcomeTitle">بياناتي الشخصية</h1>
+            <button class="btn btn-red" onclick="logout()">تسجيل الخروج 🚪</button>
+        </header>
+
+        <!-- شريط التبويبات الموحد -->
+        <div class="nav-tabs" id="navTabs">
+            <a href="adm_students.html" class="tab-btn role-admin-sup">👥 بيانات الطلاب</a>
+            <a href="adm_teachers.html" class="tab-btn role-admin-sup">👨‍🏫 إدارة المعلمين</a>
+            <a href="adm_games.html" class="tab-btn role-admin-sup">🎮 إعدادات الألعاب</a>
+            <a href="adm_scores.html" class="tab-btn role-admin-sup-teacher">📊 درجات الطلاب</a>
+            <a href="adm_reset.html" class="tab-btn admin-only-tab">⚙️ تصفير النتائج</a>
+            <a href="adm_profile.html" class="tab-btn active">👤 بياناتي الشخصية</a>
+        </div>
+
+        <div class="section-card">
+            <h2>الملف الشخصي وتعديل بيانات الحساب 👤</h2>
+            <p style="color: #666; margin-bottom: 20px;">يمكنك تحديث بياناتك الشخصية أو تغيير كلمة المرور الخاصة بك، وسيتم مزامنتها فوراً مع سحابة المنصة.</p>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>الاسم الكامل:</label>
+                    <input type="text" id="profName" placeholder="اسم المستخدم">
+                </div>
+                <div class="form-group">
+                    <label>الرقم الشخصي:</label>
+                    <input type="text" id="profCpr" placeholder="الرقم الشخصي">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>البريد الإلكتروني:</label>
+                    <input type="email" id="profEmail" placeholder="البريد الإلكتروني">
+                </div>
+                <div class="form-group">
+                    <label>كلمة المرور الجديدة:</label>
+                    <input type="password" id="profNewPass" placeholder="اتركها فارغة إن لم ترد التغيير">
+                </div>
+            </div>
+
+            <button class="btn" onclick="updateProfile()">تحديث ومزامنة البيانات مع السحابة 🚀</button>
+        </div>
+    </div>
+
+    <footer class="author-footer">
+        إعداد أ. صادق القلعاوي | مدرسة اليرموك الابتدائية للبنين 🏫✨
+    </footer>
+
+    <script>
+        let currentUser = JSON.parse(localStorage.getItem('current_staff_user'));
+
+        if(!currentUser) { 
+            window.location.href = 'staff.html'; 
+        } else {
+            const roleVal = String(currentUser.role || 'Teacher').trim().toLowerCase();
+            const roleName = (roleVal === 'admin' || roleVal === 'مدير') ? 'مدير النظام' : (roleVal === 'supervisor' || roleVal === 'مشرف') ? 'مشرف' : 'معلم';
+            document.getElementById('welcomeTitle').textContent = `بياناتي الشخصية (${currentUser.name || 'مستخدم'} - ${roleName})`;
+
+            // إذا كان المستخدم معلماً أو مشرفاً، يتم إخفاء التبويبات غير المخصصة له
+            if(roleVal === 'teacher' || roleVal === 'معلم') {
+                document.querySelectorAll('.role-admin-sup').forEach(el => el.classList.add('hidden'));
+                document.querySelectorAll('.admin-only-tab').forEach(el => el.classList.add('hidden'));
+            } else if(roleVal === 'supervisor' || roleVal === 'مشرف') {
+                document.querySelectorAll('.admin-only-tab').forEach(el => el.classList.add('hidden'));
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadProfile();
+        });
+
+        function loadProfile() {
+            document.getElementById('profName').value = currentUser.name || '';
+            document.getElementById('profCpr').value = currentUser.cpr || '';
+            document.getElementById('profEmail').value = currentUser.email || '';
+        }
+
+        async function updateProfile() {
+            const name = document.getElementById('profName').value.trim();
+            const cpr = document.getElementById('profCpr').value.trim();
+            const email = document.getElementById('profEmail').value.trim();
+            const newPass = document.getElementById('profNewPass').value.trim();
+
+            if(!name) {
+                alert('اسم المستخدم حقل إجباري!');
+                return;
+            }
+
+            let updateData = { name, cpr, email };
+            if(newPass) {
+                updateData.password = newPass;
+            }
+
+            let query = supabaseClient.from('staff').update(updateData);
+            if (currentUser.cpr) {
+                query = query.eq('cpr', currentUser.cpr);
+            } else if (currentUser.username) {
+                query = query.eq('username', currentUser.username);
+            } else {
+                query = query.eq('email', currentUser.email);
+            }
+
+            const { data, error } = await query.select();
+            
+            if(error) {
+                alert('حدث خطأ أثناء التحديث في السحابة: ' + error.message);
+            } else {
+                alert('✅ تم تحديث ومزامنة بياناتك الشخصية بنجاح!');
+                document.getElementById('profNewPass').value = '';
+                
+                // تحديث الجلسة المحلية بالبيانات الجديدة
+                if(data && data.length > 0) {
+                    currentUser = data[0];
+                } else {
+                    currentUser.name = name;
+                    currentUser.cpr = cpr;
+                    currentUser.email = email;
+                    if(newPass) currentUser.password = newPass;
+                }
+                localStorage.setItem('current_staff_user', JSON.stringify(currentUser));
+                document.getElementById('welcomeTitle').textContent = `بياناتي الشخصية (${currentUser.name || 'مستخدم'})`;
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('current_staff_user');
+            window.location.href = 'staff.html';
+        }
+    </script>
+</body>
+</html>
