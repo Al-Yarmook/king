@@ -29,7 +29,13 @@
         .form-row { display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap; }
         .form-group { flex: 1; min-width: 220px; text-align: right; }
         label { display: block; margin-bottom: 5px; font-weight: 600; color: #333; }
-        input, select { width: 100%; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-family: 'Cairo'; }
+        input[type="number"], select { width: 100%; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-family: 'Cairo'; }
+        
+        /* تنسيق خانات الاختيار Checkbox */
+        .checkbox-group { display: flex; gap: 20px; align-items: center; margin-top: 8px; background: #fff; padding: 10px 15px; border: 1px solid #cbd5e1; border-radius: 8px; }
+        .checkbox-item { display: flex; gap: 8px; align-items: center; cursor: pointer; font-weight: 600; font-size: 14px; }
+        .checkbox-item input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer; }
+
         .game-sub-section { border: 1px solid #e2e8f0; background: #f8fafc; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
         .game-sub-section h3 { margin-top: 0; color: var(--primary); border-bottom: 2px solid #cbd5e1; padding-bottom: 8px; font-size: 18px; }
         .hidden { display: none !important; }
@@ -90,24 +96,40 @@
                 <button class="btn" onclick="saveRocketSettings()">حفظ إعدادات الصواريخ 💾</button>
             </div>
 
-            <!-- 3. إعدادات لعبة منجم الذهب -->
+            <!-- 3. إعدادات لعبة منجم الذهب الشاملة والمحدثة -->
             <div class="game-sub-section">
                 <h3>⛏️ إعدادات "لغز منجم الذهب"</h3>
                 <div class="form-row">
                     <div class="form-group"><label>عدد المحاولات (القلوب):</label><input type="number" id="goldLives" value="3" min="1" max="10"></div>
                     <div class="form-group"><label>النقاط لكل حجرة:</label><input type="number" id="goldPoints" value="100" min="10"></div>
-                    <div class="form-group"><label>عدد الحجارة (الغرف):</label><input type="number" id="goldRooms" value="5" min="3" max="20"></div>
+                    <div class="form-group"><label>عدد الحجارة (الغرف في الجولة):</label><input type="number" id="goldRooms" value="5" min="3" max="20"></div>
                 </div>
+
+                <!-- خيارات نوع الأسئلة بطريقة Checkbox -->
                 <div class="form-row">
-                    <div class="form-group">
-                        <label>نوع الأسئلة المعتمد:</label>
-                        <select id="goldQuestionType">
-                            <option value="both">تنوع بين الناتج والعامل المفقود (موصى به)</option>
-                            <option value="product">إيجاد الناتج فقط (× = ؟)</option>
-                            <option value="missing">إيجاد العامل المفقود فقط (؟ × =)</option>
-                        </select>
+                    <div class="form-group" style="flex: 2;">
+                        <label>أنواع الأسئلة المعتمدة في اللعبة (يمكن اختيار نوع واحد أو الاثنين معا):</label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-item">
+                                <input type="checkbox" id="chkProduct" checked>
+                                إيجاد الناتج (مثال: 5 × 4 = ؟)
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" id="chkMissing" checked>
+                                إيجاد العامل المفقود (مثال: ؟ × 4 = 20)
+                            </label>
+                        </div>
                     </div>
                 </div>
+
+                <!-- إعدادات سلسلة السرعة والنقاط الإضافية -->
+                <h4 style="color: #334155; margin: 15px 0 10px 0; border-top: 1px dashed #cbd5e1; padding-top: 10px;">⚡ مكافآت السرعة والسلسلة الإضافية:</h4>
+                <div class="form-row">
+                    <div class="form-group"><label>عدد الأسئلة الصحيحة في السلسلة:</label><input type="number" id="goldStreakTarget" value="3" min="1"></div>
+                    <div class="form-group"><label>الفرق بالثواني بين الإجابات (الحد الأقصى):</label><input type="number" id="goldSpeedLimit" value="1.5" step="0.1" min="0.5"></div>
+                    <div class="form-group"><label>النقاط الإضافية الممنوحة للسرعة:</label><input type="number" id="goldBonusPoints" value="50" min="5"></div>
+                </div>
+
                 <button class="btn" onclick="saveGoldMineSettings()">حفظ إعدادات المنجم 💾</button>
             </div>
 
@@ -126,7 +148,6 @@
         } else {
             const roleVal = String(currentUser.role || 'Teacher').trim().toLowerCase();
             
-            // المعلم ممنوع من دخول هذه الصفحة (مخصصة للمدير والمشرف فقط)
             if(roleVal === 'teacher' || roleVal === 'معلم') {
                 alert('عذراً، إعدادات الألعاب والمستويات مخصصة للمدير والمشرفين فقط.');
                 window.location.href = 'adm_scores.html';
@@ -135,7 +156,6 @@
             const roleName = (roleVal === 'admin' || roleVal === 'مدير') ? 'مدير النظام' : 'مشرف';
             document.getElementById('welcomeTitle').textContent = `إعدادات الألعاب (${currentUser.name || 'مستخدم'} - ${roleName})`;
 
-            // إذا كان المستخدم مشرفاً نخفي تبويب التصفير الخاص بالمدير
             if(roleVal === 'supervisor' || roleVal === 'مشرف') {
                 document.querySelectorAll('.admin-only-tab').forEach(el => el.classList.add('hidden'));
             }
@@ -173,7 +193,7 @@
                 }
             } catch (e) {}
 
-            // 3. جلب إعدادات المنجم
+            // 3. جلب إعدادات المنجم الشاملة
             try {
                 const { data } = await supabaseClient.from('game_settings').select('value').eq('key', 'gold_mine_settings').single();
                 if(data && data.value) {
@@ -181,7 +201,15 @@
                     document.getElementById('goldLives').value = settings.maxLives || 3;
                     document.getElementById('goldPoints').value = settings.goldPerDoor || 100;
                     document.getElementById('goldRooms').value = settings.totalRooms || 5;
-                    document.getElementById('goldQuestionType').value = settings.questionType || 'both';
+                    
+                    // تحويل خيار نوع الأسئلة المرتجع إلى المربعات Checkbox
+                    const qType = settings.questionType || 'both';
+                    document.getElementById('chkProduct').checked = (qType === 'both' || qType === 'product');
+                    document.getElementById('chkMissing').checked = (qType === 'both' || qType === 'missing');
+
+                    document.getElementById('goldStreakTarget').value = settings.streakTarget || 3;
+                    document.getElementById('goldSpeedLimit').value = settings.speedLimitTime || 1.5;
+                    document.getElementById('goldBonusPoints').value = settings.bonusSpeedPoints || 50;
                 }
             } catch (e) {}
         }
@@ -216,11 +244,26 @@
         }
 
         async function saveGoldMineSettings() {
+            const isProd = document.getElementById('chkProduct').checked;
+            const isMiss = document.getElementById('chkMissing').checked;
+
+            if(!isProd && !isMiss) {
+                alert('⚠️ يرجى اختيار نوع واحد على الأقل من أنواع الأسئلة (إيجاد الناتج أو العامل المفقود).');
+                return;
+            }
+
+            let qTypeStr = 'both';
+            if(isProd && !isMiss) qTypeStr = 'product';
+            if(!isProd && isMiss) qTypeStr = 'missing';
+
             const settings = {
                 maxLives: parseInt(document.getElementById('goldLives').value) || 3,
                 goldPerDoor: parseInt(document.getElementById('goldPoints').value) || 100,
                 totalRooms: parseInt(document.getElementById('goldRooms').value) || 5,
-                questionType: document.getElementById('goldQuestionType').value || 'both'
+                questionType: qTypeStr,
+                streakTarget: parseInt(document.getElementById('goldStreakTarget').value) || 3,
+                speedLimitTime: parseFloat(document.getElementById('goldSpeedLimit').value) || 1.5,
+                bonusSpeedPoints: parseInt(document.getElementById('goldBonusPoints').value) || 50
             };
 
             const { error } = await supabaseClient.from('game_settings').upsert([{ key: 'gold_mine_settings', value: settings }]);
