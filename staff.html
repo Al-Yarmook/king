@@ -18,7 +18,7 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Cairo', sans-serif; }
         body { background-color: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; position: relative; }
         
-        .login-card { background: var(--card-bg); padding: 35px; border-radius: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); width: 100%; max-width: 400px; text-align: center; margin-bottom: 30px; }
+        .login-card { background: var(--card-bg); padding: 35px; border-radius: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); width: 100%; max-width: 420px; text-align: center; margin-bottom: 20px; }
         h2 { color: var(--primary); margin-bottom: 25px; font-size: 24px; font-weight: 900; }
 
         .form-group { margin-bottom: 20px; text-align: right; }
@@ -34,9 +34,14 @@
         .btn { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; width: 100%; padding: 12px; border-radius: 8px; font-size: 16px; font-family: 'Cairo'; margin-top: 5px; }
         .btn:hover { background: var(--primary-hover); }
         
-        /* زر العودة للرئيسية المنسق */
-        .btn-dark { background: #334155; margin-top: 12px; text-decoration: none; display: inline-block; color: white; text-align: center; }
+        .btn-dark { background: #334155; margin-top: 10px; text-decoration: none; display: inline-block; color: white; text-align: center; }
         .btn-dark:hover { background: #1e293b; }
+
+        .btn-link { background: none; color: var(--primary); border: none; font-size: 13px; cursor: pointer; margin-top: 12px; text-decoration: underline; font-family: 'Cairo'; display: block; width: 100%; text-align: center; }
+        .btn-link:hover { color: var(--primary-hover); }
+
+        .reset-box { background: #f8fafc; border: 1px dashed #cbd5e1; padding: 15px; border-radius: 10px; margin-top: 15px; display: none; text-align: right; }
+        .reset-box h4 { color: var(--primary); font-size: 15px; margin-bottom: 10px; text-align: center; }
 
         .footer-note { margin-top: 20px; font-size: 12px; color: #888; border-top: 1px solid #eee; padding-top: 15px; }
     </style>
@@ -46,20 +51,43 @@
     <div class="login-card">
         <h2>👨‍🏫 بوابة المعلمين والإدارة</h2>
         
-        <div class="form-group">
-            <label>الرقم الشخصي أو اسم المستخدم:</label>
-            <input type="text" id="userInput" placeholder="مثال: Admin أو الرقم الشخصي">
-        </div>
-
-        <div class="form-group">
-            <label>كلمة المرور:</label>
-            <div class="input-container">
-                <input type="password" id="passInput" placeholder="أدخل كلمة المرور">
-                <button type="button" class="toggle-password" id="togglePasswordBtn" onclick="togglePasswordVisibility()">👁️</button>
+        <!-- نموذج تسجيل الدخول الأساسي -->
+        <div id="loginSection">
+            <div class="form-group">
+                <label>الرقم الشخصي أو اسم المستخدم:</label>
+                <input type="text" id="userInput" placeholder="مثال: Admin أو الرقم الشخصي">
             </div>
+
+            <div class="form-group">
+                <label>كلمة المرور:</label>
+                <div class="input-container">
+                    <input type="password" id="passInput" placeholder="أدخل كلمة المرور">
+                    <button type="button" class="toggle-password" id="togglePasswordBtn" onclick="togglePasswordVisibility()">👁️</button>
+                </div>
+            </div>
+
+            <button class="btn" onclick="handleStaffLogin()">تسجيل الدخول 🔓</button>
+            <button type="button" class="btn-link" onclick="toggleResetMode()">نسيت كلمة المرور؟ 🔑</button>
         </div>
 
-        <button class="btn" onclick="handleStaffLogin()">تسجيل الدخول 🔓</button>
+        <!-- قسم استعادة وتغيير كلمة المرور -->
+        <div id="resetSection" class="reset-box">
+            <h4>استعادة كلمة المرور</h4>
+            <div class="form-group" style="margin-bottom: 12px;">
+                <label style="font-size:13px;">اسم المستخدم أو الرقم الشخصي:</label>
+                <input type="text" id="resetUser" placeholder="أدخل اسم المستخدم">
+            </div>
+            <div class="form-group" style="margin-bottom: 12px;">
+                <label style="font-size:13px;">البريد الإلكتروني المسجل:</label>
+                <input type="email" id="resetEmail" placeholder="teacher@yarmook.bh">
+            </div>
+            <div class="form-group" style="margin-bottom: 12px;">
+                <label style="font-size:13px;">كلمة المرور الجديدة:</label>
+                <input type="password" id="newPassInput" placeholder="كلمة المرور الجديدة">
+            </div>
+            <button class="btn" style="background: #2e7d32;" onclick="executePasswordReset()">تحديث كلمة المرور 🔄</button>
+            <button type="button" class="btn-link" style="color: #64748b;" onclick="toggleResetMode()">العودة لتسجيل الدخول</button>
+        </div>
 
         <a href="index.html" class="btn btn-dark">🏠 الرئيسية</a>
 
@@ -82,6 +110,19 @@
             }
         }
 
+        // إظهار/إخفاء قسم استعادة كلمة المرور
+        function toggleResetMode() {
+            const loginSec = document.getElementById('loginSection');
+            const resetSec = document.getElementById('resetSection');
+            if (resetSec.style.display === 'block') {
+                resetSec.style.display = 'none';
+                loginSec.style.display = 'block';
+            } else {
+                loginSec.style.display = 'none';
+                resetSec.style.display = 'block';
+            }
+        }
+
         async function handleStaffLogin() {
             const rawInput = document.getElementById('userInput').value.trim();
             const password = document.getElementById('passInput').value.trim();
@@ -91,20 +132,16 @@
                 return;
             }
 
-            // التحقق المباشر لحساب المدير العام الأساسي لضمان الدخول الفوري دون عوائق
+            // التحقق المباشر لحساب المدير العام الأساسي
             if (rawInput.toLowerCase() === 'admin' && password === '123456') {
-                localStorage.setItem('is_admin', 'true');
-                localStorage.setItem('current_staff_user', JSON.stringify({ name: 'مدير النظام', username: 'Admin' }));
-                window.location.href = 'dashboard.html';
+                const adminUser = { name: 'مدير النظام', username: 'Admin', role: 'Admin' };
+                localStorage.setItem('current_staff_user', JSON.stringify(adminUser));
+                window.location.href = 'adm_scores.html';
                 return;
             }
 
             try {
-                // البحث في جدول المعلمين والإدارة في السحابة
-                const { data, error } = await supabaseClient
-                    .from('staff')
-                    .select('*');
-
+                const { data, error } = await supabaseClient.from('staff').select('*');
                 if (error) throw error;
 
                 if (!data || data.length === 0) {
@@ -127,7 +164,14 @@
                 const dbPass = String(matchedUser.password || '').trim();
                 if (dbPass === password) {
                     localStorage.setItem('current_staff_user', JSON.stringify(matchedUser));
-                    window.location.href = 'dashboard.html';
+                    
+                    // التوجيه الذكي حسب الدور
+                    const role = String(matchedUser.role || 'Teacher').trim().toLowerCase();
+                    if (role === 'admin' || role === 'مدير' || role === 'supervisor' || role === 'مشرف') {
+                        window.location.href = 'adm_scores.html';
+                    } else {
+                        window.location.href = 'adm_scores.html'; // المعلم يوجه للدرجات والصفوف الخاصة به
+                    }
                 } else {
                     alert('❌ كلمة المرور غير صحيحة!');
                 }
@@ -135,6 +179,61 @@
             } catch (err) {
                 console.error("Login Error:", err);
                 alert('حدث خطأ أثناء الاتصال بالسحابة: ' + err.message);
+            }
+        }
+
+        // تنفيذ استعادة وتغيير كلمة المرور بالتحقق من المطابقة في السحابة
+        async function executePasswordReset() {
+            const rUser = document.getElementById('resetUser').value.trim();
+            const rEmail = document.getElementById('resetEmail').value.trim().toLowerCase();
+            const newPass = document.getElementById('newPassInput').value.trim();
+
+            if (!rUser || !rEmail || !newPass) {
+                alert('الرجاء تعبئة جميع حقول استعادة كلمة المرور!');
+                return;
+            }
+
+            try {
+                const { data, error } = await supabaseClient.from('staff').select('*');
+                if (error) throw error;
+
+                // البحث عن الحساب المطابق للاسم/الرقم والبريد الإلكتروني معاً
+                const targetStaff = data.find(st => {
+                    const dbUser = String(st.username || '').trim().toLowerCase();
+                    const dbCpr = String(st.cpr || '').trim();
+                    const dbEmail = String(st.email || '').trim().toLowerCase();
+                    const inputLower = rUser.toLowerCase();
+
+                    return (dbUser === inputLower || dbCpr === rUser) && dbEmail === rEmail;
+                });
+
+                if (!targetStaff) {
+                    alert('❌ بيانات المطابقة غير صحيحة! تأكد من اسم المستخدم والبريد الإلكتروني المسجل.');
+                    return;
+                }
+
+                // تحديث كلمة المرور في جدول staff في السحابة
+                let query = supabaseClient.from('staff').update({ password: newPass });
+                if (targetStaff.cpr) {
+                    query = query.eq('cpr', targetStaff.cpr);
+                } else {
+                    query = query.eq('username', targetStaff.username);
+                }
+
+                const { error: updateError } = await query;
+                if (updateError) {
+                    alert('حدث خطأ أثناء تحديث كلمة المرور بالسحابة: ' + updateError.message);
+                } else {
+                    alert('✅ تم تغيير كلمة المرور بنجاح! يمكنك الآن تسجيل الدخول بكلمة المرور الجديدة.');
+                    document.getElementById('resetUser').value = '';
+                    document.getElementById('resetEmail').value = '';
+                    document.getElementById('newPassInput').value = '';
+                    toggleResetMode();
+                }
+
+            } catch (err) {
+                console.error("Reset Error:", err);
+                alert('حدث خطأ في الاتصال: ' + err.message);
             }
         }
 
