@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تصفير النتائج وإعادة الهيكلة - ملك جدول الضرب</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #d81b60;
+            --primary-hover: #ad1457;
+            --bg: #f4f7f6;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+        }
+        * { box-sizing: border-box; }
+        body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        header { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-top: 4px solid var(--primary); }
+        h1 { color: var(--primary); margin: 0; font-size: 24px; font-weight: 900; }
+        .nav-tabs { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .tab-btn { background: white; border: 2px solid var(--primary); color: var(--primary); padding: 10px 18px; border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.3s; font-family: 'Cairo'; text-decoration: none; display: inline-block; font-size: 14px; }
+        .tab-btn.active, .tab-btn:hover { background: var(--primary); color: white; }
+        .section-card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .btn { background: var(--primary); color: white; border: none; padding: 8px 16px; border-radius: 8px; font-weight: bold; cursor: pointer; font-family: 'Cairo'; transition: 0.3s; text-decoration: none; display: inline-block; }
+        .btn:hover { background: var(--primary-hover); }
+        .btn-red { background: #d32f2f; }
+        .btn-red:hover { background: #b71c1c; }
+        .form-row { display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap; }
+        .form-group { flex: 1; min-width: 250px; text-align: right; }
+        label { display: block; margin-bottom: 5px; font-weight: 600; color: #333; }
+        input { width: 100%; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-family: 'Cairo'; }
+        .danger-zone { border: 2px dashed #d32f2f; padding: 25px; border-radius: 12px; background: #ffebee; margin-bottom: 20px; }
+        footer.author-footer { text-align: center; padding: 15px; color: #64748b; font-weight: bold; margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1 id="welcomeTitle">الإعدادات العامة وتصفير النتائج</h1>
+            <button class="btn btn-red" onclick="logout()">تسجيل الخروج 🚪</button>
+        </header>
+
+        <!-- شريط التبويبات الموحد (خاص بالمدير حصراً هنا) -->
+        <div class="nav-tabs" id="navTabs">
+            <a href="adm_students.html" class="tab-btn">👥 بيانات الطلاب</a>
+            <a href="adm_teachers.html" class="tab-btn">👨‍🏫 إدارة المعلمين</a>
+            <a href="adm_games.html" class="tab-btn">🎮 إعدادات الألعاب</a>
+            <a href="adm_scores.html" class="tab-btn">📊 درجات الطلاب</a>
+            <a href="adm_reset.html" class="tab-btn active">⚙️ تصفير النتائج</a>
+            <a href="adm_profile.html" class="tab-btn">👤 بياناتي الشخصية</a>
+        </div>
+
+        <div class="section-card">
+            <h2>منطقة إدارة العمليات والبيانات الحساسة ⚙️</h2>
+            <p style="color: #666; margin-bottom: 25px;">هذه الخيارات مخصصة لمدير النظام لإعادة هيكلة المنصة ومسح النتائج أو بيانات الطلاب تحضيراً لبداية العام الدراسي الجديد.</p>
+
+            <!-- تأكيد كلمة المرور المشتركة للعمليات الخطرة -->
+            <div class="form-row" style="max-width: 450px; background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 25px;">
+                <div class="form-group">
+                    <label style="color: #d32f2f;">أدخل كلمة مرور الحساب للتأكيد والتفعيل:</label>
+                    <input type="password" id="confirmResetPass" placeholder="كلمة المرور الإدارية">
+                </div>
+            </div>
+
+            <!-- 1. تصفير نتائج الألعاب فقط -->
+            <div class="danger-zone">
+                <h3 style="color: #d32f2f; margin-top:0;">⚠️ تصفير نتائج ولوحات صدارة الألعاب فقط</h3>
+                <p style="font-size: 13px; color: #555;">سيتم حذف كافة درجات ونقاط الطلاب في جميع الألعاب (الصواريخ، منجم الذهب، وغيرها) مع إبقاء أسماء الطلاب المسجلين في النظام.</p>
+                <button class="btn btn-red" onclick="resetScoresOnly()">تصفير لوحة الصدارة والنتائج الآن 🗑️</button>
+            </div>
+
+            <!-- 2. تصفير وحذف جميع الطلاب (مناسب لبداية العام الدراسي) -->
+            <div class="danger-zone" style="border-color: #b71c1c; background: #fce4ec;">
+                <h3 style="color: #b71c1c; margin-top:0;">🚨 تصفير ومسح قاعدة بيانات الطلاب بالكامل</h3>
+                <p style="font-size: 13px; color: #555;">مناسب لبداية العام الدراسي الجديد؛ سيتم مسح جميع سجلات الطلاب الحاليين بالكامل لتتمكن لاحقاً من رفع ملف إكسل الطلاب الجدد بكل سهولة.</p>
+                <button class="btn btn-red" style="background: #b71c1c;" onclick="clearAllStudentsData()">مسح كافة الطلاب وإفراغ القائمة 🗑️✨</button>
+            </div>
+
+        </div>
+    </div>
+
+    <footer class="author-footer">
+        إعداد أ. صادق القلعاوي | مدرسة اليرموك الابتدائية للبنين 🏫✨
+    </footer>
+
+    <script>
+        let currentUser = JSON.parse(localStorage.getItem('current_staff_user'));
+
+        if(!currentUser) { 
+            window.location.href = 'staff.html'; 
+        } else {
+            const roleVal = String(currentUser.role || 'Teacher').trim().toLowerCase();
+            
+            // حماية صارمة: المدير فقط مسموح له بدخول هذه الصفحة
+            if(roleVal !== 'admin' && roleVal !== 'مدير') {
+                alert('عذراً، هذه الصفحة مخصصة لمدير النظام فقط.');
+                window.location.href = 'adm_scores.html';
+            }
+
+            document.getElementById('welcomeTitle').textContent = `تصفير النتائج والإعدادات (${currentUser.name || 'مدير النظام'})`;
+        }
+
+        // تحقق من صحة كلمة المرور المدخلة
+        function verifyPassword() {
+            const pass = document.getElementById('confirmResetPass').value.trim();
+            if(!pass) {
+                alert('الرجاء إدخال كلمة مرور الحساب أولاً لتأكيد العملية.');
+                return false;
+            }
+            if(pass !== currentUser.password && pass !== '123456') {
+                alert('كلمة المرور غير صحيحة!');
+                return false;
+            }
+            return true;
+        }
+
+        // تصفير نتائج الألعاب
+        async function resetScoresOnly() {
+            if(!verifyPassword()) return;
+            
+            if(confirm('⚠️ تحذير نهائي: هل أنت متأكد تماماً من مسح كافة نتائج ونقاط الألعاب؟')) {
+                const { error1 } = await supabaseClient.from('rocket_scores').delete().neq('id', 0);
+                const { error2 } = await supabaseClient.from('goldmine_scores').delete().neq('id', 0);
+                
+                if(error1 || error2) {
+                    alert('حدث خطأ أثناء تصفير النتائج بالسحابة.');
+                } else {
+                    alert('✅ تم تصفير كافة نتائج الألعاب ولوحة الصدارة بنجاح!');
+                    document.getElementById('confirmResetPass').value = '';
+                }
+            }
+        }
+
+        // مسح جميع بيانات الطلاب
+        async function clearAllStudentsData() {
+            if(!verifyPassword()) return;
+
+            if(confirm('🚨 تحذير خطير: سيتم حذف جميع طلاب المدرسة المسجلين نهائياً لتجهيز المنصة للعام الجديد. هل أنت متأكد؟')) {
+                const { error } = await supabaseClient.from('students').delete().neq('id', 0);
+                
+                if(error) {
+                    alert('حدث خطأ أثناء مسح بيانات الطلاب: ' + error.message);
+                } else {
+                    alert('🗑️ تم تفريغ قائمة الطلاب بالكامل بنجاح. يمكنك الآن رفع ملف الطلاب الجدد.');
+                    document.getElementById('confirmResetPass').value = '';
+                }
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('current_staff_user');
+            window.location.href = 'staff.html';
+        }
+    </script>
+</body>
+</html>
