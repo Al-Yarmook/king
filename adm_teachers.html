@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إدارة المعلمين والصلاحيات - ملك جدول الضرب</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="config.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #d81b60;
+            --primary-hover: #ad1457;
+            --bg: #f4f7f6;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+        }
+        * { box-sizing: border-box; }
+        body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        header { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-top: 4px solid var(--primary); }
+        h1 { color: var(--primary); margin: 0; font-size: 24px; font-weight: 900; }
+        .nav-tabs { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .tab-btn { background: white; border: 2px solid var(--primary); color: var(--primary); padding: 10px 18px; border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.3s; font-family: 'Cairo'; text-decoration: none; display: inline-block; font-size: 14px; }
+        .tab-btn.active, .tab-btn:hover { background: var(--primary); color: white; }
+        .section-card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { border: 1px solid #e2e8f0; padding: 10px; text-align: center; font-size: 13px; }
+        th { background: var(--primary); color: white; font-weight: bold; }
+        .btn { background: var(--primary); color: white; border: none; padding: 8px 16px; border-radius: 8px; font-weight: bold; cursor: pointer; font-family: 'Cairo'; transition: 0.3s; text-decoration: none; display: inline-block; }
+        .btn:hover { background: var(--primary-hover); }
+        .btn-green { background: #2e7d32; }
+        .btn-green:hover { background: #1b5e20; }
+        .btn-blue { background: #1565c0; }
+        .btn-blue:hover { background: #0d47a1; }
+        .btn-orange { background: #f57c00; }
+        .btn-orange:hover { background: #e65100; }
+        .btn-red { background: #d32f2f; }
+        .btn-red:hover { background: #b71c1c; }
+        .form-row { display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap; }
+        .form-group { flex: 1; min-width: 200px; text-align: right; }
+        label { display: block; margin-bottom: 5px; font-weight: 600; color: #333; }
+        input, select { width: 100%; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-family: 'Cairo'; }
+        .table-input { width: 100%; padding: 6px; border: 1px solid #cbd5e1; border-radius: 4px; text-align: center; font-family: 'Cairo'; }
+        .hidden { display: none !important; }
+        footer.author-footer { text-align: center; padding: 15px; color: #64748b; font-weight: bold; margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1 id="welcomeTitle">إدارة المعلمين والصلاحيات</h1>
+            <button class="btn btn-red" onclick="logout()">تسجيل الخروج 🚪</button>
+        </header>
+
+        <!-- شريط التبويبات الموحد -->
+        <div class="nav-tabs" id="navTabs">
+            <a href="adm_students.html" class="tab-btn">👥 بيانات الطلاب</a>
+            <a href="adm_teachers.html" class="tab-btn active">👨‍🏫 إدارة المعلمين</a>
+            <a href="adm_games.html" class="tab-btn">🎮 إعدادات الألعاب</a>
+            <a href="adm_scores.html" class="tab-btn">📊 درجات الطلاب</a>
+            <a href="adm_reset.html" class="tab-btn admin-only-tab">⚙️ تصفير النتائج</a>
+            <a href="adm_profile.html" class="tab-btn">👤 بياناتي الشخصية</a>
+        </div>
+
+        <div class="section-card">
+            <h2>إدارة المعلمين وطاقم العمل 👨‍🏫</h2>
+            
+            <!-- أدوات الإكسل والرفع (للمدير فقط) -->
+            <div id="adminStaffTools" class="admin-only" style="margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
+                <button class="btn btn-blue" onclick="downloadStaffTemplate()">📥 تحميل قالب إكسل المعلمين</button>
+                <input type="file" id="staffExcelFile" accept=".xlsx, .xls" style="display:none" onchange="uploadStaffExcel(event)">
+                <button class="btn btn-green" onclick="document.getElementById('staffExcelFile').click()">📤 رفع ملف إكسل المعلمين</button>
+                <button class="btn" onclick="exportStaffExcel()">📊 تصدير بيانات المعلمين إكسل</button>
+            </div>
+
+            <!-- إضافة معلم جديد (للمدير فقط) -->
+            <div id="adminAddStaffSection" class="admin-only">
+                <h3>إضافة معلم جديد يدويّاً</h3>
+                <div class="form-row">
+                    <div class="form-group"><label>اسم المعلم:</label><input type="text" id="stfName" placeholder="الاسم الكامل"></div>
+                    <div class="form-group"><label>الرقم الشخصي:</label><input type="text" id="stfCpr" placeholder="الرقم الشخصي"></div>
+                    <div class="form-group"><label>البريد الإلكتروني:</label><input type="email" id="stfEmail" placeholder="teacher@yarmook.bh"></div>
+                    <div class="form-group"><label>كلمة المرور المؤقتة:</label><input type="text" id="stfPass" value="123456"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>الصفوف التي يدرسها (مثال: 5ب4, 4ب2):</label><input type="text" id="stfClasses" placeholder="5ب4, 4ب2"></div>
+                    <div class="form-group">
+                        <label>الدور / الصلاحية:</label>
+                        <select id="stfRole">
+                            <option value="Teacher">معلم</option>
+                            <option value="Supervisor">مشرف</option>
+                            <option value="Admin">مدير</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="align-self: flex-end;"><button class="btn" onclick="addStaffManual()">حفظ المعلم ➕</button></div>
+                </div>
+                <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 25px 0;">
+            </div>
+
+            <h3>قائمة المعلمين والحسابات المسجلة</h3>
+            <p id="supervisorNotice" class="hidden" style="color: #d81b60; font-weight: bold; background: #fdf2f8; padding: 10px; border-radius: 6px;">مرحباً بك بصفتك مشرفاً: يمكنك تعديل الصفوف الدراسية الخاصة بالمعلمين فقط.</p>
+            
+            <table id="staffTable">
+                <thead>
+                    <tr>
+                        <th>الاسم</th>
+                        <th>الرقم الشخصي</th>
+                        <th>اسم المستخدم</th>
+                        <th>البريد</th>
+                        <th>الدور</th>
+                        <th>الصفوف التي يدرسها</th>
+                        <th>الإجراءات المتاحة</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <footer class="author-footer">
+        إعداد أ. صادق القلعاوي | مدرسة اليرموك الابتدائية للبنين 🏫✨
+    </footer>
+
+    <script>
+        let currentUser = JSON.parse(localStorage.getItem('current_staff_user'));
+
+        if(!currentUser) { 
+            window.location.href = 'staff.html'; 
+        } else {
+            const roleVal = String(currentUser.role || 'Teacher').trim().toLowerCase();
+            
+            // المعلم ممنوع من دخول هذه الصفحة
+            if(roleVal === 'teacher' || roleVal === 'معلم') {
+                alert('عذراً، هذه الصفحة مخصصة لإدارة المعلمين فقط.');
+                window.location.href = 'adm_scores.html';
+            }
+
+            const roleName = (roleVal === 'admin' || roleVal === 'مدير') ? 'مدير النظام' : 'مشرف';
+            document.getElementById('welcomeTitle').textContent = `إدارة المعلمين (${currentUser.name || 'مستخدم'} - ${roleName})`;
+
+            // إذا كان المستخدم مشرفاً، نخفي أدوات الإدارة الكاملة ونظهر إشعار تعديل الصفوف
+            if(roleVal === 'supervisor' || roleVal === 'مشرف') {
+                document.querySelectorAll('.admin-only').forEach(el => el.classList.add('hidden'));
+                document.querySelectorAll('.admin-only-tab').forEach(el => el.classList.add('hidden'));
+                document.getElementById('supervisorNotice').classList.remove('hidden');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadStaff();
+        });
+
+        async function loadStaff() {
+            const { data, error } = await supabaseClient.from('staff').select('*');
+            const tbody = document.querySelector('#staffTable tbody');
+            tbody.innerHTML = '';
+
+            const roleVal = String(currentUser.role || '').trim().toLowerCase();
+            const isAdmin = (roleVal === 'admin' || roleVal === 'مدير');
+
+            if(data && data.length > 0) {
+                data.forEach(st => {
+                    let staffKey = st.cpr || st.username;
+                    if(!staffKey) return;
+
+                    if(isAdmin) {
+                        // عرض كامل للتعديل للمدير (الاسم، والرقم، واليوزر، والإيميل، والدور، والصفوف، وإعادة التعيين، والحذف)
+                        tbody.innerHTML += `
+                            <tr>
+                                <td><input type="text" class="table-input" id="stf_name_${staffKey}" value="${st.name || ''}"></td>
+                                <td><input type="text" class="table-input" id="stf_cpr_${staffKey}" value="${st.cpr || ''}"></td>
+                                <td><input type="text" class="table-input" id="stf_username_${staffKey}" value="${st.username || ''}"></td>
+                                <td><input type="text" class="table-input" id="stf_email_${staffKey}" value="${st.email || ''}"></td>
+                                <td><input type="text" class="table-input" id="stf_role_${staffKey}" value="${st.role || ''}"></td>
+                                <td><input type="text" class="table-input" id="stf_classes_${staffKey}" value="${st.classes || ''}"></td>
+                                <td>
+                                    <button class="btn btn-orange" onclick="updateStaffAdmin('${staffKey}')" style="margin-bottom:4px;">حفظ 💾</button>
+                                    <button class="btn btn-blue" onclick="resetStaffPassword('${staffKey}')" style="margin-bottom:4px; font-size:11px;">إعادة كلمة السر 🔑</button>
+                                    <button class="btn btn-red" onclick="deleteStaffMember('${staffKey}')" style="font-size:11px;">حذف 🗑️</button>
+                                </td>
+                            </tr>`;
+                    } else {
+                        // عرض مخصص للمشرف: البيانات قراءة فقط عدا حقل "الصفوف" متاح للتعديل والحفظ
+                        tbody.innerHTML += `
+                            <tr>
+                                <td>${st.name || ''}</td>
+                                <td>${st.cpr || ''}</td>
+                                <td>${st.username || ''}</td>
+                                <td>${st.email || ''}</td>
+                                <td>${st.role || ''}</td>
+                                <td><input type="text" class="table-input" id="stf_classes_${staffKey}" value="${st.classes || ''}"></td>
+                                <td>
+                                    <button class="btn btn-orange" onclick="updateStaffClassesOnly('${staffKey}')">حفظ الصفوف 💾</button>
+                                </td>
+                            </tr>`;
+                    }
+                });
+            } else {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#666;">لا توجد بيانات معلمين مسجلة حالياً.</td></tr>`;
+            }
+        }
+
+        // تحديث شامل للمدير
+        async function updateStaffAdmin(staffKey) {
+            const name = document.getElementById(`stf_name_${staffKey}`).value.trim();
+            const cpr = document.getElementById(`stf_cpr_${staffKey}`).value.trim();
+            const username = document.getElementById(`stf_username_${staffKey}`).value.trim();
+            const email = document.getElementById(`stf_email_${staffKey}`).value.trim();
+            const role = document.getElementById(`stf_role_${staffKey}`).value.trim();
+            const classes = document.getElementById(`stf_classes_${staffKey}`).value.trim();
+
+            const { error } = await supabaseClient.from('staff').update({ name, cpr, username, email, role, classes }).eq('cpr', staffKey);
+            if(error) alert('خطأ أثناء التحديث: ' + error.message);
+            else { alert('✅ تم تحديث بيانات المعلم بنجاح!'); loadStaff(); }
+        }
+
+        // تحديث الصفوف فقط (للمشرف)
+        async function updateStaffClassesOnly(staffKey) {
+            const classes = document.getElementById(`stf_classes_${staffKey}`).value.trim();
+            const { error } = await supabaseClient.from('staff').update({ classes }).eq('cpr', staffKey);
+            if(error) alert('خطأ أثناء تحديث الصفوف: ' + error.message);
+            else { alert('✅ تم تحديث صفوف المعلم بنجاح!'); loadStaff(); }
+        }
+
+        // إعادة تعيين كلمة المرور إلى 123456
+        async function resetStaffPassword(staffKey) {
+            if(confirm('هل تريد حقاً إعادة تعيين كلمة المرور لهذا المعلم إلى الافتراضية (123456)؟')) {
+                const { error } = await supabaseClient.from('staff').update({ password: '123456' }).eq('cpr', staffKey);
+                if(error) alert('خطأ: ' + error.message);
+                else alert('🔑 تم إعادة تعيين كلمة المرور بنجاح إلى: 123456');
+            }
+        }
+
+        async function deleteStaffMember(staffKey) {
+            if(confirm('⚠️ تحذير: هل أنت متأكد من حذف هذا المعلم نهائياً؟')) {
+                const { error } = await supabaseClient.from('staff').delete().eq('cpr', staffKey);
+                if(error) alert('خطأ أثناء الحذف: ' + error.message);
+                else { alert('✅ تم حذف المعلم بنجاح!'); loadStaff(); }
+            }
+        }
+
+        async function addStaffManual() {
+            const name = document.getElementById('stfName').value.trim();
+            const cpr = document.getElementById('stfCpr').value.trim();
+            const email = document.getElementById('stfEmail').value.trim();
+            const password = document.getElementById('stfPass').value.trim() || '123456';
+            const classes = document.getElementById('stfClasses').value.trim();
+            const role = document.getElementById('stfRole').value;
+            const username = cpr || email;
+
+            if(!name) { alert('الرجاء إدخال اسم المعلم على الأقل.'); return; }
+
+            const { error } = await supabaseClient.from('staff').insert([{ name, cpr, username, email, password, classes, role }]);
+            if(error) alert('خطأ في الإضافة: ' + error.message);
+            else { 
+                alert('✅ تم إضافة المعلم بنجاح'); 
+                document.getElementById('stfName').value=''; 
+                document.getElementById('stfCpr').value=''; 
+                document.getElementById('stfEmail').value=''; 
+                document.getElementById('stfClasses').value=''; 
+                loadStaff(); 
+            }
+        }
+
+        function downloadStaffTemplate() {
+            const ws = XLSX.utils.json_to_sheet([{ name: "أحمد علي", cpr: "900000000", username: "900000000", email: "teacher@yarmook.bh", password: "123456", classes: "5ب4", role: "Teacher" }]);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "المعلمين");
+            XLSX.writeFile(wb, "staff_template.xlsx");
+        }
+
+        async function uploadStaffExcel(e) {
+            const file = e.target.files[0];
+            if(!file) return;
+            const reader = new FileReader();
+            reader.onload = async function(evt) {
+                try {
+                    const data = new Uint8Array(evt.target.result);
+                    const workbook = XLSX.read(data, {type: 'array'});
+                    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const rows = XLSX.utils.sheet_to_json(sheet, {defval: ""});
+                    
+                    let count = 0;
+                    for(let r of rows) {
+                        let keys = Object.keys(r);
+                        let stName = "", stCpr = "", stUsername = "", stEmail = "", stRole = "Teacher", stClasses = "";
+                        keys.forEach(k => {
+                            let lk = k.toLowerCase().trim();
+                            if(lk.includes('name') || lk.includes('اسم')) stName = r[k];
+                            if(lk.includes('cpr') || lk.includes('شخصي')) stCpr = r[k];
+                            if(lk.includes('username') || lk.includes('مستخدم')) stUsername = r[k];
+                            if(lk.includes('email') || lk.includes('بريد')) stEmail = r[k];
+                            if(lk.includes('role') || lk.includes('دور')) stRole = r[k];
+                            if(lk.includes('class') || lk.includes('صفوف')) stClasses = r[k];
+                        });
+
+                        if(stName) {
+                            const { error } = await supabaseClient.from('staff').insert([{
+                                name: String(stName).trim(), 
+                                cpr: stCpr ? String(stCpr).trim() : null, 
+                                username: stUsername ? String(stUsername).trim() : (stCpr ? String(stCpr).trim() : stEmail),
+                                email: stEmail ? String(stEmail).trim() : null, 
+                                password: '123456', 
+                                classes: String(stClasses).trim(), 
+                                role: String(stRole).trim()
+                            }]);
+                            if(!error) count++;
+                        }
+                    }
+                    alert(`✅ تم رفع واستيراد (${count}) معلماً بنجاح!`);
+                    loadStaff();
+                } catch (err) { alert('خطأ في معالجة ملف الإكسل.'); }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        async function exportStaffExcel() {
+            const { data } = await supabaseClient.from('staff').select('name, cpr, username, email, role, classes');
+            const ws = XLSX.utils.json_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "المعلمين");
+            XLSX.writeFile(wb, "all_staff.xlsx");
+        }
+
+        function logout() {
+            localStorage.removeItem('current_staff_user');
+            window.location.href = 'staff.html';
+        }
+    </script>
+</body>
+</html>
