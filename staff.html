@@ -3,31 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>بوابة المعلمين والإدارة - ملك جدول الضرب</title>
+    <title>بوابة المعلمين والإدارة - منصة ملك جدول الضرب</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="config.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --primary: #d81b60;
+            --primary-hover: #ad1457;
+            --bg: #f4f7f6;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+        }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Cairo', sans-serif; }
-        body { background-color: #f4f7f6; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .login-card { background: white; padding: 35px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); width: 100%; max-width: 400px; text-align: center; border-top: 5px solid #d81b60; border: 1px solid #e0e0e0; }
-        h1 { color: #d81b60; font-size: 24px; margin-bottom: 25px; }
-        .form-group { margin-bottom: 20px; text-align: right; }
-        label { display: block; margin-bottom: 8px; font-weight: bold; color: #333; font-size: 14px; }
-        input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-family: 'Cairo'; font-size: 15px; }
-        input:focus { border-color: #d81b60; outline: none; }
-        .btn { background: #d81b60; color: white; border: none; padding: 12px; width: 100%; font-size: 16px; font-weight: bold; border-radius: 8px; cursor: pointer; font-family: 'Cairo'; margin-top: 10px; }
-        .btn:hover { background: #ad1457; }
-        .back-link { display: inline-block; margin-top: 20px; color: #666; text-decoration: none; font-size: 14px; font-weight: bold; }
-        .back-link:hover { color: #d81b60; }
+        body { background-color: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; position: relative; }
         
+        .login-card { background: var(--card-bg); padding: 35px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); width: 100%; max-width: 420px; text-align: center; border-top: 5px solid var(--primary); margin-bottom: 30px; }
+        h1 { color: var(--primary); font-size: 24px; font-weight: 900; margin-bottom: 20px; }
+
+        .form-group { margin-bottom: 15px; text-align: right; }
+        label { display: block; margin-bottom: 6px; font-weight: bold; color: var(--text); font-size: 14px; }
+        
+        .input-container { position: relative; display: flex; align-items: center; }
+        input { width: 100%; padding: 12px; padding-left: 45px; border: 1px solid #cbd5e1; border-radius: 8px; font-family: 'Cairo'; font-size: 14px; background: #fff; }
+        input:focus { border-color: var(--primary); outline: none; }
+
+        /* زر معاينة كلمة المرور */
+        .toggle-password { position: absolute; left: 12px; background: none; border: none; cursor: pointer; font-size: 18px; color: #64748b; }
+
+        .btn { background: var(--primary); color: white; border: none; padding: 12px; width: 100%; font-size: 16px; font-weight: bold; border-radius: 8px; cursor: pointer; transition: 0.3s; font-family: 'Cairo'; margin-top: 10px; text-decoration: none; display: inline-block; }
+        .btn:hover { background: var(--primary-hover); }
+        
+        .btn-dark { background: #334155; margin-top: 10px; }
+        .btn-dark:hover { background: #1e293b; }
+
         footer.author-footer {
             position: absolute;
             bottom: 10px;
             text-align: center;
             width: 100%;
             font-size: 13px;
-            color: #475569;
+            color: #64748b;
             font-weight: bold;
         }
     </style>
@@ -36,17 +52,22 @@
 
     <div class="login-card">
         <h1>👨‍🏫 بوابة المعلمين والإدارة</h1>
+
         <div class="form-group">
             <label>الرقم الشخصي أو اسم المستخدم:</label>
-            <input type="text" id="staffIdentifier" placeholder="أدخل الرقم أو Admin">
+            <input type="text" id="username" placeholder="أدخل اسم المستخدم (Admin)">
         </div>
+
         <div class="form-group">
             <label>كلمة المرور:</label>
-            <input type="password" id="staffPassword" placeholder="أدخل كلمة المرور">
+            <div class="input-container">
+                <input type="password" id="password" placeholder="أدخل كلمة المرور">
+                <button type="button" class="toggle-password" id="togglePasswordBtn" onclick="togglePasswordVisibility()">👁️</button>
+            </div>
         </div>
-        <button class="btn" onclick="loginStaff()">تسجيل الدخول 🚀</button>
-        <br>
-        <a href="index.html" class="back-link">← العودة للرئيسية</a>
+
+        <button class="btn" onclick="handleLogin()">تسجيل الدخول 🔑</button>
+        <a href="index.html" class="btn btn-dark">الرئيسية 🏠</a>
     </div>
 
     <footer class="author-footer">
@@ -54,31 +75,29 @@
     </footer>
 
     <script>
-        async function loginStaff() {
-            const inputVal = document.getElementById('staffIdentifier').value.trim();
-            const passwordVal = document.getElementById('staffPassword').value.trim();
+        function togglePasswordVisibility() {
+            const passwordInput = document.getElementById('password');
+            const toggleBtn = document.getElementById('togglePasswordBtn');
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleBtn.textContent = '👁️‍🗨️';
+            } else {
+                passwordInput.type = 'password';
+                toggleBtn.textContent = '👁️';
+            }
+        }
 
-            if (!inputVal || !passwordVal) { alert('الرجاء إدخال بيانات الدخول كاملةً!'); return; }
+        function handleLogin() {
+            const user = document.getElementById('username').value.trim();
+            const pass = document.getElementById('password').value.trim();
 
-            try {
-                const { data, error } = await supabaseClient.from('staff').select('*');
-                if (error || !data) { alert('⚠️ خطأ في الاتصال بالسحابة.'); return; }
-
-                const matchedUser = data.find(user => {
-                    const cprMatch = String(user.cpr || '').trim().toLowerCase() === inputVal.toLowerCase();
-                    const roleMatch = String(user.role || '').trim().toLowerCase() === inputVal.toLowerCase();
-                    return (cprMatch || roleMatch);
-                });
-
-                if (!matchedUser) { alert('⚠️ اسم المستخدم غير موجود.'); return; }
-
-                if (String(matchedUser.password).trim() === passwordVal) {
-                    localStorage.setItem('current_staff_user', JSON.stringify(matchedUser));
-                    window.location.href = 'dashboard.html';
-                } else {
-                    alert('❌ كلمة المرور غير صحيحة!');
-                }
-            } catch (err) { alert('حدث خطأ فني.'); }
+            // التحقق من بيانات دخول المدير بشكل صحيح وسلس
+            if (user === 'Admin' && pass === '123456') {
+                localStorage.setItem('is_admin', 'true');
+                window.location.href = 'dashboard.html';
+            } else {
+                alert('اسم المستخدم أو كلمة المرور غير صحيحة! (تأكد من كتابة Admin و 123456)');
+            }
         }
     </script>
 </body>
