@@ -33,7 +33,6 @@
         
         .rocket-ship { position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); font-size: 55px; user-select: none; z-index: 15; transform-origin: bottom center; transition: transform 0.05s linear; }
         
-        /* شعاع الليزر الذي يمتد بطول الشاشة */
         .laser-beam { position: absolute; bottom: 65px; width: 6px; background: linear-gradient(to top, var(--primary), #f43f5e, #fb7185); transform-origin: bottom center; z-index: 12; box-shadow: 0 0 15px var(--primary); border-radius: 3px; pointer-events: none; }
 
         .modal { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.97); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 999; text-align: center; padding: 25px; box-sizing: border-box; pointer-events: auto; }
@@ -168,6 +167,7 @@
             return String(num).replace(/\d/g, (d) => arabicNumbers[d]);
         }
 
+        // إعدادات افتراضية يتم تحديثها تلقائياً من سحابة Supabase
         let customSettings = {
             gameTime: 60,
             correctPoints: 100,
@@ -176,23 +176,38 @@
             bonusTime: 10
         };
 
+        // مستويات أقصى جداول الضرب للصفوف (تُجلب من السحابة)
+        let gradeTablesConfig = { t1: 3, t2: 5, t3: 7, t4: 9, t5: 12, t6: 12 };
+
+        // جلب الإعدادات من جدول game_settings في سحابة Supabase
         async function loadCloudSettings() {
             try {
-                const { data } = await supabaseClient
+                // 1. جلب إعدادات لعبة الصواريخ
+                const { data: rocketData } = await supabaseClient
                     .from('game_settings')
                     .select('value')
                     .eq('key', 'rocket_settings')
                     .single();
 
-                if (data && data.value) {
-                    customSettings = { ...customSettings, ...data.value };
+                if (rocketData && rocketData.value) {
+                    customSettings = { ...customSettings, ...rocketData.value };
+                }
+
+                // 2. جلب إعدادات نطاق الجداول للصفوف
+                const { data: gradeData } = await supabaseClient
+                    .from('game_settings')
+                    .select('value')
+                    .eq('key', 'grade_tables_settings')
+                    .single();
+
+                if (gradeData && gradeData.value) {
+                    gradeTablesConfig = { ...gradeTablesConfig, ...gradeData.value };
                 }
             } catch (e) {}
 
             document.getElementById('ruleTime').textContent = toArabicNum(customSettings.gameTime);
             document.getElementById('rulePoints').textContent = toArabicNum(customSettings.correctPoints);
             document.getElementById('ruleStreak').textContent = toArabicNum(customSettings.streakCount);
-            document.getElementById('ruleBonus').textContent = toArabicNum(customSettings.bonusTime);
             document.getElementById('timeLeft').textContent = toArabicNum(customSettings.gameTime);
         }
 
@@ -207,11 +222,23 @@
             initGameSettings();
         }
 
+        // تحديد أقصى جدول ضرب بناءً على صف الطالب وقاعدة البيانات بالسحابة
         function initGameSettings() {
             const cls = String(studentData.cls || '').trim();
-            if (cls.includes('٤') || cls.includes('4')) maxTable = 6;
-            else if (cls.includes('٥') || cls.includes('5') || cls.includes('٦') || cls.includes('6')) maxTable = 12;
-            else maxTable = 10;
+            // استخراج الرقم الأول من اسم الصف (مثال: 4ب3 -> 4)
+            const firstDigitMatch = cls.match(/\d/);
+            const gradeNum = firstDigitMatch ? parseInt(firstDigitMatch[0]) : 5;
+
+            switch(gradeNum) {
+                case 1: maxTable = gradeTablesConfig.t1; break;
+                case 2: maxTable = gradeTablesConfig.t2; break;
+                case 3: maxTable = gradeTablesConfig.t3; break;
+                case 4: maxTable = gradeTablesConfig.t4; break;
+                case 5: maxTable = gradeTablesConfig.t5; break;
+                case 6: maxTable = gradeTablesConfig.t6; break;
+                default: maxTable = 12; break;
+            }
+
             startGameEngine();
         }
 
@@ -257,7 +284,7 @@
             asteroids.forEach(ast => ast.element.remove());
             asteroids = [];
 
-            let num1 = Math.floor(Math.random() * (maxTable - 1)) + 2;
+            let num1 = Math.floor(Math.random() * maxTable) + 1;
             let num2 = Math.floor(Math.random() * 10) + 1;
             currentCorrectAnswer = num1 * num2;
 
@@ -325,7 +352,6 @@
             rocketShip.style.transform = `translateX(-50%) rotate(${angle}deg)`;
         }
 
-        // دالة حساب مسافة النقطة إلى خط شعاع الليزر
         function getDistanceFromPointToLineSegment(px, py, x1, y1, x2, y2) {
             let A = px - x1;
             let B = py - y1;
@@ -359,7 +385,6 @@
             const startX = (rocketRect.left + rocketRect.right) / 2 - rect.left;
             const startY = arena.clientHeight - 30;
 
-            // التحقق أولاً هل نقر اللاعب مباشرة فوق نيزك معين
             let clickedAst = null;
             asteroids.forEach(ast => {
                 let astCenterX = ast.x + 37.5;
@@ -372,16 +397,13 @@
 
             let targetAst = clickedAst;
 
-            // إذا لم ينقر مباشرة فوق نيزك، نبحث عن أول نيزك يتقاطع مع مسار شعاع الليزر المنطلق نحو مكان النقر
             if (!targetAst) {
                 let minDistanceToRocket = 99999;
                 asteroids.forEach(ast => {
                     let astCenterX = ast.x + 37.5;
                     let astCenterY = ast.y + 37.5;
-                    // حساب مسافة النيزك عن خط الليزر
                     let distToBeam = getDistanceFromPointToLineSegment(astCenterX, astCenterY, startX, startY, clickX, clickY);
                     if (distToBeam <= 40) {
-                        // إذا كان يقع على مسار الشعاع، نختار الأقرب للصاروخ
                         let distToRocket = Math.hypot(astCenterX - startX, astCenterY - startY);
                         if (distToRocket < minDistanceToRocket) {
                             minDistanceToRocket = distToRocket;
@@ -391,14 +413,12 @@
                 });
             }
 
-            // تحديد اتجاه وطول شعاع الليزر (يمتد بطول الشاشة أو حتى الاصطدام بالنيزك المستهدف)
             let endX = clickX;
             let endY = clickY;
             if (targetAst) {
                 endX = targetAst.x + 37.5;
                 endY = targetAst.y + 37.5;
             } else {
-                // تمديد الشعاع حتى يخرج من الشاشة في نفس اتجاه النقر
                 let angleRad = Math.atan2(clickX - startX, startY - clickY);
                 endX = startX + Math.sin(angleRad) * 1000;
                 endY = startY - Math.cos(angleRad) * 1000;
@@ -408,7 +428,7 @@
             angle = Math.max(-90, Math.min(90, angle));
             rocketShip.style.transform = `translateX(-50%) rotate(${angle}deg)`;
 
-            const length = Math.hypot(endX - startX, endY - startY);
+            let length = Math.hypot(endX - startX, endY - startY);
 
             const laser = document.createElement('div');
             laser.className = 'laser-beam';
@@ -423,7 +443,6 @@
             if (targetAst) {
                 checkAnswer(targetAst.value);
             } else {
-                // إذا لم يصطدم بأي نيزك، لا يتم خصم نقاط ولا سلسلة!
                 updateHUD();
             }
         }
