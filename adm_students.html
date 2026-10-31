@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إدارة بيانات الطلاب - ملك جدول الضرب</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="config.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #d81b60;
+            --primary-hover: #ad1457;
+            --bg: #f4f7f6;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+        }
+        * { box-sizing: border-box; }
+        body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        header { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-top: 4px solid var(--primary); }
+        h1 { color: var(--primary); margin: 0; font-size: 24px; font-weight: 900; }
+        .nav-tabs { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .tab-btn { background: white; border: 2px solid var(--primary); color: var(--primary); padding: 10px 18px; border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.3s; font-family: 'Cairo'; text-decoration: none; display: inline-block; font-size: 14px; }
+        .tab-btn.active, .tab-btn:hover { background: var(--primary); color: white; }
+        .section-card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { border: 1px solid #e2e8f0; padding: 10px; text-align: center; font-size: 13px; }
+        th { background: var(--primary); color: white; font-weight: bold; }
+        .btn { background: var(--primary); color: white; border: none; padding: 8px 16px; border-radius: 8px; font-weight: bold; cursor: pointer; font-family: 'Cairo'; transition: 0.3s; text-decoration: none; display: inline-block; }
+        .btn:hover { background: var(--primary-hover); }
+        .btn-green { background: #2e7d32; }
+        .btn-green:hover { background: #1b5e20; }
+        .btn-blue { background: #1565c0; }
+        .btn-blue:hover { background: #0d47a1; }
+        .btn-orange { background: #f57c00; }
+        .btn-orange:hover { background: #e65100; }
+        .btn-red { background: #d32f2f; }
+        .btn-red:hover { background: #b71c1c; }
+        .form-row { display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap; }
+        .form-group { flex: 1; min-width: 200px; text-align: right; }
+        label { display: block; margin-bottom: 5px; font-weight: 600; color: #333; }
+        input, select { width: 100%; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-family: 'Cairo'; }
+        .table-input { width: 100%; padding: 6px; border: 1px solid #cbd5e1; border-radius: 4px; text-align: center; font-family: 'Cairo'; }
+        .hidden { display: none !important; }
+        footer.author-footer { text-align: center; padding: 15px; color: #64748b; font-weight: bold; margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1 id="welcomeTitle">إدارة بيانات الطلاب</h1>
+            <button class="btn btn-red" onclick="logout()">تسجيل الخروج 🚪</button>
+        </header>
+
+        <!-- شريط التبويبات الموحد لجميع الصفحات -->
+        <div class="nav-tabs" id="navTabs">
+            <a href="adm_students.html" class="tab-btn active role-admin role-supervisor">👥 بيانات الطلاب</a>
+            <a href="adm_teachers.html" class="tab-btn role-admin role-supervisor">👨‍🏫 إدارة المعلمين</a>
+            <a href="adm_games.html" class="tab-btn role-admin role-supervisor">🎮 إعدادات الألعاب</a>
+            <a href="adm_scores.html" class="tab-btn role-admin role-supervisor role-teacher">📊 درجات الطلاب</a>
+            <a href="adm_reset.html" class="tab-btn role-admin">⚙️ تصفير النتائج</a>
+            <a href="adm_profile.html" class="tab-btn role-admin role-supervisor role-teacher">👤 بياناتي الشخصية</a>
+        </div>
+
+        <div class="section-card">
+            <h2>إدارة بيانات الطلاب 🎓</h2>
+            
+            <!-- أدوات رفع وتصدير الإكسل (تظهر للمدير فقط) -->
+            <div id="adminExcelTools" class="admin-only" style="margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
+                <button class="btn btn-blue" onclick="downloadStudentTemplate()">📥 تحميل قالب إكسل مفرغ</button>
+                <input type="file" id="studentExcelFile" accept=".xlsx, .xls" style="display:none" onchange="uploadStudentExcel(event)">
+                <button class="btn btn-green" onclick="document.getElementById('studentExcelFile').click()">📤 رفع ملف إكسل للطلاب</button>
+                <button class="btn" onclick="exportStudentsExcel()">📊 تحميل جميع بيانات الطلاب إكسل</button>
+            </div>
+
+            <!-- نموذج الإضافة اليدوية (تظهر للمدير والشرِف) -->
+            <h3>إضافة طالب يدويّاً</h3>
+            <div class="form-row">
+                <div class="form-group"><label>اسم الطالب:</label><input type="text" id="stdName" placeholder="الاسم الكامل"></div>
+                <div class="form-group"><label>الصف (مثال: 5ب4):</label><input type="text" id="stdClass" placeholder="5ب4"></div>
+                <div class="form-group"><label>الرقم الشخصي:</label><input type="text" id="stdCpr" placeholder="اختياري"></div>
+                <div class="form-group" style="align-self: flex-end;"><button class="btn" onclick="addStudentManual()">إضافة الطالب ➕</button></div>
+            </div>
+
+            <h3>قائمة الطلاب المسجلين في النظام</h3>
+            <table id="studentsTable">
+                <thead>
+                    <tr>
+                        <th>اسم الطالب</th>
+                        <th>الصف / الفرقة</th>
+                        <th>الرقم الشخصي</th>
+                        <th>الإجراءات والتحديث</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <footer class="author-footer">
+        إعداد أ. صادق القلعاوي | مدرسة اليرموك الابتدائية للبنين 🏫✨
+    </footer>
+
+    <script>
+        let currentUser = JSON.parse(localStorage.getItem('current_staff_user'));
+
+        if(!currentUser) { 
+            window.location.href = 'staff.html'; 
+        } else {
+            const roleVal = String(currentUser.role || 'Teacher').trim().toLowerCase();
+            
+            // حماية الصفحة: المعلم لا يدخل لهذه الصفحة
+            if(roleVal === 'teacher' || roleVal === 'معلم') {
+                alert('عذراً، هذه الصفحة مخصصة للإدارة والمشرفين فقط.');
+                window.location.href = 'adm_scores.html';
+            }
+
+            const roleName = (roleVal === 'admin' || roleVal === 'مدير') ? 'مدير النظام' : 'مشرف';
+            document.getElementById('welcomeTitle').textContent = `إدارة الطلاب (${currentUser.name || 'مستخدم'} - ${roleName})`;
+
+            // التحكم في ظهور العناصر حسب الصلاحية
+            if(roleVal === 'supervisor' || roleVal === 'مشرف') {
+                document.querySelectorAll('.admin-only').forEach(el => el.classList.add('hidden'));
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadStudents();
+        });
+
+        async function loadStudents() {
+            const { data, error } = await supabaseClient.from('students').select('*').order('cls', { ascending: true });
+            const tbody = document.querySelector('#studentsTable tbody');
+            tbody.innerHTML = '';
+
+            const roleVal = String(currentUser.role || '').trim().toLowerCase();
+            const isAdmin = (roleVal === 'admin' || roleVal === 'مدير');
+
+            if(data && data.length > 0) {
+                data.forEach(s => {
+                    let rowId = s.id || s.cpr;
+                    if(!rowId) return;
+
+                    // إنشاء زر الحذف فقط للمدير
+                    let deleteBtnHTML = isAdmin ? `<button class="btn btn-red" onclick="deleteStudent('${rowId}')">حذف 🗑️</button>` : '';
+
+                    tbody.innerHTML += `
+                        <tr>
+                            <td><input type="text" class="table-input" id="std_name_${rowId}" value="${s.name || ''}"></td>
+                            <td><input type="text" class="table-input" id="std_cls_${rowId}" value="${s.cls || ''}"></td>
+                            <td><input type="text" class="table-input" id="std_cpr_${rowId}" value="${s.cpr || ''}"></td>
+                            <td>
+                                <button class="btn btn-orange" onclick="updateStudentManual('${rowId}')">حفظ 💾</button>
+                                ${deleteBtnHTML}
+                            </td>
+                        </tr>`;
+                });
+            } else {
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#666;">لا توجد بيانات طلاب مسجلة حالياً.</td></tr>`;
+            }
+        }
+
+        async function updateStudentManual(rowId) {
+            const name = document.getElementById(`std_name_${rowId}`).value.trim();
+            const cls = document.getElementById(`std_cls_${rowId}`).value.trim();
+            const cpr = document.getElementById(`std_cpr_${rowId}`).value.trim();
+
+            if(!name || !cls) { alert('الاسم والصف حقول إجبارية!'); return; }
+
+            let query = supabaseClient.from('students').update({ name, cls, cpr });
+            if(!isNaN(rowId)) query = query.eq('id', rowId);
+            else query = query.eq('cpr', rowId);
+
+            const { error } = await query;
+            if(error) alert('خطأ أثناء التحديث: ' + error.message);
+            else { alert('✅ تم تحديث بيانات الطالب بنجاح!'); loadStudents(); }
+        }
+
+        async function addStudentManual() {
+            const name = document.getElementById('stdName').value.trim();
+            const cls = document.getElementById('stdClass').value.trim();
+            const cpr = document.getElementById('stdCpr').value.trim();
+
+            if(!name || !cls) { alert('الرجاء إدخال اسم الطالب والصف!'); return; }
+            
+            const { error } = await supabaseClient.from('students').insert([{ name, cls, cpr: cpr || null }]);
+            if(error) alert('خطأ في الإضافة: ' + error.message);
+            else { 
+                alert('✅ تمت إضافة الطالب بنجاح'); 
+                document.getElementById('stdName').value=''; 
+                document.getElementById('stdClass').value=''; 
+                document.getElementById('stdCpr').value=''; 
+                loadStudents(); 
+            }
+        }
+
+        async function deleteStudent(rowId) {
+            const roleVal = String(currentUser.role || '').trim().toLowerCase();
+            if(roleVal !== 'admin' && roleVal !== 'مدير') {
+                alert('عذراً، حذف الطلاب مسموح فقط لمدير النظام.');
+                return;
+            }
+            if(confirm('هل أنت متأكد من حذف هذا الطالب نهائياً؟')) {
+                let query = supabaseClient.from('students').delete();
+                if(!isNaN(rowId)) query = query.eq('id', rowId);
+                else query = query.eq('cpr', rowId);
+                const { error } = await query;
+                if(error) alert('خطأ أثناء الحذف: ' + error.message);
+                else { alert('✅ تم حذف الطالب بنجاح!'); loadStudents(); }
+            }
+        }
+
+        function downloadStudentTemplate() {
+            const ws = XLSX.utils.json_to_sheet([{ name: "محمد أحمد علي", cls: "5ب4", cpr: "900000000" }]);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "الطلاب");
+            XLSX.writeFile(wb, "student_template.xlsx");
+        }
+
+        async function uploadStudentExcel(e) {
+            const file = e.target.files[0];
+            if(!file) return;
+            const reader = new FileReader();
+            reader.onload = async function(evt) {
+                try {
+                    const data = new Uint8Array(evt.target.result);
+                    const workbook = XLSX.read(data, {type: 'array'});
+                    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const rows = XLSX.utils.sheet_to_json(sheet, {defval: ""});
+                    
+                    let successCount = 0;
+                    for(let r of rows) {
+                        let keys = Object.keys(r);
+                        let studentName = "", studentClass = "", studentCpr = "";
+                        keys.forEach(k => {
+                            let lk = k.toLowerCase().trim();
+                            if(lk.includes('name') || lk.includes('اسم')) studentName = r[k];
+                            if(lk.includes('class') || lk.includes('cls') || lk.includes('صف')) studentClass = r[k];
+                            if(lk.includes('cpr') || lk.includes('رقم')) studentCpr = r[k];
+                        });
+
+                        if(studentName && studentClass) {
+                            const { error } = await supabaseClient.from('students').insert([{ 
+                                name: String(studentName).trim(), 
+                                cls: String(studentClass).trim(), 
+                                cpr: studentCpr ? String(studentCpr).trim() : null 
+                            }]);
+                            if(!error) successCount++;
+                        }
+                    }
+                    alert(`✅ تم رفع واستيراد (${successCount}) طالباً بنجاح!`);
+                    loadStudents();
+                } catch (err) { alert('حدث خطأ أثناء معالجة ملف الإكسل.'); }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        async function exportStudentsExcel() {
+            const { data } = await supabaseClient.from('students').select('name, cls, cpr').order('cls', { ascending: true });
+            const ws = XLSX.utils.json_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "الطلاب");
+            XLSX.writeFile(wb, "all_students.xlsx");
+        }
+
+        function logout() {
+            localStorage.removeItem('current_staff_user');
+            window.location.href = 'staff.html';
+        }
+    </script>
+</body>
+</html>
